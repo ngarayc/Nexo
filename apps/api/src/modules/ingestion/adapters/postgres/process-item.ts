@@ -1,15 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import { PgBoss, fromDrizzle } from 'pg-boss';
 import { sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
 import type { Pool } from 'pg';
 import { ingestionQueue } from '../../../../platform/queue/policy.js';
+import { WriteTransactions } from '../../../../platform/database/write-transactions.js';
 import {
   ClassifyTelemetry,
   TelemetryTransaction,
   OriginalJson,
 } from '../../../telemetry/public.js';
 import { readWork } from '../../domain/work.js';
+import { IngestionInvariantError } from '../../domain/recovery-policy.js';
 
 type BatchRow = { state: string; next_index: number; total: number };
 type ItemRow = {
@@ -27,7 +28,7 @@ export class ProcessItem {
     pool: Pool,
     private readonly boss: PgBoss,
   ) {
-    this.db = drizzle(pool);
+    this.db = new WriteTransactions(pool);
   }
 
   async execute(
@@ -38,8 +39,7 @@ export class ProcessItem {
     const work = readWork(data);
     if (!work) return 'obsolete';
     signal.throwIfAborted();
-    return this.db.transaction(async (tx) => {
-      await tx.execute(sql`SET LOCAL transaction_timeout='10s'`);
+    return this.db.run(async (tx) => {
       // Orden único de bloqueos para consumidor y futuro reconciliador: lote, posición.
       const parent = await tx.execute<BatchRow>(sql`
         SELECT state,next_index,total FROM ingestion_batches
@@ -78,13 +78,13 @@ export class ProcessItem {
             job_id=${jobId},not_before=clock_timestamp()
           WHERE ingestion_id=${work.ingestionId} AND item_index=${next} AND state='waiting'
           RETURNING item_index`);
-        if (updated.rows.length !== 1) throw new Error('Continuación durable incoherente.');
+        if (updated.rows.length !== 1) throw new IngestionInvariantError();
         const sent = await this.boss.send(
           ingestionQueue,
           { ingestionId: work.ingestionId, index: next, generation: 1 },
           { id: jobId, retryLimit: 0, db: fromDrizzle(tx, sql) },
         );
-        if (sent !== jobId) throw new Error('No se confirmó la continuación reservada.');
+        if (sent !== jobId) throw new IngestionInvariantError();
       }
       await tx.execute(sql`
         UPDATE ingestion_batches SET state=${next === batch.total ? 'complete' : 'active'},

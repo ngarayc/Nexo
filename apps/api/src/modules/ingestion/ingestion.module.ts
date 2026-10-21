@@ -10,6 +10,9 @@ import { IngestionIngress } from './adapters/http/ingress.js';
 import { IngestionController } from './adapters/http/ingestion-controller.js';
 import { ProcessItem } from './adapters/postgres/process-item.js';
 import { IngestionWorker } from './adapters/queue/ingestion-worker.js';
+import { RecoverItem } from './adapters/postgres/recover-item.js';
+import { ReconcileIngestion } from './application/reconcile.js';
+import { IngestionReconciler } from './adapters/queue/ingestion-reconciler.js';
 
 @Module({
   imports: [DatabaseModule],
@@ -19,6 +22,18 @@ import { IngestionWorker } from './adapters/queue/ingestion-worker.js';
     QueueConnection,
     IngestionIngress,
     IngestionWorker,
+    IngestionReconciler,
+    {
+      provide: RecoverItem,
+      inject: [WriteDatabase, QueueConnection],
+      useFactory: (write: WriteDatabase, queue: QueueConnection) =>
+        new RecoverItem(write.pool, queue.boss),
+    },
+    {
+      provide: ReconcileIngestion,
+      inject: [RecoverItem],
+      useFactory: (recovery: RecoverItem) => new ReconcileIngestion(recovery),
+    },
     {
       provide: ProcessItem,
       inject: [WriteDatabase, QueueConnection],
