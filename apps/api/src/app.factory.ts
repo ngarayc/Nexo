@@ -4,6 +4,7 @@ import { AppModule } from './app.module.js';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import helmet from 'helmet';
 import { Sessions } from './modules/access/public.js';
+import { IngestionIngress } from './modules/ingestion/public.js';
 import { SafeErrors, unavailableBody } from './platform/http/safe-errors.js';
 import type { Request, Response, NextFunction } from 'express';
 
@@ -30,8 +31,17 @@ export function configureApplication(app: NestExpressApplication): NestExpressAp
     }),
   );
   const sessions = app.get(Sessions);
-  app.use((request: Request, response: Response, next: NextFunction) => {
+  const ingestion = app.get(IngestionIngress);
+  app.use((_request: Request, response: Response, next: NextFunction) => {
     response.setHeader('Cache-Control', 'no-store');
+    next();
+  });
+  app.use(ingestion.middleware);
+  app.use((request: Request, response: Response, next: NextFunction) => {
+    if (ingestion.isProducerRequest(request)) {
+      next();
+      return;
+    }
     sessions.middleware(request, response, (error?: unknown) => {
       if (error) {
         if (response.headersSent) response.destroy();

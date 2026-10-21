@@ -2,7 +2,7 @@
 
 Telemetría sintética de flotas con NestJS, Angular y PostgreSQL. El nombre expresa el vínculo entre vehículos, información y supervisión.
 
-**Estado:** base E0 con NestJS, Angular y PostgreSQL en Docker, migración/seed, acceso demo por sesión y CI. E1-I01 añade el esquema de telemetría y adaptadores de identidad, tiempo y JSON; recepción/procesamiento, SSE, reproductor y CR-01 se incorporan en los siguientes incrementos.
+**Estado:** base E0 con Docker, acceso demo por sesión y CI; E1 conserva identidad, tiempo y JSON exactos, admite lotes HTTP y consulta recibos durables. **La clasificación todavía no está implementada:** los lotes permanecen pendientes y devuelven 503 al vencer su espera. Procesamiento, consultas del dominio, SSE, reproductor y CR-01 se incorporan después.
 
 ## Arranque
 
@@ -55,7 +55,7 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 
 - [Arquitectura](docs/architecture.md).
 - [Persistencia exacta y migraciones](docs/persistence.md).
-- [Admisión durable: base y pendientes](docs/ingestion.md).
+- [Admisión durable y contratos HTTP](docs/ingestion.md).
 - [Comprobación desde copia limpia](docs/reproducibility.md).
 - [Reglas de dominio y GPS](docs/domain.md).
 - [Seguridad](docs/security.md).

@@ -4,21 +4,12 @@ import { sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import type { Pool } from 'pg';
 import { ingestionBatches, ingestionItems } from '../../../../platform/database/schema.js';
-import { DatabaseSlots } from '../../../../platform/database/slots.js';
+import { DatabaseSlots, DatabaseCapacityError } from '../../../../platform/database/slots.js';
 import { ingestionQueue } from '../../../../platform/queue/policy.js';
 import { OriginalJson } from '../../../telemetry/public.js';
 import type { BatchInput } from '../../domain/batch.js';
-
-export class IngestionIdConflict extends Error {
-  constructor() {
-    super('El identificador de recepción ya representa otro cuerpo.');
-  }
-}
-export class IngestionCapacityError extends Error {
-  constructor() {
-    super('Capacidad durable de ingesta agotada.');
-  }
-}
+import { IngestionIdConflict, IngestionCapacityError } from '../../application/ingest.js';
+export { IngestionIdConflict, IngestionCapacityError } from '../../application/ingest.js';
 
 type Capacity = {
   active: string;
@@ -42,6 +33,18 @@ export class AdmissionStore {
   }
 
   async admit(ingestionId: string, batch: BatchInput): Promise<'created' | 'existing'> {
+    try {
+      return await this.admitChecked(ingestionId, batch);
+    } catch (error) {
+      if (error instanceof DatabaseCapacityError) throw new IngestionCapacityError();
+      throw error;
+    }
+  }
+
+  private async admitChecked(
+    ingestionId: string,
+    batch: BatchInput,
+  ): Promise<'created' | 'existing'> {
     const seen = await this.readSlots.run(() =>
       this.readPool.query<{ request_document: string }>(
         'SELECT request_document::text FROM ingestion_batches WHERE ingestion_id=$1',

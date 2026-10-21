@@ -59,6 +59,7 @@ if (job === 'quality') {
     'build',
     'api',
     'db',
+    'web',
   ]);
   command('npm', ['run', 'test:integration']);
   passed('postgresql', await json('reports/integration-summary.json'));

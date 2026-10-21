@@ -47,6 +47,10 @@ export class Sessions implements OnModuleDestroy {
     return identity;
   }
 
+  get demoEnabled(): boolean {
+    return this.config.demoEnabled;
+  }
+
   requireOrigin(request: Request): void {
     if (request.get('Origin') !== this.config.origin) throw accessError('ORIGIN_NOT_ALLOWED');
   }

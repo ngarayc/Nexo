@@ -23,7 +23,11 @@ Repetir el arranque conserva ID y hash. En una base inicializada, una cuenta aus
 
 Las migraciones usan `nexo_owner`. HTTP usa `nexo_app`, sin superusuario, creación de bases/roles, DDL o modificación de credenciales. Lee usuarios y metadatos de migración; E1 añade escritura acotada de sus seis tablas, con inmutabilidad de eventos, evidencia y payloads según [persistencia](persistence.md). El entrypoint elimina `DB_OWNER_PASSWORD` del entorno heredado por HTTP. La configuración administrativa de Docker contiene las variables necesarias para preparar el contenedor y no debe publicarse.
 
-La preparación incorpora también el esquema interno de pg-boss y la cola, antes de servir. Sus permisos DML se limitan a ese esquema; no habilitan borrado de datos propios. [Admisión](ingestion.md) distingue los adaptadores ya comprobados de las rutas y consumidores pendientes. No modificar manualmente sus tablas internas para operar la aplicación.
+La preparación incorpora también el esquema interno de pg-boss y la cola, antes de servir. Sus permisos DML se limitan a ese esquema; no habilitan borrado de datos propios. [Admisión](ingestion.md) describe las rutas y distingue su recepción durable del consumidor todavía pendiente. No modificar manualmente sus tablas internas para operar la aplicación.
+
+El productor usa X-API-Key de entorno para POST /api/events/batch y GET /api/ingestions/:id; Angular no recibe esa credencial. El panel puede leer el mismo recibo con sesión en GET /api/demo/ingestions/:id. Hasta incorporar E1-I03, el POST admitido devuelve pendiente con 503 al vencer su espera; consultar no crea ni reenvía trabajo. Conservar ingestionId, especialmente si la primera respuesta se perdió.
+
+El perfil de demo/CI conserva 1.000 posiciones y 2 MiB. Las dos variables opcionales INGEST_MAX_EVENTS_PER_BATCH e INGEST_MAX_BODY_BYTES permiten reducirlo; valores incompatibles con esquema/proxy impiden arrancar. El tamaño retenido es contabilidad lógica y no espacio físico de disco.
 
 Se rechazan configuración ausente, secretos inválidos y reutilización del secreto de sesión como API key. La generación acredita el origen aleatorio; la longitud de un valor arbitrario no demuestra entropía. Los fallos HTTP no exponen cadenas de conexión, contraseñas o stacks.
 

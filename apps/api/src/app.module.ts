@@ -3,9 +3,10 @@ import { AppController } from './app.controller.js';
 import { ApplicationInfoService } from './application-info.service.js';
 import { DatabaseModule } from './platform/database/database.module.js';
 import { AccessModule } from './modules/access/public.js';
+import { IngestionModule } from './modules/ingestion/public.js';
 
 @Module({
-  imports: [DatabaseModule, AccessModule],
+  imports: [DatabaseModule, AccessModule, IngestionModule],
   controllers: [AppController],
   providers: [ApplicationInfoService],
 })
