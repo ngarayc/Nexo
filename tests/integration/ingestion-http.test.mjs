@@ -11,7 +11,7 @@ before(() => stack.compose('up', '-d', '--no-build', '--wait', 'db', 'api', 'web
 after(() => stack.close(), { timeout: 180000 });
 for (const [scenario, description] of Object.entries({
   boundaries: 'API y proxy autorizan antes de JSON y rechazan formato/exceso sin admisión',
-  durable: 'HTTP real conserva lotes límite, idempotencia y recibos pendientes por ambas fronteras',
+  durable: 'HTTP real clasifica lotes límite y conserva idempotencia/recibos por ambas fronteras',
 }))
   test(description, () =>
     assert.equal(
@@ -42,6 +42,17 @@ test('reiniciar API conserva las recepciones y su trabajo sin reenvío HTTP', as
   );
   assert.equal(
     stack.apiScript(`process.env.NEXO_INGESTION_HTTP_CASE='restart';\n${source}`),
+    'ingestion-http-case-ok',
+  );
+});
+
+test('consumidor y HTTP reales cumplen 20/2/2, 0/22/2, latest, alertas y 43 efectos sin reset', () => {
+  const fixture = readFileSync('fixtures/events.jsonl', 'utf8');
+  const expected = JSON.parse(readFileSync('fixtures/expected_detailed.json', 'utf8'));
+  assert.equal(
+    stack.apiScript(
+      `globalThis.nexoHttpOracle=${JSON.stringify({ fixture, expected })};\nprocess.env.NEXO_INGESTION_HTTP_CASE='oracles';\n${source}`,
+    ),
     'ingestion-http-case-ok',
   );
 });

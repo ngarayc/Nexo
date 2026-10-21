@@ -5,7 +5,15 @@ import { testStack } from '../support/stack.mjs';
 
 const stack = testStack();
 const source = readFileSync('tests/support/check-queue.mjs', 'utf8');
-before(() => stack.compose('up', '-d', '--no-build', '--wait', 'db', 'api'), { timeout: 180000 });
+before(
+  () => {
+    stack.compose('up', '-d', '--no-build', '--wait', 'db', 'api');
+    // Estas pruebas ejercen reclamación/adaptadores manuales; ningún consumidor
+    // concurrente debe reclamar sus jobs antes de la comprobación explícita.
+    stack.compose('stop', 'api');
+  },
+  { timeout: 180000 },
+);
 after(() => stack.close(), { timeout: 180000 });
 
 for (const [scenario, description] of Object.entries({
@@ -20,7 +28,7 @@ for (const [scenario, description] of Object.entries({
 })) {
   test(description, () => {
     assert.equal(
-      stack.apiScript(`process.env.NEXO_QUEUE_CASE=${JSON.stringify(scenario)};\n${source}`),
+      stack.apiTool(`process.env.NEXO_QUEUE_CASE=${JSON.stringify(scenario)};\n${source}`),
       'queue-case-ok',
     );
   });
