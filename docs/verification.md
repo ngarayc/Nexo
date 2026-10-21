@@ -72,3 +72,11 @@ Los 17 casos adicionales de integración usan PostgreSQL real y el código compi
 Las pruebas detectaron que SELECT FOR KEY SHARE en el trigger de proyección exigía UPDATE sobre eventos. Se corrigió usando SELECT y el control de ausencia; la FK protege la referencia y los eventos permanecen inmutables, sin conceder ese permiso adicional. El recorrido completo posterior pasó. Las tres imágenes del incremento pasaron Trivy sin vulnerabilidades altas/críticas.
 
 [Persistencia](persistence.md) explica fuentes, archivos, costes y límites. La suite nativa inserta datos mediante los adaptadores/SQL: no acredita todavía recepción HTTP, ejecución de jobs, atomicidad de clasificación ni los oráculos 20/2/2 y 0/22/2. El CI remoto y la revisión se registran en la PR del candidato publicado; la revisión del autor para main mantiene su estado propio.
+
+## Base de cola y admisión — parte de E1-I02
+
+La base de [#14](https://github.com/ngarayc/Nexo/issues/14) pasó calidad, build, **122 pruebas API, 4 Angular, 41 de integración y 6 Chromium**, sin omisiones. Las 8 integraciones adicionales verifican pg-boss 12.38.0/esquema 46, su política, operación sin DDL, commit/rollback de fromDrizzle, admisión y recibo originales, idempotencia concurrente y conflicto estructural, fallo después de publicar, preparación repetida/incompatible y carrera por la última plaza activa. Los 33 casos anteriores vuelven a pasar, incluido upgrade desde E0 y persistencia de las seis tablas.
+
+Se corrigieron dos incompatibilidades durante la comprobación: updateQueue rechaza campos inmutables aun con igual valor; solo recibe ahora ajustes mutables y la preparación valida los otros. La consulta SQL de fecha del test devolvía texto mediante Drizzle; se usa el tiempo de PostgreSQL directamente al insertar el marcador técnico. La preparación incompatible falla sin reemplazar la cola o purgar sus trabajos. Las 20 pruebas unitarias nuevas cubren sobre/UUID y turnos SQL, incluidos límites exactos y espera vencida sin ejecución posterior.
+
+[Admisión](ingestion.md) identifica los archivos, fuentes y límites actuales. Esta es una parte de la issue: no acredita las rutas HTTP, autenticación pre-parser, límites del proxy, respuesta final, clasificación o recuperación completa. Esos criterios permanecen abiertos; el CI y la revisión de la promoción registran su SHA exacto.

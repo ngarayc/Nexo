@@ -1,7 +1,13 @@
 import type { PoolConfig } from 'pg';
 
 export interface DatabaseConfig {
-  readonly pool: PoolConfig;
+  readonly pool: PoolConfig & {
+    host: string;
+    port: number;
+    database: string;
+    user: string;
+    password: string;
+  };
   readonly demoEnabled: boolean;
   readonly migrationsFolder: string;
 }

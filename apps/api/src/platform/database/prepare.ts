@@ -5,6 +5,7 @@ import { Pool } from 'pg';
 import type { DatabaseConfig } from './config.js';
 import { users } from './schema.js';
 import { passwordHashOptions as hashOptions } from './password-policy.js';
+import { prepareQueue } from '../queue/prepare.js';
 
 export async function prepareDatabase(config: DatabaseConfig): Promise<void> {
   const pool = new Pool(config.pool);
@@ -53,6 +54,7 @@ export async function prepareDatabase(config: DatabaseConfig): Promise<void> {
         ON public.outbox_messages TO nexo_app`);
       await client.query(`GRANT USAGE, SELECT ON SEQUENCE public.telemetry_events_event_pk_seq,
         public.vehicle_latest_vehicle_pk_seq TO nexo_app`);
+      await prepareQueue(config, client);
     } finally {
       await client.query('SELECT pg_advisory_unlock(72416001)').catch(() => undefined);
       client.release();

@@ -20,4 +20,6 @@ Tres contenedores permanentes: `web` sirve Angular y hace proxy bajo el mismo or
 
 La ingesta posterior utilizará cola durable en PostgreSQL, procesamiento transaccional por evento y outbox para cambios confirmados. El receptor progresa independientemente de los controles del emisor. La persistencia y el procesamiento se demostrarán con PostgreSQL real; no se deducen de esta descripción.
 
+La [base de admisión](ingestion.md) prepara ahora el esquema pg-boss y adaptadores SQL verificados directamente, todavía sin rutas HTTP o consumidor. Conserva recibos propios y publica el primer job en la misma transacción Drizzle. Las consultas/sesiones/salud comparten pool de cuatro conexiones y un presupuesto acotado de operaciones.
+
 El coste de estas decisiones es una composición modular y controles transaccionales explícitos. Mantienen un único despliegue de API y evitan agregar un broker o servicios ajenos al alcance. No se afirma capacidad productiva para una flota real sin mediciones.

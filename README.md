@@ -55,6 +55,7 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 
 - [Arquitectura](docs/architecture.md).
 - [Persistencia exacta y migraciones](docs/persistence.md).
+- [Admisión durable: base y pendientes](docs/ingestion.md).
 - [Comprobación desde copia limpia](docs/reproducibility.md).
 - [Reglas de dominio y GPS](docs/domain.md).
 - [Seguridad](docs/security.md).
