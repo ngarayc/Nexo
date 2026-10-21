@@ -134,6 +134,9 @@ export function testStack({ webPort = 8080 } = {}) {
     compose,
     sql,
     health,
+    apiScript(source) {
+      return compose('exec', '-T', 'api', 'node', '--input-type=module', '-e', source);
+    },
     async waitHealthy() {
       for (let i = 0; i < 20; i += 1) {
         if (health().status === 200) return;
