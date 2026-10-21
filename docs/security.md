@@ -22,7 +22,7 @@ La ausencia de hallazgos es evidencia del árbol y la base de avisos consultados
 
 ## Verificación pendiente
 
-El primer CI remoto pasó y la base se promovió a test por PR. Las demostraciones negativas remotas, revisión humana de main y seguridad de ingesta/SSE conservan comprobaciones pendientes en sus issues. Cada imagen nueva repite el escaneo: resultados anteriores no acreditan una revisión posterior.
+El primer CI remoto pasó y la base se promovió a test por PR. Las [demostraciones negativas y recuperación](control-demonstrations.md) comprobaron bloqueo mediante reglas equivalentes. La revisión humana de main y seguridad de ingesta/SSE conservan comprobaciones pendientes en sus issues. Cada imagen nueva repite el escaneo: resultados anteriores no acreditan una revisión posterior.
 
 ## Escaneo previo a la publicación inicial
 

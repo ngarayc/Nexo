@@ -1,0 +1,260 @@
+{
+  "version": 1,
+  "repository": "ngarayc/Nexo-control-proofs",
+  "source_commit": "577ecc7ece06829c84f17be8dbe455b85ad0d936",
+  "baseline_commit": "0f7b140bbe2e9c4cedcff87c3253735aa8392df9",
+  "baseline_run": {
+    "id": 39559782455,
+    "status": "success",
+    "jobs": [
+      {
+        "name": "quality",
+        "conclusion": "success"
+      },
+      {
+        "name": "integration",
+        "conclusion": "success"
+      },
+      {
+        "name": "security-source",
+        "conclusion": "success"
+      },
+      {
+        "name": "system",
+        "conclusion": "success"
+      },
+      {
+        "name": "unit",
+        "conclusion": "success"
+      },
+      {
+        "name": "ci-required",
+        "conclusion": "success"
+      }
+    ]
+  },
+  "controls": {
+    "test": {
+      "required_checks": [
+        {
+          "context": "ci-required",
+          "app_id": 15368
+        }
+      ],
+      "strict": true,
+      "enforce_admins": true,
+      "pr_required": true,
+      "approving_reviews": 0,
+      "no_force_push_or_delete": true,
+      "conversations_resolved": true
+    },
+    "main": {
+      "required_checks": [
+        {
+          "context": "ci-required",
+          "app_id": 15368
+        },
+        {
+          "context": "main-review",
+          "app_id": 15368
+        }
+      ],
+      "strict": true,
+      "enforce_admins": true,
+      "pr_required": true,
+      "approving_reviews": 0,
+      "no_force_push_or_delete": true,
+      "conversations_resolved": true
+    }
+  },
+  "main_review_environment": {
+    "name": "main-review",
+    "reviewer": "ngarayc",
+    "can_admins_bypass": false,
+    "prevent_self_review": false
+  },
+  "direct_push": {
+    "before": "0f7b140bbe2e9c4cedcff87c3253735aa8392df9",
+    "after": "0f7b140bbe2e9c4cedcff87c3253735aa8392df9",
+    "candidate": "9b0dd9685a658a35cd81e936f281404c11ba19fd",
+    "exit_code": 1,
+    "rejected_by": "GitHub protected branch rule",
+    "remote_reason": [
+      "remote: error: GH006: Protected branch update failed for refs/heads/main.",
+      "remote: - Changes must be made through a pull request.",
+      "remote: - 2 of 2 required status checks are expected."
+    ]
+  },
+  "omission": {
+    "run_id": 39560491148,
+    "candidate": "9b0dd9685a658a35cd81e936f281404c11ba19fd",
+    "jobs": {
+      "quality": "success",
+      "unit": "failure",
+      "security-source": "success",
+      "system": "success",
+      "integration": "success",
+      "ci-required": "failure"
+    },
+    "merge_exit": 1,
+    "merge_status": "405",
+    "merge_reason": "Required status check \"ci-required\" is failing.",
+    "test_before": "0f7b140bbe2e9c4cedcff87c3253735aa8392df9",
+    "test_after": "0f7b140bbe2e9c4cedcff87c3253735aa8392df9"
+  },
+  "failure": {
+    "run_id": 39561847816,
+    "candidate": "947fb7ac2df68093877dbb21c72622d21bf6cedb",
+    "jobs": {
+      "quality": "success",
+      "integration": "success",
+      "unit": "failure",
+      "security-source": "success",
+      "system": "success",
+      "ci-required": "failure"
+    },
+    "merge_exit": 1,
+    "merge_status": "405",
+    "merge_reason": "Required status check \"ci-required\" is failing.",
+    "test_before": "0f7b140bbe2e9c4cedcff87c3253735aa8392df9",
+    "test_after": "0f7b140bbe2e9c4cedcff87c3253735aa8392df9"
+  },
+  "secret_marker": {
+    "detector_exit": 1,
+    "rule": "github-pat",
+    "findings": 1,
+    "recovery_exit": 0,
+    "committed": false,
+    "published": false
+  },
+  "recovery": {
+    "run_id": 39563019643,
+    "candidate": "fdd3f7e2115ca547f88e6628f1479f76b9e92966",
+    "integration_candidate": "536032d2f7c2377476b379f0ba29e7bd81fcdadc",
+    "validated_five_reports": true,
+    "reports": {
+      "quality": {
+        "version": 1,
+        "job": "quality",
+        "sha": "536032d2f7c2377476b379f0ba29e7bd81fcdadc",
+        "runId": "39563019643",
+        "attempt": "1",
+        "checks": [
+          {
+            "name": "workspace-quality",
+            "status": "passed"
+          },
+          {
+            "name": "traceability",
+            "status": "passed"
+          },
+          {
+            "name": "ci-controls",
+            "status": "passed"
+          }
+        ]
+      },
+      "unit": {
+        "version": 1,
+        "job": "unit",
+        "sha": "536032d2f7c2377476b379f0ba29e7bd81fcdadc",
+        "runId": "39563019643",
+        "attempt": "1",
+        "checks": [
+          {
+            "name": "api",
+            "status": "passed",
+            "tests": {
+              "total": 41,
+              "passed": 41,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "name": "web",
+            "status": "passed",
+            "tests": {
+              "total": 4,
+              "passed": 4,
+              "failed": 0,
+              "skipped": 0
+            }
+          }
+        ]
+      },
+      "integration": {
+        "version": 1,
+        "job": "integration",
+        "sha": "536032d2f7c2377476b379f0ba29e7bd81fcdadc",
+        "runId": "39563019643",
+        "attempt": "1",
+        "checks": [
+          {
+            "name": "postgresql",
+            "status": "passed",
+            "tests": {
+              "total": 16,
+              "passed": 16,
+              "failed": 0,
+              "skipped": 0
+            }
+          }
+        ]
+      },
+      "security-source": {
+        "version": 1,
+        "job": "security-source",
+        "sha": "536032d2f7c2377476b379f0ba29e7bd81fcdadc",
+        "runId": "39563019643",
+        "attempt": "1",
+        "checks": [
+          {
+            "name": "secrets",
+            "status": "passed"
+          },
+          {
+            "name": "dependencies",
+            "status": "passed"
+          },
+          {
+            "name": "configuration",
+            "status": "passed"
+          }
+        ]
+      },
+      "system": {
+        "version": 1,
+        "job": "system",
+        "sha": "536032d2f7c2377476b379f0ba29e7bd81fcdadc",
+        "runId": "39563019643",
+        "attempt": "1",
+        "checks": [
+          {
+            "name": "images",
+            "status": "passed"
+          },
+          {
+            "name": "browser",
+            "status": "passed",
+            "tests": {
+              "total": 6,
+              "passed": 6,
+              "failed": 0,
+              "skipped": 0
+            }
+          },
+          {
+            "name": "persistence",
+            "status": "passed"
+          }
+        ]
+      }
+    },
+    "tree_equals_baseline": true,
+    "test_merge": "b45a860ffc10d1aef854e9c79d60b3e751b94fd6",
+    "post_merge_run": 39565939778
+  },
+  "main_unchanged": true,
+  "archived": true
+}

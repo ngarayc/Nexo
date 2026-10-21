@@ -56,3 +56,9 @@ Se clonó de nuevo `577ecc7ece06829c84f17be8dbe455b85ad0d936` y se siguió el [p
 El recorrido manual automatizado comprobó salud, formulario y hash real, dos sesiones distintas, logout independiente, restauración por recarga, revocación al reiniciar API y conservación exacta de registro/hash tras reinicio y recreación de contenedores. Los valores sensibles se compararon en memoria y no se guardaron en artefactos. Después se eliminaron exclusivamente los recursos del proyecto sintético creado para esa comprobación; la instalación habitual permaneció disponible.
 
 La reproducibilidad técnica no cierra por sí sola E0: las demostraciones de controles, CI del candidato actual y revisión del autor en main mantienen criterios propios. Horas finales y entregables completos se acreditan al cierre con información confirmada.
+
+## Rechazos y recuperación — E0-I04
+
+[La demostración](control-demonstrations.md) usa una copia de `577ecc7ece06829c84f17be8dbe455b85ad0d936` con protecciones equivalentes. GitHub rechazó push directo a main con GH006; omisión y fallo real produjeron unit/ci-required fallidos y dos rechazos HTTP 405 de integración, conservando test. El marcador sintético fue detectado localmente y retirado antes de commit/publicación.
+
+Restaurar el árbol original permitió CI, cinco artefactos revalidados y promoción por PR hacia test. El CI del merge también pasó; main no cambió y el recurso quedó archivado. [El registro saneado](evidence/control-proofs.json) conserva SHAs, resultados y métricas. No acredita revisión humana o integración en main de Nexo; estas conservan su comprobación propia.
