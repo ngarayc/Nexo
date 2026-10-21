@@ -1,0 +1,32 @@
+name: Cambio verificable
+description: Historia, tarea técnica, defecto o cambio del contrato.
+body:
+  - type: textarea
+    id: result
+    attributes:
+      label: Resultado y origen
+      description: Necesidad, requisito de origen y comportamiento observable.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Alcance y dependencias
+      description: Límites del incremento, contratos afectados e issues previas.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Criterios de aceptación
+      description: Casos comprobables, incluidos errores y persistencia cuando apliquen.
+      placeholder: '- [ ] Resultado observable y forma de comprobarlo.'
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Verificación y cierre
+      description: Pruebas, evidencia necesaria, documentación y revisión requerida.
+    validations:
+      required: true

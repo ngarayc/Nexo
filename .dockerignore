@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+**/.angular
+.git
+.cache
+.env
+.env.*
+!.env.example
+reports
+test-results
+playwright-report
+**/*.log
+**/coverage
