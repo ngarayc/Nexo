@@ -2,7 +2,7 @@
 
 ## Estado
 
-Los workflows de Actions y los módulos de `scripts/ci/` implementan el protocolo de E0-I04. [La primera ejecución remota](https://github.com/ngarayc/Nexo/actions/runs/39552267643) pasó quality, unit, integration, security-source, system y ci-required para el origen `7d65bd2518e2501687123b3c702b142ed8a98e02`; sus cinco artefactos saneados se descargaron y revalidaron contra el candidato de integración `9d373779aa138bbb27152ee34e89dfe2b03415f4`. La [PR #7](https://github.com/ngarayc/Nexo/pull/7) se integró en test tras revisión técnica. Las demostraciones negativas remotas siguen pendientes: un recorrido verde no acredita un rechazo.
+Los workflows de Actions y los módulos de `scripts/ci/` implementan el protocolo de E0-I04. [La primera ejecución remota](https://github.com/ngarayc/Nexo/actions/runs/39552267643) pasó quality, unit, integration, security-source, system y ci-required para el origen `7d65bd2518e2501687123b3c702b142ed8a98e02`; sus cinco artefactos saneados se descargaron y revalidaron contra el candidato de integración `9d373779aa138bbb27152ee34e89dfe2b03415f4`. La [PR #7](https://github.com/ngarayc/Nexo/pull/7) se integró en test tras revisión técnica. Las [demostraciones negativas y recuperación](control-demonstrations.md) también se ejecutaron en un recurso descartable con reglas equivalentes: rechazo de push directo, bloqueo por prueba omitida/fallida y recuperación por PR.
 
 ```sh
 node scripts/ci/run-node-tests.mjs ci-controls
@@ -30,7 +30,7 @@ El adaptador de reportes Vitest contrasta cada archivo del inventario con el res
 
 ## Evidencia y límites
 
-Las 31 pruebas de los controles incluyen omisiones, reportes antiguos, discrepancias de conteo, ramas incorrectas, referencias a PR, metadatos ausentes y recuperación con un conjunto válido. Acreditan el comportamiento local de los validadores. CI y escaneos pasaron remotamente para el primer candidato; las demostraciones de rechazo y recuperación permanecen pendientes en [E0-I04](https://github.com/ngarayc/Nexo/issues/4).
+Las 31 pruebas de los controles incluyen omisiones, reportes antiguos, discrepancias de conteo, ramas incorrectas, referencias a PR, metadatos ausentes y recuperación con un conjunto válido. Acreditan el comportamiento local de los validadores. CI y escaneos pasaron remotamente; [E0-I04](https://github.com/ngarayc/Nexo/issues/4) registra además los rechazos y recuperación remotos, con [metadatos y reportes saneados](evidence/control-proofs.json). La revisión humana de main conserva su criterio propio.
 
 ## Workflows y revisión del candidato
 
