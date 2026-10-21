@@ -54,6 +54,7 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 ## Documentación
 
 - [Arquitectura](docs/architecture.md).
+- [Comprobación desde copia limpia](docs/reproducibility.md).
 - [Reglas de dominio y GPS](docs/domain.md).
 - [Seguridad](docs/security.md).
 - [Acceso local](docs/access.md).

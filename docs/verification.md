@@ -39,7 +39,7 @@ La comprobación inicial de declaraciones de Drizzle falló con 73 diagnósticos
 
 ## Acceso — E0-I05
 
-Sobre el incremento de acceso pasaron localmente **41 pruebas API, 4 Angular, 16 de integración y 6 Chromium**, sin omisiones. Los 31 controles de CI siguen aprobados. El build compila API/Angular; las imágenes API/web/db del incremento pasaron Trivy sin altos/críticos. La auditoría de dependencias no reportó vulnerabilidades. El candidato remoto se verificará antes de promoverlo.
+Sobre el incremento de acceso pasaron localmente **41 pruebas API, 4 Angular, 16 de integración y 6 Chromium**, sin omisiones. Los 31 controles de CI siguen aprobados. El build compila API/Angular; las imágenes API/web/db del incremento pasaron Trivy sin altos/críticos. La auditoría de dependencias no reportó vulnerabilidades. [CI remoto 39557905564](https://github.com/ngarayc/Nexo/actions/runs/39557905564) repitió y aprobó los cinco controles para el origen `34d950cd14df44023f8eb80f05a34e6d9a6ff183` y candidato de integración `cd8a46e21615c65a19a73d7b301b2db8b2b344d8`. Sus cinco artefactos se descargaron y revalidaron. La [PR #9](https://github.com/ngarayc/Nexo/pull/9) se integró en test tras revisión técnica; main conserva revisión del autor pendiente.
 
 Las pruebas HTTP de API usan bibliotecas de sesión/CSRF/cuotas reales y sustituyen explícitamente el caso de credenciales; comprueban precedencia de origen y parser, cookies, regeneración, cuatro horas con reloj controlado, cuotas, capacidad y fallos de almacén/limitador. Pruebas del almacén verifican que escrituras y lecturas pendientes tras logout no revivan el SID. Esto no acredita por sí solo la verificación de contraseña persistida.
 
