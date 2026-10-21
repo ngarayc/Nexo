@@ -4,7 +4,8 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-export function testStack() {
+export function testStack({ webPort = 8080 } = {}) {
+  if (![8080, 8081].includes(webPort)) throw new Error('Puerto de stack de pruebas no permitido.');
   const project = `nexo-e0-check-${randomBytes(6).toString('hex')}`;
   const directory = mkdtempSync(join(tmpdir(), 'nexo-test-config-'));
   const envFile = join(directory, 'environment');
@@ -14,6 +15,7 @@ export function testStack() {
       'DB_NAME=nexo',
       'DB_HOST=db',
       'DEMO_ENABLED=true',
+      `WEB_PORT=${webPort}`,
       ...['DB_PASSWORD', 'DB_OWNER_PASSWORD', 'SESSION_SECRET', 'INGEST_API_KEY'].map(
         (name) => `${name}=${randomBytes(32).toString('hex')}`,
       ),

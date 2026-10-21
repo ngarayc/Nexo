@@ -53,3 +53,15 @@ npm run test:integration
 La integración necesita las imágenes locales construidas y Docker. Crea su stack db/api con configuración sintética, sin publicar puertos, comprueba migración/seed, permisos, indisponibilidad, recuperación y persistencia, y elimina su volumen propio al finalizar. Sus reportes contienen métricas, no hashes ni entornos.
 
 `npm run start:web` sirve el desarrollo Angular en `127.0.0.1:4200`. La API compilada necesita configuración completa y acceso de red a PostgreSQL; el recorrido soportado es Compose, cuya red privada no publica la base para procesos nativos del host.
+
+## Navegador y CI
+
+```sh
+npx --no-install playwright install chromium
+npm run test:ci-controls
+npm run test:e2e
+```
+
+El recorrido de navegador crea un stack sintético en `127.0.0.1:8081`, manteniendo `8080` para la aplicación local. Comprueba Angular compilado, proxy, cabeceras y CSP en Chromium; no guarda trace, HAR, vídeo, capturas o storageState. El reporte crudo queda local y solo se generan métricas para publicación. Los casos de acceso se incorporan con E0-I05.
+
+Los jobs de Actions preparan Node/npm y construyen sus propias imágenes. Usan tokens de lectura y una lista explícita de artefactos; los controles y su estado se describen en [CI](ci-controls.md).

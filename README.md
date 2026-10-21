@@ -56,6 +56,7 @@ Los controles de CI se incorporan con E0-I04 y crecen con las capacidades. No ha
 - [Arquitectura](docs/architecture.md).
 - [Reglas de dominio y GPS](docs/domain.md).
 - [Seguridad](docs/security.md).
+- [Controles de CI](docs/ci-controls.md).
 - [Procedencia](docs/references.md).
 - [Contrato común suministrado](docs/requirements/common-spec.md).
 - [Demostración requerida](docs/requirements/DEMO-REPLAY.md).

@@ -25,6 +25,10 @@ export default tseslint.config(
     languageOptions: { parserOptions: { projectService: true } },
   },
   {
+    files: ['tests/system/**/*.mjs'],
+    languageOptions: { globals: { window: 'readonly', document: 'readonly' } },
+  },
+  {
     files: ['apps/web/**/*.ts'],
     extends: [...angular.configs.tsRecommended],
     processor: angular.processInlineTemplates,
