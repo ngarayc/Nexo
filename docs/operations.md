@@ -66,4 +66,4 @@ El recorrido de navegador crea un stack sintético en `127.0.0.1:8081`, con orig
 
 Los jobs de Actions preparan Node/npm y construyen sus propias imágenes. Usan tokens de lectura y una lista explícita de artefactos; los controles y su estado se describen en [CI](ci-controls.md).
 
-El [procedimiento de copia limpia](reproducibility.md) usa configuración y proyecto propios, verifica el SHA declarado y distingue sus recursos de la instalación habitual. Su ejecución y resultados se registrarán al cerrar E0-I06.
+El [procedimiento de copia limpia](reproducibility.md) usa configuración y proyecto propios, verifica el SHA declarado y distingue sus recursos de la instalación habitual. [Verificación](verification.md) registra el candidato comprobado, los resultados observados y los criterios de gobierno todavía pendientes.
