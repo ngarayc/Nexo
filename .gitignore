@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.angular/
+coverage/
+reports/
+test-results/
+playwright-report/
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+.DS_Store
+.idea/
+.vscode/

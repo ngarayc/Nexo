@@ -1,0 +1,27 @@
+# Uso de IA durante la construcción
+
+## Preparación de E0-I01
+
+Solicitud: comenzar la implementación del plan, relacionar commits con issues y preparar PR, continuando hasta un bloqueo que requiera intervención, preservando los controles del reto.
+
+El agente contrastó la solicitud con los requisitos y el flujo de bootstrap. Encontró un repositorio sin commits, Node 22.23.1/npm 12.2.0 disponibles, ausencia de Docker en PATH y falta de conexión autenticada de GitHub para Issues. La selección de Node para el proyecto sigue siendo 24.22.0.
+
+Se prepararon externamente el cuerpo de la issue E0-I01, reglas, tres procedimientos y archivos candidatos de NestJS/Angular. La issue [#1](https://github.com/ngarayc/Nexo/issues/1) se publicó antes de incorporar los archivos al repositorio. Se resolvió el lockfile y se ejecutaron instalación limpia, calidad, compilación, 13 pruebas y arranque HTTP de las dos aplicaciones.
+
+Esta preparación no constituye los dos ciclos funcionales requeridos. EP-03 se implementará y revisará primero; CR-01 añadirá el filtro después de una referencia estable de la base.
+
+## Registro de cada ciclo
+
+Conservar issue, contexto mínimo, propuesta, diff/SHA, comandos y resultados, hallazgos, corrección y decisión humana real. Redactar los prompts para publicación sin conversaciones privadas, credenciales o datos ajenos. Identificar comprobaciones no ejecutadas y su causa.
+
+La comparación general/focalizada parte del mismo estado y criterios, con modelo, herramientas y permisos registrados. Los controles de seguridad se conservan en ambos intentos. No reconstruir métricas ausentes, fabricar un error o atribuir ahorro causal sin evidencia.
+
+El agente publica y promueve a test con revisión técnica y CI; las PR hacia main quedan abiertas para revisión del autor. Los registros de EP-03/CR-01 identificarán verificación y decisiones humanas reales; la autorización general de trabajo no se presenta como revisión del diff o aprobación del software.
+
+## Uso de los procedimientos en E0-I01
+
+- `nexo-spec-change`: contrastar el bootstrap con el stack, delimitar capacidades posteriores y definir comprobaciones antes de incorporar el cambio.
+- `nexo-implement-change`: preparar e incorporar el workspace bajo la issue #1 y ejecutar sus comandos.
+- `nexo-review-change`: detectar Vite vulnerable en el árbol real, comprobar el parche, revisar metadatos de inyección y corregir la incompatibilidad de tipos del adaptador multibundler sin silenciar el typecheck.
+
+La corrección se verificó con auditoría sin hallazgos, calidad, builds y 13 pruebas. Esta revisión técnica la realizó el agente; no se atribuye como revisión humana ni sustituye las iteraciones funcionales EP-03/CR-01 pendientes. La revisión del candidato hacia main y las decisiones humanas de esos ciclos se registrarán cuando ocurran.

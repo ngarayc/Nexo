@@ -1,0 +1,26 @@
+{
+  "name": "@nexo/web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "ng build",
+    "start": "ng serve --host 127.0.0.1 --port 4200",
+    "typecheck": "ngc --noEmit -p tsconfig.app.json && tsc --noEmit -p tsconfig.spec.json",
+    "test:unit": "ng test --watch=false"
+  },
+  "dependencies": {
+    "@angular/common": "22.2.3",
+    "@angular/compiler": "22.2.3",
+    "@angular/core": "22.2.3",
+    "@angular/platform-browser": "22.2.3",
+    "@angular/router": "22.2.3",
+    "rxjs": "7.8.2",
+    "tslib": "2.8.1"
+  },
+  "devDependencies": {
+    "@angular/build": "22.2.3",
+    "@angular/cli": "22.2.3",
+    "@angular/compiler-cli": "22.2.3"
+  }
+}

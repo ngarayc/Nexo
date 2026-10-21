@@ -1,0 +1,50 @@
+{
+  "name": "nexo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Telemetr\u00eda sint\u00e9tica de flotas con Angular y NestJS",
+  "type": "module",
+  "packageManager": "npm@12.2.0",
+  "engines": {
+    "node": "24.22.0",
+    "npm": "12.2.0"
+  },
+  "workspaces": [
+    "apps/api",
+    "apps/web"
+  ],
+  "scripts": {
+    "build": "npm run build --workspace @nexo/api && npm run build --workspace @nexo/web",
+    "start:api": "npm run start --workspace @nexo/api",
+    "start:web": "npm run start --workspace @nexo/web",
+    "typecheck": "npm run typecheck --workspace @nexo/api && npm run typecheck --workspace @nexo/web",
+    "lint": "eslint apps",
+    "format:check": "prettier --check .",
+    "format": "prettier --write .",
+    "boundaries": "depcruise apps --config .dependency-cruiser.cjs",
+    "docs:check": "node scripts/check-docs.mjs",
+    "fixtures:check": "node scripts/check-fixtures.mjs",
+    "quality": "npm run format:check && npm run lint && npm run typecheck && npm run boundaries && npm run docs:check && npm run fixtures:check",
+    "test:unit": "npm run test:unit --workspace @nexo/api && npm run test:unit --workspace @nexo/web"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@swc/core": "1.16.18",
+    "@types/node": "24.10.0",
+    "@types/supertest": "6.0.3",
+    "@vitest/coverage-v8": "5.0.5",
+    "angular-eslint": "22.6.0",
+    "dependency-cruiser": "18.7.0",
+    "eslint": "10.13.0",
+    "jsdom": "30.1.3",
+    "prettier": "3.9.10",
+    "supertest": "7.3.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.0",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
+  },
+  "overrides": {
+    "vite": "$vite"
+  }
+}

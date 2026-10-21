@@ -1,0 +1,55 @@
+:host {
+  display: grid;
+  min-height: 100svh;
+  place-items: center;
+  padding: 2rem;
+}
+
+main {
+  width: min(100%, 42rem);
+  padding: clamp(2rem, 7vw, 5rem);
+  background: #ffffff;
+  border: 1px solid #dbe6e5;
+  border-radius: 1.5rem;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 3rem;
+}
+
+.identity span {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: #13766d;
+}
+
+.identity span:nth-child(2) {
+  width: 2.5rem;
+  height: 0.2rem;
+  border-radius: 0;
+}
+
+.eyebrow {
+  color: #37665f;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+h1 {
+  margin: 0.5rem 0 1rem;
+  font-size: clamp(3rem, 10vw, 5rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.description {
+  max-width: 26rem;
+  color: #526970;
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
