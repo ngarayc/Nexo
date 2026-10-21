@@ -24,11 +24,12 @@
     "boundaries": "depcruise apps --config .dependency-cruiser.cjs",
     "docs:check": "node scripts/check-docs.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
-    "quality": "npm run format:check && npm run lint && npm run typecheck && npm run boundaries && npm run docs:check && npm run fixtures:check",
+    "quality": "npm run format:check && npm run lint && npm run typecheck && npm run boundaries && npm run docs:check && npm run fixtures:check && npm run schema:check",
     "test:unit": "npm run test:unit --workspace @nexo/api && npm run test:unit --workspace @nexo/web",
     "test:integration": "node scripts/ci/run-node-tests.mjs integration",
     "test:ci-controls": "node scripts/ci/run-node-tests.mjs ci-controls",
-    "test:e2e": "node scripts/ci/run-system.mjs"
+    "test:e2e": "node scripts/ci/run-system.mjs",
+    "schema:check": "node scripts/check-schema.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
