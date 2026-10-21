@@ -210,7 +210,10 @@ export const ingestionItems = pgTable(
     (${table.state} = 'waiting' AND ${table.generation} = 0 AND ${table.jobId} IS NULL AND ${table.notBefore} IS NULL AND ${table.finalizedAt} IS NULL AND ${table.failureCode} IS NULL)
     OR (${table.state} = 'scheduled' AND ${table.generation} > 0 AND ${table.jobId} IS NOT NULL AND ${table.notBefore} IS NOT NULL AND ${table.finalizedAt} IS NULL)
     OR (${table.state} = 'classified' AND ${table.generation} > 0 AND ${table.jobId} IS NOT NULL AND ${table.notBefore} IS NOT NULL AND ${table.finalizedAt} IS NOT NULL)
-    OR (${table.state} = 'failed' AND ${table.opportunitiesReserved} = ${table.attemptLimit} AND ${table.jobId} IS NOT NULL AND ${table.notBefore} IS NOT NULL AND ${table.finalizedAt} IS NOT NULL AND ${table.failureCode} IS NOT NULL)
+    OR (${table.state} = 'failed' AND (
+      ${table.opportunitiesReserved} = ${table.attemptLimit}
+      OR ${table.failureCode} IN ('QUEUE_CANCELLED','QUEUE_PROTOCOL_VIOLATION','SCHEMA_INCOMPATIBLE','INGESTION_INVARIANT')
+    ) AND ${table.generation} > 0 AND ${table.jobId} IS NOT NULL AND ${table.notBefore} IS NOT NULL AND ${table.finalizedAt} IS NOT NULL AND ${table.failureCode} IS NOT NULL)
     OR (${table.state} = 'blocked' AND ${table.generation} = 0 AND ${table.jobId} IS NULL AND ${table.notBefore} IS NULL AND ${table.finalizedAt} IS NOT NULL AND ${table.failureCode} IS NOT NULL)
   `,
     ),

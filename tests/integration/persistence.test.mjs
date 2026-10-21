@@ -5,7 +5,15 @@ import { testStack } from '../support/stack.mjs';
 
 const stack = testStack();
 const source = readFileSync('tests/support/check-persistence.mjs', 'utf8');
-before(() => stack.compose('up', '-d', '--no-build', '--wait', 'db', 'api'), { timeout: 180000 });
+before(
+  () => {
+    stack.compose('up', '-d', '--no-build', '--wait', 'db', 'api');
+    // Fixtures SQL intermedios no representan trabajos completos de admisión.
+    // La recuperación productiva se verifica aparte con el servidor activo.
+    stack.compose('stop', 'api');
+  },
+  { timeout: 180000 },
+);
 after(() => stack.close(), { timeout: 180000 });
 
 for (const [scenario, description] of Object.entries({
@@ -28,13 +36,13 @@ for (const [scenario, description] of Object.entries({
 })) {
   test(description, () => {
     const script = `process.env.NEXO_PERSISTENCE_SCENARIO=${JSON.stringify(scenario)};\n${source}`;
-    assert.equal(stack.apiScript(script), 'persistence-case-ok');
+    assert.equal(stack.apiTool(script), 'persistence-case-ok');
   });
 }
 
 test('recrear API y PostgreSQL conserva datos exactos de las seis tablas nuevas', () => {
   assert.equal(
-    stack.apiScript(`process.env.NEXO_PERSISTENCE_SCENARIO='restart_seed';\n${source}`),
+    stack.apiTool(`process.env.NEXO_PERSISTENCE_SCENARIO='restart_seed';\n${source}`),
     'persistence-case-ok',
   );
   const keys = {

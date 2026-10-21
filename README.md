@@ -2,7 +2,7 @@
 
 Telemetría sintética de flotas con NestJS, Angular y PostgreSQL. El nombre expresa el vínculo entre vehículos, información y supervisión.
 
-**Estado:** base E0 con Docker, acceso demo por sesión y CI; E1 admite lotes HTTP y clasifica eventos mediante cola durable, conservando identidad, tiempo y JSON exactos. Incluye proyección, alertas y outbox transaccionales. Recuperación completa bajo fallos, consultas del dominio, SSE, reproductor y CR-01 se incorporan después. La pantalla conserva el acceso inicial.
+**Estado:** base E0 con Docker, acceso demo por sesión y CI; E1 admite lotes HTTP, clasifica eventos y recupera fallos mediante cola durable, conservando identidad, tiempo y JSON exactos. Incluye proyección, alertas y outbox transaccionales, tres oportunidades por posición y reconciliación tras reinicio. Consultas del dominio, SSE, reproductor y CR-01 se incorporan después. La pantalla conserva el acceso inicial.
 
 ## Arranque
 
@@ -57,6 +57,7 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 - [Persistencia exacta y migraciones](docs/persistence.md).
 - [Admisión durable y contratos HTTP](docs/ingestion.md).
 - [Clasificación y efectos transaccionales](docs/classification.md).
+- [Recuperación, backoff y agotamiento](docs/recovery.md).
 - [Comprobación desde copia limpia](docs/reproducibility.md).
 - [Reglas de dominio y GPS](docs/domain.md).
 - [Seguridad](docs/security.md).
@@ -70,4 +71,4 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 
 ## Entrega pendiente
 
-La demostración, vídeo accesible, resultados completos y tag `entrega-final` corresponden al cierre del proyecto. Las horas invertidas las confirmará el autor y se identificarán como estimadas o medidas; no se inferirán del historial o las herramientas.
+La demostración, vídeo accesible, resultados completos y tag `entrega-final` corresponden al cierre del proyecto. El total estimado de horas lo confirmará el autor; no se inferirá del historial o las herramientas.

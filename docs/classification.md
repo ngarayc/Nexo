@@ -1,6 +1,6 @@
 # Clasificación transaccional — E1-I03
 
-La [issue #17](https://github.com/ngarayc/Nexo/issues/17) conecta el consumidor de la cola con la clasificación de cada posición. El contrato y los oráculos suministrados siguen siendo la autoridad. El consumidor no depende de que el productor siga conectado y la espera HTTP no controla su avance. El dashboard, SSE y la recuperación completa bajo fallos se incorporan en sus incrementos propios.
+La [issue #17](https://github.com/ngarayc/Nexo/issues/17) conecta el consumidor de la cola con la clasificación de cada posición. El contrato y los oráculos suministrados siguen siendo la autoridad. El consumidor no depende de que el productor siga conectado y la espera HTTP no controla su avance. El dashboard y SSE se incorporan después; [recuperación](recovery.md) documenta el tratamiento de fallos de E1-I04.
 
 ## Fronteras y validación
 
@@ -35,7 +35,7 @@ Cada outbox guarda la envoltura y el tamaño UTF-8 de su trama SSE versión 1. L
 
 Repetir el handler después de un commit encuentra cursor/estado actualizado y no reproduce efectos o continuación. Una excepción después de publicar el siguiente job revierte también ese job y todas las escrituras de la posición. Un ACK fallido no deshace un resultado ya confirmado. El error que recibe pg-boss es un código técnico fijo, sin SQL/payload; el recibo nunca convierte ese fallo en rechazo de dominio.
 
-La recuperación de jobs fallidos/ausentes, incertidumbre de COMMIT, oportunidades 2/3, backoff y agotamiento corresponde a E1-I04. Hasta completarla, un fallo técnico puede dejar un recibo pendiente; no se afirma recuperación completa ni entrega exactamente una vez.
+E1-I04 incorpora la [recuperación](recovery.md) de jobs fallidos/ausentes, incertidumbre de COMMIT, oportunidades 2/3, backoff y agotamiento. El handler y reconciliador releen la verdad durable antes de sustituir trabajo; una generación obsoleta no repite efectos. La garantía sigue sin ser entrega exactamente una vez.
 
 ## Verificación y costes
 

@@ -7,6 +7,7 @@ export interface StoredTelemetry {
   readonly eventPk: bigint;
   readonly event: TelemetryEvent;
 }
+export class TelemetryInvariantError extends Error {}
 // Todos los puertos deben pertenecer a la misma transacción de la posición.
 export interface TelemetryEffects {
   insert(event: TelemetryEvent): Promise<StoredTelemetry | undefined>;
@@ -31,7 +32,8 @@ export class ClassifyTelemetry {
     if (!created) {
       // Nueva sentencia tras el conflicto: no reutilizar un snapshot previo al INSERT.
       const previous = await effects.find(event.eventId);
-      if (!previous) throw new Error('No se pudo leer el evento que resolvió el conflicto.');
+      if (!previous)
+        throw new TelemetryInvariantError('No se pudo leer el evento que resolvió el conflicto.');
       return sameEventPayload(previous.event, event)
         ? { outcome: 'duplicate', eventPk: previous.eventPk }
         : { outcome: 'rejected', reason: 'EVENT_ID_CONFLICT' };

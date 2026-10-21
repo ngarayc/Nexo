@@ -1,4 +1,5 @@
 import type { ConstructorOptions, Queue } from 'pg-boss';
+import type { PoolConfig } from 'pg';
 import type { DatabaseConfig } from '../database/config.js';
 
 export const ingestionQueue = 'telemetry.ingest';
@@ -15,7 +16,10 @@ export const queuePolicy = Object.freeze({
   partition: false,
 } satisfies Omit<Queue, 'name'>);
 
-export function queueOptions(config: DatabaseConfig, preparing = false): ConstructorOptions {
+export function queueOptions(
+  config: DatabaseConfig,
+  preparing = false,
+): ConstructorOptions & Pick<PoolConfig, 'query_timeout'> {
   return {
     host: config.pool.host,
     port: config.pool.port,
@@ -23,6 +27,8 @@ export function queueOptions(config: DatabaseConfig, preparing = false): Constru
     user: config.pool.user,
     password: config.pool.password,
     connectionTimeoutMillis: 2000,
+    // 12.38.0 pasa esta configuración a pg.Pool; el límite cliente complementa el SQL.
+    query_timeout: 6000,
     schema: 'pgboss',
     application_name: preparing ? 'nexo-queue-prepare' : 'nexo-queue',
     max: preparing ? 1 : 4,
