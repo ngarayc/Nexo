@@ -4,7 +4,12 @@ import { readServerConfig } from './platform/config.js';
 async function bootstrap(): Promise<void> {
   const config = readServerConfig(process.env);
   const app = await createApplication();
-  await app.listen(config.port, config.host);
+  try {
+    await app.listen(config.port, config.host);
+  } catch (error) {
+    await app.close();
+    throw error;
+  }
 }
 
 bootstrap().catch(() => {

@@ -1,19 +1,55 @@
-# Operación de la base inicial
+# Operación
 
-## Preparación y alcance
+## Preparación local
 
-Usar Node.js 24.22.0 y npm 12.2.0 desde la raíz del workspace. `npm ci` instala el árbol del lockfile; `npm run build` compila primero la API y después Angular. Las dependencias y sus versiones se conservan en los manifiestos y `package-lock.json`.
+El recorrido principal requiere Docker Engine y Compose; Node/npm se usan dentro de las imágenes. Se verificó con Engine 29.9.2 y Compose 5.6.0 en Linux/WSL, incluido acceso desde Windows por localhost. Solo web publica `127.0.0.1:8080`; API y PostgreSQL carecen de puertos publicados al host.
 
-La instalación y los comandos de calidad, build y pruebas se han ejecutado en Linux/WSL. El bootstrap contiene una API identificadora y una pantalla inicial; no contiene todavía base operativa, autenticación, telemetría o reproductor.
+Desde la raíz, generar la configuración una sola vez:
 
-## API
+```sh
+bash scripts/configure-local.sh
+docker compose --env-file .env.local -f infra/compose.yaml up --build -d --wait
+```
 
-Después de compilar, `npm run start:api` ejecuta `apps/api/dist/main.js`. El valor por defecto es `127.0.0.1:3000`; `PORT` admite enteros de 1 a 65535 y `HOST` admite `127.0.0.1` o `0.0.0.0` explícito. Valores incorrectos impiden el arranque. Para el desarrollo local se mantiene loopback.
+El script requiere Bash y OpenSSL. Genera cuatro valores independientes de 32 bytes aleatorios en hexadecimal, usa permisos privados y rechaza reemplazar un `.env.local` existente. `.env.example` describe las variables sin valores utilizables. La configuración real queda fuera de Git y del contexto de build. Usar `compose config --quiet` para validar sin volcar secretos.
 
-`GET /api` devuelve el nombre de la aplicación. `GET /api/health` se implementará junto a la comprobación real de PostgreSQL y esquema en E0-I03; no se utiliza el identificador como sustituto de salud de las dependencias.
+Abrir `http://localhost:8080`. Actualmente se presenta la pantalla inicial; el formulario de acceso pertenece a E0-I05. `GET /api` identifica Nexo y `GET /api/health` comprueba conexión, versión de migración y usuario preparado. La salud no anuncia cola o SSE antes de que existan.
 
-## Frontend
+## Arranque y credenciales
 
-`npm run start:web` inicia el servidor de desarrollo en `127.0.0.1:4200`. `npm run build` genera la distribución Angular en `apps/web/dist/web/browser`. La prueba de arranque HTTP comprueba que se sirve el documento Angular; la prueba de TestBed comprueba la navegación y presentación inicial. El navegador sobre el stack completo pertenece al incremento de contenedores/acceso.
+Compose espera la salud de PostgreSQL antes de iniciar API y la de API antes de iniciar web. La API aplica migraciones y prepara `demo` / `demo` antes de aceptar tráfico. El seed utiliza Argon2id con 19 MiB, dos iteraciones y paralelismo uno; revisa los parámetros mediante la biblioteca, sin depender de su orden serializado.
 
-Detener estos procesos con Ctrl+C. El bootstrap no crea datos persistentes ni requiere un reset. El arranque Compose y la conservación de volumen se documentarán con su implementación y prueba reales.
+Repetir el arranque conserva ID y hash. En una base inicializada, una cuenta ausente o incompatible impide preparar el servicio: no se reemplaza silenciosamente. SQL permite únicamente el nombre `demo` y su unicidad. `DEMO_ENABLED=false` no ejecuta el seed; su denegación de acceso se comprueba al incorporar las sesiones.
+
+Las migraciones usan `nexo_owner`. HTTP usa `nexo_app`, sin superusuario, creación de bases/roles, DDL o modificación de credenciales; este incremento solo le concede lectura de usuarios y metadatos de migración. El entrypoint elimina `DB_OWNER_PASSWORD` del entorno heredado por HTTP. La configuración administrativa de Docker contiene las variables necesarias para preparar el contenedor y no debe publicarse.
+
+Se rechazan configuración ausente, secretos inválidos y reutilización del secreto de sesión como API key. La generación acredita el origen aleatorio; la longitud de un valor arbitrario no demuestra entropía. Los fallos HTTP no exponen cadenas de conexión, contraseñas o stacks.
+
+## Persistencia y detención
+
+PostgreSQL 18 monta el volumen nombrado `postgres18-data` del proyecto en `/var/lib/postgresql`, con `PGDATA=/var/lib/postgresql/18/docker`. Conservar `.env.local` y volumen entre arranques: el rol de base se inicializa al crear el directorio de datos.
+
+```sh
+docker compose --env-file .env.local -f infra/compose.yaml ps
+docker compose --env-file .env.local -f infra/compose.yaml down
+docker compose --env-file .env.local -f infra/compose.yaml up -d --wait
+```
+
+`down` conserva el volumen. Este recorrido no utiliza `--volumes` ni limpieza global de Docker. Las pruebas crean recursos con un identificador aleatorio propio y eliminan únicamente esos recursos al terminar; no se ejecutan contra el volumen de la aplicación.
+
+## Desarrollo y comprobación
+
+Para herramientas de fuentes usar Node.js 24.22.0 y npm 12.2.0:
+
+```sh
+npm ci
+npm run quality
+npm run build
+npm run test:unit
+docker compose --env-file .env.local -f infra/compose.yaml build
+npm run test:integration
+```
+
+La integración necesita las imágenes locales construidas y Docker. Crea su stack db/api con configuración sintética, sin publicar puertos, comprueba migración/seed, permisos, indisponibilidad, recuperación y persistencia, y elimina su volumen propio al finalizar. Sus reportes contienen métricas, no hashes ni entornos.
+
+`npm run start:web` sirve el desarrollo Angular en `127.0.0.1:4200`. La API compilada necesita configuración completa y acceso de red a PostgreSQL; el recorrido soportado es Compose, cuya red privada no publica la base para procesos nativos del host.

@@ -18,14 +18,15 @@
     "start:api": "npm run start --workspace @nexo/api",
     "start:web": "npm run start --workspace @nexo/web",
     "typecheck": "npm run typecheck --workspace @nexo/api && npm run typecheck --workspace @nexo/web",
-    "lint": "eslint apps",
+    "lint": "eslint apps scripts tests",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "boundaries": "depcruise apps --config .dependency-cruiser.cjs",
     "docs:check": "node scripts/check-docs.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
     "quality": "npm run format:check && npm run lint && npm run typecheck && npm run boundaries && npm run docs:check && npm run fixtures:check",
-    "test:unit": "npm run test:unit --workspace @nexo/api && npm run test:unit --workspace @nexo/web"
+    "test:unit": "npm run test:unit --workspace @nexo/api && npm run test:unit --workspace @nexo/web",
+    "test:integration": "node scripts/ci/run-node-tests.mjs integration"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -45,6 +46,9 @@
     "vitest": "5.0.5"
   },
   "overrides": {
-    "vite": "$vite"
+    "vite": "$vite",
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.25.12"
+    }
   }
 }

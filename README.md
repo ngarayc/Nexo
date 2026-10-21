@@ -2,44 +2,48 @@
 
 Telemetría sintética de flotas con NestJS, Angular y PostgreSQL. El nombre expresa el vínculo entre vehículos, información y supervisión.
 
-**Estado:** base inicial de [E0-I01](https://github.com/ngarayc/Nexo/issues/1). API NestJS y frontend Angular con instalación reproducible, compilación y pruebas locales. Los servicios de telemetría y la demostración oficial se incorporan en los siguientes incrementos.
+**Estado:** base reproducible de E0 con NestJS, Angular y PostgreSQL en Docker, migración/seed, salud y persistencia verificadas. Login, telemetría, SSE, reproductor y CR-01 se incorporan en los siguientes incrementos.
 
-## Estructura inicial
+## Arranque
 
-- `apps/api`: API NestJS/TypeScript; composición, configuración de escucha y respuesta identificadora en `/api`.
-- `apps/web`: Angular standalone, navegación y pantalla inicial.
-- `skills/`: especificación, implementación y revisión; `.agents/skills/` permite descubrirlas.
-- `docs/requirements/` y `fixtures/`: contratos y datos suministrados, preservados.
-- `scripts/`: comprobaciones de enlaces internos y conservación de fixtures.
+Requisitos: Docker Engine y Compose, Bash y OpenSSL. Desde la raíz, generar la configuración solo la primera vez:
 
-El diseño acordado es un monolito modular, con Angular organizado por funcionalidades y fachadas cuando se incorpore estado. PostgreSQL, Docker Compose, autenticación, telemetría, SSE, reproductor y CR-01 se incorporan en incrementos posteriores. Este bootstrap no demuestra todavía esas capacidades.
+```sh
+bash scripts/configure-local.sh
+docker compose --env-file .env.local -f infra/compose.yaml up --build -d --wait
+```
 
-## Arranque local de la base inicial
+Abrir **http://localhost:8080**. Actualmente se muestra la pantalla inicial; `demo` / `demo` queda preparada en PostgreSQL y su interfaz de acceso pertenece a E0-I05. La salud real está en `/api/health`.
 
-Requisitos: **Node.js 24.22.0 y npm 12.2.0**. Dependencias directas fijadas y lockfile raíz; el gestor comprueba las versiones. Desde la raíz del repositorio:
+Solo web publica `127.0.0.1:8080`; API y base permanecen en redes Docker. PostgreSQL conserva datos en un volumen nombrado. `.env.local` no se publica y se conserva entre arranques. El generador rechaza sobrescribirlo.
+
+```sh
+docker compose --env-file .env.local -f infra/compose.yaml down
+docker compose --env-file .env.local -f infra/compose.yaml up -d --wait
+```
+
+La detención conserva el volumen. [Operación](docs/operations.md) detalla configuración, persistencia, permisos y límites comprobados.
+
+## Fuentes y comprobaciones
+
+Herramientas de desarrollo: **Node.js 24.22.0 y npm 12.2.0**, fijadas también en las imágenes de build y el lockfile.
 
 ```sh
 npm ci
 npm run quality
 npm run build
 npm run test:unit
+npm run test:integration
 ```
 
-Iniciar la API compilada:
+La integración necesita Docker e imágenes construidas mediante el arranque anterior; usa su stack db/api con datos sintéticos y no modifica el volumen de la aplicación. Se comprobaron 21 casos unitarios de API, uno de Angular y 12 de integración SQL/contenedores. [Verificación](docs/verification.md) describe resultados y pendientes.
 
-```sh
-npm run start:api
-```
-
-`http://127.0.0.1:3000/api` devuelve `{"name":"Nexo"}`. En otra terminal, iniciar Angular:
-
-```sh
-npm run start:web
-```
-
-Abrir `http://127.0.0.1:4200`. Estos comandos corresponden al bootstrap; Docker Compose y el acceso demo se incorporan en E0-I03/E0-I05. Consultar [operación](docs/operations.md) y [verificación](docs/verification.md) para resultados y límites.
-
-La API y el servidor de desarrollo web están limitados a loopback por defecto. `GET /api/health` se incorporará con la comprobación real de PostgreSQL y del esquema; no se simula salud de una dependencia ausente.
+- `apps/api`: monolito modular NestJS/TypeScript, configuración, persistencia y salud.
+- `apps/web`: Angular por funcionalidades, navegación y pantalla inicial.
+- `infra`: Compose, imágenes fijadas por digest y proxy NGINX.
+- `skills/`: especificación, implementación y revisión; aliases en `.agents/skills/`.
+- `docs/requirements/` y `fixtures/`: contratos y datos suministrados, preservados.
+- `scripts/` y `tests/`: comprobaciones de fuentes, controles e integración.
 
 ## Calidad y gobierno
 
