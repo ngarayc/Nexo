@@ -1,0 +1,24 @@
+name: Revisión de main
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: main-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  main-review:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    environment: main-review
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - run: node scripts/ci/review-context.mjs

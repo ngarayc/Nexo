@@ -1,0 +1,135 @@
+name: CI
+on:
+  push:
+    branches: [development, test, main]
+  pull_request:
+    branches: [test, main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+concurrency:
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  quality:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup-project
+      - run: node scripts/ci/job.mjs quality
+        env:
+          GH_TOKEN: ${{ github.token }}
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: ci-quality-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/ci/quality.json
+          if-no-files-found: error
+          retention-days: 7
+  unit:
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-project
+      - run: node scripts/ci/job.mjs unit
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-unit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/ci/unit.json
+          if-no-files-found: error
+          retention-days: 7
+  integration:
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-project
+      - run: node scripts/ci/job.mjs integration
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-integration-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/ci/integration.json
+          if-no-files-found: error
+          retention-days: 7
+  security-source:
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup-project
+      - run: node scripts/ci/job.mjs security-source
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-security-source-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/ci/security-source.json
+          if-no-files-found: error
+          retention-days: 7
+  system:
+    needs: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/setup-project
+      - run: node scripts/ci/job.mjs system
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ci-system-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/ci/system.json
+          if-no-files-found: error
+          retention-days: 7
+  ci-required:
+    if: ${{ always() }}
+    needs: [quality, unit, integration, security-source, system]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
+        with:
+          node-version-file: .nvmrc
+          package-manager-cache: false
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: ci-quality-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/ci
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: ci-unit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/ci
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: ci-integration-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/ci
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: ci-security-source-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/ci
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: ci-system-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/ci
+      - if: ${{ always() }}
+        run: node scripts/ci/gate.mjs
+        env:
+          NEEDS_JSON: ${{ toJSON(needs) }}

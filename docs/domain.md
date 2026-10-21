@@ -8,7 +8,7 @@ El [contrato suministrado](requirements/common-spec.md) y los fixtures son la re
 - `eventId` es globalmente único con garantía persistente bajo concurrencia. Mismo payload es duplicado; payload distinto es conflicto sin sobrescritura.
 - No reparar automáticamente JSON, completar campos ausentes o convertir strings numéricos en números. Sintaxis JSON incorrecta rechaza la petición; un registro inválido de un lote legible se rechaza individualmente.
 - Latitud finita entre −90 y 90; longitud finita entre −180 y 180; `speedKph` finito y no negativo; `ignitionOn` booleano estricto.
-- Conservar identidad y representación de entrada sin perder información relevante para igualdad y conflicto. Las decisiones físicas SQL y su garantía se documentarán con la migración y pruebas reales de E1.
+- Conservar identidad y representación de entrada sin perder información relevante para igualdad y conflicto. [Persistencia](persistence.md) documenta la representación reversible, exclusión por igualdad y JSON original; [clasificación](classification.md) describe su aplicación transaccional y comprobaciones.
 
 ## Tiempo, estado y alertas
 

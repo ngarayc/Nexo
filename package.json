@@ -2,7 +2,7 @@
   "name": "nexo",
   "version": "0.1.0",
   "private": true,
-  "description": "Telemetr\u00eda sint\u00e9tica de flotas con Angular y NestJS",
+  "description": "Telemetría sintética de flotas con Angular y NestJS",
   "type": "module",
   "packageManager": "npm@12.2.0",
   "engines": {
@@ -18,17 +18,22 @@
     "start:api": "npm run start --workspace @nexo/api",
     "start:web": "npm run start --workspace @nexo/web",
     "typecheck": "npm run typecheck --workspace @nexo/api && npm run typecheck --workspace @nexo/web",
-    "lint": "eslint apps",
+    "lint": "eslint apps scripts tests",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
     "boundaries": "depcruise apps --config .dependency-cruiser.cjs",
     "docs:check": "node scripts/check-docs.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
-    "quality": "npm run format:check && npm run lint && npm run typecheck && npm run boundaries && npm run docs:check && npm run fixtures:check",
-    "test:unit": "npm run test:unit --workspace @nexo/api && npm run test:unit --workspace @nexo/web"
+    "quality": "npm run format:check && npm run lint && npm run typecheck && npm run boundaries && npm run docs:check && npm run fixtures:check && npm run schema:check",
+    "test:unit": "npm run test:unit --workspace @nexo/api && npm run test:unit --workspace @nexo/web",
+    "test:integration": "node scripts/ci/run-node-tests.mjs integration",
+    "test:ci-controls": "node scripts/ci/run-node-tests.mjs ci-controls",
+    "test:e2e": "node scripts/ci/run-system.mjs",
+    "schema:check": "node scripts/check-schema.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
     "@swc/core": "1.16.18",
     "@types/node": "24.10.0",
     "@types/supertest": "6.0.3",
@@ -42,9 +47,13 @@
     "typescript": "6.0.3",
     "typescript-eslint": "8.72.0",
     "vite": "8.3.4",
-    "vitest": "5.0.5"
+    "vitest": "5.0.5",
+    "yaml": "2.9.1"
   },
   "overrides": {
-    "vite": "$vite"
+    "vite": "$vite",
+    "@esbuild-kit/core-utils": {
+      "esbuild": "0.25.12"
+    }
   }
 }

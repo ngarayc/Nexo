@@ -2,56 +2,66 @@
 
 Telemetría sintética de flotas con NestJS, Angular y PostgreSQL. El nombre expresa el vínculo entre vehículos, información y supervisión.
 
-**Estado:** base inicial de [E0-I01](https://github.com/ngarayc/Nexo/issues/1). API NestJS y frontend Angular con instalación reproducible, compilación y pruebas locales. Los servicios de telemetría y la demostración oficial se incorporan en los siguientes incrementos.
+**Estado:** base E0 con Docker, acceso demo por sesión y CI; E1 admite lotes HTTP y clasifica eventos mediante cola durable, conservando identidad, tiempo y JSON exactos. Incluye proyección, alertas y outbox transaccionales. Recuperación completa bajo fallos, consultas del dominio, SSE, reproductor y CR-01 se incorporan después. La pantalla conserva el acceso inicial.
 
-## Estructura inicial
+## Arranque
 
-- `apps/api`: API NestJS/TypeScript; composición, configuración de escucha y respuesta identificadora en `/api`.
-- `apps/web`: Angular standalone, navegación y pantalla inicial.
-- `skills/`: especificación, implementación y revisión; `.agents/skills/` permite descubrirlas.
-- `docs/requirements/` y `fixtures/`: contratos y datos suministrados, preservados.
-- `scripts/`: comprobaciones de enlaces internos y conservación de fixtures.
+Requisitos: Docker Engine y Compose, Bash y OpenSSL. Desde la raíz, generar la configuración solo la primera vez:
 
-El diseño acordado es un monolito modular, con Angular organizado por funcionalidades y fachadas cuando se incorpore estado. PostgreSQL, Docker Compose, autenticación, telemetría, SSE, reproductor y CR-01 se incorporan en incrementos posteriores. Este bootstrap no demuestra todavía esas capacidades.
+```sh
+bash scripts/configure-local.sh
+docker compose --env-file .env.local -f infra/compose.yaml up --build -d --wait
+```
 
-## Arranque local de la base inicial
+Abrir **http://localhost:8080** e ingresar con **demo / demo**. La pantalla inicial requiere sesión; permite cerrar únicamente la sesión actual. La salud real está en `/api/health`. [Acceso](docs/access.md) describe cookies, duración, cuotas y límites locales.
 
-Requisitos: **Node.js 24.22.0 y npm 12.2.0**. Dependencias directas fijadas y lockfile raíz; el gestor comprueba las versiones. Desde la raíz del repositorio:
+Solo web publica `127.0.0.1:8080`; API y base permanecen en redes Docker. PostgreSQL conserva datos en un volumen nombrado. `.env.local` no se publica y se conserva entre arranques. El generador rechaza sobrescribirlo.
+
+```sh
+docker compose --env-file .env.local -f infra/compose.yaml down
+docker compose --env-file .env.local -f infra/compose.yaml up -d --wait
+```
+
+La detención conserva el volumen. [Operación](docs/operations.md) detalla configuración, persistencia, permisos y límites comprobados.
+
+## Fuentes y comprobaciones
+
+Herramientas de desarrollo: **Node.js 24.22.0 y npm 12.2.0**, fijadas también en las imágenes de build y el lockfile.
 
 ```sh
 npm ci
 npm run quality
 npm run build
 npm run test:unit
+npm run test:integration
 ```
 
-Iniciar la API compilada:
+La integración necesita Docker e imágenes construidas mediante el arranque anterior; usa su stack db/api con datos sintéticos y no modifica el volumen de la aplicación. [Verificación](docs/verification.md) describe los resultados de cada incremento y sus pendientes.
 
-```sh
-npm run start:api
-```
-
-`http://127.0.0.1:3000/api` devuelve `{"name":"Nexo"}`. En otra terminal, iniciar Angular:
-
-```sh
-npm run start:web
-```
-
-Abrir `http://127.0.0.1:4200`. Estos comandos corresponden al bootstrap; Docker Compose y el acceso demo se incorporan en E0-I03/E0-I05. Consultar [operación](docs/operations.md) y [verificación](docs/verification.md) para resultados y límites.
-
-La API y el servidor de desarrollo web están limitados a loopback por defecto. `GET /api/health` se incorporará con la comprobación real de PostgreSQL y del esquema; no se simula salud de una dependencia ausente.
+- `apps/api`: monolito modular NestJS/TypeScript, acceso, configuración, persistencia y salud.
+- `apps/web`: Angular por funcionalidades, fachadas, acceso y navegación protegida.
+- `infra`: Compose, imágenes fijadas por digest y proxy NGINX.
+- `skills/`: especificación, implementación y revisión; aliases en `.agents/skills/`.
+- `docs/requirements/` y `fixtures/`: contratos y datos suministrados, preservados.
+- `scripts/` y `tests/`: comprobaciones de fuentes, controles e integración.
 
 ## Calidad y gobierno
 
 Cada cambio requiere issue y commits con referencia real. Después del bootstrap revisado, las ramas permanentes son `development`, `test` y `main`. El agente publica y promueve por PR a test tras revisión QA y CI; las PR hacia main quedan abiertas para revisión del autor mientras continúa el desarrollo. Consultar [AGENTS.md](AGENTS.md), [gobierno](AGENT-GOVERNANCE.md) y [flujo de IA](docs/AI-WORKFLOW.md).
 
-Los controles de CI se incorporan con E0-I04 y crecen con las capacidades. No hay ejecuciones remotas acreditadas en este estado. La aceptación final conserva 20/2/2 y 0/22/2, 20 eventos, 8 vehículos y 4 alertas con las identidades de los oráculos. Los datos adversariales y de carga se aíslan del fixture oficial.
+Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de CI](https://github.com/ngarayc/Nexo/actions/runs/39552267643), promovido por [PR #7](https://github.com/ngarayc/Nexo/pull/7). Cada candidato nuevo repite los controles. Las [demostraciones negativas y recuperación](docs/control-demonstrations.md) están comprobadas; la revisión humana de main conserva su estado propio. La aceptación final mantiene 20/2/2 y 0/22/2, 20 eventos, 8 vehículos y 4 alertas con las identidades de los oráculos; todavía no se acredita con E0.
 
 ## Documentación
 
 - [Arquitectura](docs/architecture.md).
+- [Persistencia exacta y migraciones](docs/persistence.md).
+- [Admisión durable y contratos HTTP](docs/ingestion.md).
+- [Clasificación y efectos transaccionales](docs/classification.md).
+- [Comprobación desde copia limpia](docs/reproducibility.md).
 - [Reglas de dominio y GPS](docs/domain.md).
 - [Seguridad](docs/security.md).
+- [Acceso local](docs/access.md).
+- [Controles de CI](docs/ci-controls.md).
 - [Procedencia](docs/references.md).
 - [Contrato común suministrado](docs/requirements/common-spec.md).
 - [Demostración requerida](docs/requirements/DEMO-REPLAY.md).
