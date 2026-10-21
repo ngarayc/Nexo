@@ -23,6 +23,8 @@ Repetir el arranque conserva ID y hash. En una base inicializada, una cuenta aus
 
 Las migraciones usan `nexo_owner`. HTTP usa `nexo_app`, sin superusuario, creación de bases/roles, DDL o modificación de credenciales. Lee usuarios y metadatos de migración; E1 añade escritura acotada de sus seis tablas, con inmutabilidad de eventos, evidencia y payloads según [persistencia](persistence.md). El entrypoint elimina `DB_OWNER_PASSWORD` del entorno heredado por HTTP. La configuración administrativa de Docker contiene las variables necesarias para preparar el contenedor y no debe publicarse.
 
+La preparación incorpora también el esquema interno de pg-boss y la cola, antes de servir. Sus permisos DML se limitan a ese esquema; no habilitan borrado de datos propios. [Admisión](ingestion.md) distingue los adaptadores ya comprobados de las rutas y consumidores pendientes. No modificar manualmente sus tablas internas para operar la aplicación.
+
 Se rechazan configuración ausente, secretos inválidos y reutilización del secreto de sesión como API key. La generación acredita el origen aleatorio; la longitud de un valor arbitrario no demuestra entropía. Los fallos HTTP no exponen cadenas de conexión, contraseñas o stacks.
 
 ## Persistencia y detención

@@ -18,6 +18,10 @@ La investigación de telemetría, colas, recuperación y cartografía se incorpo
 
 [Persistencia](persistence.md) enlaza las fuentes PostgreSQL de exclusiones, hash, B-tree, JSON y aislamiento con su adaptación, coste y pruebas. La codificación por puntos de código y el comparador exacto son propios. [Temporal](https://github.com/js-temporal/temporal-polyfill), fijado en 0.5.1, aporta validación de calendario/zona; Nexo conserva por separado la cola decimal que excede nanosegundos. [jsonc-parser](https://github.com/microsoft/node-jsonc-parser), fijado en 3.3.1, aporta AST y offsets; Nexo exige JSON estricto y añade conservación de fragmentos e igualdad decimal sin Number. No se ha copiado código de una plataforma de seguimiento.
 
+## Cola y admisión — base de E1-I02
+
+[El adaptador de pg-boss](https://pgboss.io/api/adapters) permite usar la transacción Drizzle existente para publicar. Se fijó 12.38.0 y se verificó con las versiones propias y PostgreSQL real, sin forzar peers. La biblioteca administra su esquema 46; Nexo conserva recibos, presupuesto y resultados propios. [Admisión](ingestion.md) relaciona preparación, opciones documentadas, bloqueo de cuota y costes con los archivos y pruebas observadas. La clasificación y recuperación posteriores conservan criterios propios; no se atribuyen a la promesa de transacción del adaptador.
+
 ## Persistencia, arranque y CSP
 
 [Drizzle: migraciones](https://orm.drizzle.team/docs/migrations) aporta generación SQL revisable y aplicación antes de servir; Nexo añade seed comprobado y separación de permisos. [PostgreSQL oficial en Docker](https://hub.docker.com/_/postgres) establece el montaje de datos de la versión 18. [Compose: orden de arranque](https://docs.docker.com/compose/how-tos/startup-order/) sustenta las dependencias por salud; las pruebas desconectan la base para comprobar que salud no equivale a contenedor iniciado.
