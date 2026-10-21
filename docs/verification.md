@@ -39,7 +39,7 @@ La comprobación inicial de declaraciones de Drizzle falló con 73 diagnósticos
 
 ## Acceso — E0-I05
 
-Sobre el incremento de acceso pasaron localmente **41 pruebas API, 4 Angular, 16 de integración y 6 Chromium**, sin omisiones. Los 31 controles de CI siguen aprobados. El build compila API/Angular; las imágenes API/web/db del incremento pasaron Trivy sin altos/críticos. La auditoría de dependencias no reportó vulnerabilidades. El candidato remoto se verificará antes de promoverlo.
+Sobre el incremento de acceso pasaron localmente **41 pruebas API, 4 Angular, 16 de integración y 6 Chromium**, sin omisiones. Los 31 controles de CI siguen aprobados. El build compila API/Angular; las imágenes API/web/db del incremento pasaron Trivy sin altos/críticos. La auditoría de dependencias no reportó vulnerabilidades. [CI remoto 39557905564](https://github.com/ngarayc/Nexo/actions/runs/39557905564) repitió y aprobó los cinco controles para el origen `34d950cd14df44023f8eb80f05a34e6d9a6ff183` y candidato de integración `cd8a46e21615c65a19a73d7b301b2db8b2b344d8`. Sus cinco artefactos se descargaron y revalidaron. La [PR #9](https://github.com/ngarayc/Nexo/pull/9) se integró en test tras revisión técnica; main conserva revisión del autor pendiente.
 
 Las pruebas HTTP de API usan bibliotecas de sesión/CSRF/cuotas reales y sustituyen explícitamente el caso de credenciales; comprueban precedencia de origen y parser, cookies, regeneración, cuatro horas con reloj controlado, cuotas, capacidad y fallos de almacén/limitador. Pruebas del almacén verifican que escrituras y lecturas pendientes tras logout no revivan el SID. Esto no acredita por sí solo la verificación de contraseña persistida.
 
@@ -48,3 +48,11 @@ La integración adicional usa PostgreSQL y la imagen API reales: credenciales co
 Chromium pasa por NGINX y Angular compilado. Comprueba dos contextos con SIDs diferentes, cookie inaccesible a JavaScript, logout sin revocar al otro cliente, restauración por recarga sin cambio de SID, error de contraseña y limpieza del formulario, almacenamiento web vacío, host ajeno y origen falsificado rechazados, además de CSP/nonce y salud. No guarda cookies, cuerpos de sesión o trazas como evidencia publicable.
 
 Una prueba de capacidad detectó que `regenerate` podía causar una cookie al fallar la admisión. Se destruye ahora el estado de esa solicitud antes de responder 503 y se verifica ausencia de cookie, preservación de sesiones existentes y recuperación al liberar cupo. Otro caso simula fallo de guardado y comprueba que no queda reserva ni se reintenta persistir al finalizar la respuesta.
+
+## Copia limpia — E0-I06
+
+Se clonó de nuevo `577ecc7ece06829c84f17be8dbe455b85ad0d936` y se siguió el [procedimiento público](reproducibility.md) con configuración generada y proyecto/volumen propios. `npm ci`, calidad, build, 41 pruebas API, 4 Angular, 16 PostgreSQL, 6 Chromium y 31 controles pasaron; el checkout permaneció limpio y en ese SHA.
+
+El recorrido manual automatizado comprobó salud, formulario y hash real, dos sesiones distintas, logout independiente, restauración por recarga, revocación al reiniciar API y conservación exacta de registro/hash tras reinicio y recreación de contenedores. Los valores sensibles se compararon en memoria y no se guardaron en artefactos. Después se eliminaron exclusivamente los recursos del proyecto sintético creado para esa comprobación; la instalación habitual permaneció disponible.
+
+La reproducibilidad técnica no cierra por sí sola E0: las demostraciones de controles, CI del candidato actual y revisión del autor en main mantienen criterios propios. Horas finales y entregables completos se acreditan al cierre con información confirmada.
