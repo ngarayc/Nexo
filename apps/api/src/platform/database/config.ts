@@ -42,6 +42,7 @@ export function readDatabaseConfig(env: NodeJS.ProcessEnv, migration = false): D
       connectionTimeoutMillis: 2000,
       idleTimeoutMillis: 10000,
       statement_timeout: 5000,
+      query_timeout: 6000,
       lock_timeout: 1000,
       idle_in_transaction_session_timeout: 10000,
       application_name: migration ? 'nexo-migrations' : 'nexo-api',

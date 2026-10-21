@@ -2,12 +2,18 @@ import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { QueueConnection } from '../../../../platform/queue/connection.js';
 import { ingestionQueue } from '../../../../platform/queue/policy.js';
 import { ProcessItem } from '../postgres/process-item.js';
+import { RecoverItem } from '../postgres/recover-item.js';
+import {
+  processingFailure,
+  UnconfirmedIngestionWork,
+} from '../../application/processing-failure.js';
 
 @Injectable()
 export class IngestionWorker implements OnApplicationBootstrap {
   constructor(
     private readonly queue: QueueConnection,
     private readonly processor: ProcessItem,
+    private readonly recovery: RecoverItem,
   ) {}
 
   async onApplicationBootstrap(): Promise<void> {
@@ -22,12 +28,17 @@ export class IngestionWorker implements OnApplicationBootstrap {
       },
       async (jobs) => {
         const job = jobs[0];
-        if (!job) throw new Error('INGESTION_WORK_UNCONFIRMED');
+        if (!job) throw new UnconfirmedIngestionWork();
         try {
           await this.processor.execute(job.id, job.data, job.signal);
-        } catch {
-          // El estado propio se relee para recuperación; no filtrar SQL/payload al job.
-          throw new Error('INGESTION_WORK_UNCONFIRMED');
+        } catch (error) {
+          try {
+            const result = await this.recovery.recover(job.id, job.data, processingFailure(error));
+            if (result === 'obsolete' || result === 'scheduled' || result === 'failed') return;
+          } catch {
+            // El reconciliador resolverá incertidumbre/indisponibilidad después.
+          }
+          throw new UnconfirmedIngestionWork(processingFailure(error));
         }
       },
     );

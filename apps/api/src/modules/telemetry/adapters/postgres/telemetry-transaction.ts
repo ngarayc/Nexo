@@ -8,6 +8,7 @@ import { OriginalJson } from '../../domain/original-json.js';
 import { changeMessage, changeFrame } from '../../application/change-message.js';
 import type { ChangeType } from '../../application/change-message.js';
 import type { StoredTelemetry, TelemetryEffects } from '../../application/classify.js';
+import { TelemetryInvariantError } from '../../application/classify.js';
 
 type EventRow = {
   event_pk: string;
@@ -79,11 +80,12 @@ export class TelemetryTransaction implements TelemetryEffects {
     // ganador de una actualización concurrente tras esperar el bloqueo.
     const locked = await this.tx.execute(sql`
       SELECT event_pk FROM vehicle_latest WHERE vehicle_key=${vehicleKey} FOR UPDATE`);
-    if (locked.rows.length !== 1) throw new Error('Proyección de vehículo ausente.');
+    if (locked.rows.length !== 1)
+      throw new TelemetryInvariantError('Proyección de vehículo ausente.');
     const current = await this.tx.execute<EventRow>(sql`
       SELECT ${columns} FROM telemetry_events WHERE event_pk=(
         SELECT event_pk FROM vehicle_latest WHERE vehicle_key=${vehicleKey})`);
-    if (!current.rows[0]) throw new Error('Evento de proyección ausente.');
+    if (!current.rows[0]) throw new TelemetryInvariantError('Evento de proyección ausente.');
     if (compareEventOrder(candidate.event, stored(current.rows[0]).event) <= 0) return false;
     await this.tx.execute(sql`
       UPDATE vehicle_latest SET event_pk=${candidate.eventPk.toString()} WHERE vehicle_key=${vehicleKey}`);

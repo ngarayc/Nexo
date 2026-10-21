@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { PgBoss, fromDrizzle } from 'pg-boss';
 import { sql } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/node-postgres';
 import type { Pool } from 'pg';
 import { ingestionBatches, ingestionItems } from '../../../../platform/database/schema.js';
 import { DatabaseSlots, DatabaseCapacityError } from '../../../../platform/database/slots.js';
+import { WriteTransactions } from '../../../../platform/database/write-transactions.js';
 import { ingestionQueue } from '../../../../platform/queue/policy.js';
 import { OriginalJson } from '../../../telemetry/public.js';
 import type { BatchInput } from '../../domain/batch.js';
@@ -29,7 +29,7 @@ export class AdmissionStore {
     private readonly boss: PgBoss,
     private readonly readSlots: DatabaseSlots,
   ) {
-    this.db = drizzle(writePool);
+    this.db = new WriteTransactions(writePool);
   }
 
   async admit(ingestionId: string, batch: BatchInput): Promise<'created' | 'existing'> {
@@ -58,8 +58,7 @@ export class AdmissionStore {
       return 'existing';
     }
     return this.slots.run(() =>
-      this.db.transaction(async (tx) => {
-        await tx.execute(sql`SET LOCAL transaction_timeout = '10s'`);
+      this.db.run(async (tx) => {
         // Solo altas nuevas; no participa en procesadores, consultas o replay.
         await tx.execute(sql`SELECT pg_advisory_xact_lock(72416002)`);
         // Nueva sentencia después de adquirir el bloqueo: observa admisiones previas.
