@@ -3,6 +3,7 @@ import http from 'node:http';
 import { randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { readDatabaseConfig } from '/app/apps/api/dist/platform/database/config.js';
+import { decodeIdentity } from '/app/apps/api/dist/modules/telemetry/domain/identity.js';
 
 const owner = new Pool(readDatabaseConfig(process.env, true).pool);
 const origin = 'http://localhost:8080';
@@ -151,12 +152,12 @@ const cases = {
         await new Promise((resolve) => setTimeout(resolve, 20));
       }
       assert.equal(response.status, 200);
-      assert.equal(response.body.complete, false);
       assert.equal(response.body.total, total);
-      assert.equal(response.body.pendingIndexes.length, total);
-      assert.equal(response.body.results.length, 0);
+      assert.equal(response.body.pendingIndexes.length + response.body.results.length, total);
       assert.equal(response.body.failedIndexes.length, 0);
-      assert.equal(response.body.rejected, 0);
+      assert.equal(response.body.rejected, response.body.results.length);
+      assert.equal(response.body.accepted, 0);
+      assert.equal(response.body.duplicates, 0);
     }
     const reused = call(true, '/api/events/batch', {
       body: apiBody,
@@ -182,7 +183,7 @@ const cases = {
     });
     assert.equal(demo.status, 200);
     assert.equal(demo.body.ingestionId, apiId);
-    assert.equal(demo.body.pendingIndexes.length, 1000);
+    assert.equal(demo.body.pendingIndexes.length + demo.body.results.length, 1000);
     assert.equal(
       (await read(true, apiId, { key: false, headers: { Cookie: cookie } })).status,
       403,
@@ -196,23 +197,28 @@ const cases = {
     assert.equal(stored.rows[0].input_bytes, String(Buffer.byteLength(apiBody) + 1000 * 4));
     assert.equal(stored.rows[1].input_bytes, String(Buffer.byteLength(proxyBody) + 4));
     assert.equal((await owner.query('SELECT count(*) FROM ingestion_items')).rows[0].count, '1001');
-    assert.equal((await owner.query('SELECT count(*) FROM pgboss.job')).rows[0].count, '2');
     for (const result of [...(await completed), ...(await reusedResult)]) {
       if (result.status !== 'fulfilled')
         throw new Error('No se recibió una respuesta HTTP verificable.');
       const response = result.value;
-      assert.equal(response.status, 503);
-      assert.equal(response.body.code, 'INGESTION_RESULT_PENDING');
-      assert.equal(response.body.admission, 'admitted');
-      assert.equal(response.body.resultsAvailable, true);
-      assert.equal(response.body.complete, false);
-      assert.equal(response.body.pendingIndexes.length, response.body.total);
-      assert.equal(response.body.rejected, 0);
+      assert.equal(response.status, 200);
+      assert.equal(response.body.complete, true);
+      assert.equal(response.body.pendingIndexes.length, 0);
+      assert.equal(response.body.failedIndexes.length, 0);
+      assert.equal(response.body.accepted, 0);
+      assert.equal(response.body.duplicates, 0);
+      assert.equal(response.body.rejected, response.body.total);
+      assert.equal(response.body.revision, response.body.total);
+      assert.equal(
+        response.body.errors.every((error) => error.reason === 'INVALID_EVENT'),
+        true,
+      );
     }
+    assert.equal((await owner.query('SELECT count(*) FROM pgboss.job')).rows[0].count, '1001');
     assert.equal(
       Date.now() - started < 60000,
       true,
-      'Respuesta API dentro del plazo total, sin afirmar clasificación.',
+      'Clasificación completa dentro del plazo total de HTTP.',
     );
   },
   async restart() {
@@ -222,9 +228,67 @@ const cases = {
       const response = await read(true, row.ingestion_id);
       assert.equal(response.status, 200);
       assert.equal(response.body.total, row.total);
-      assert.equal(response.body.pendingIndexes.length, row.total);
+      assert.equal(response.body.pendingIndexes.length, 0);
+      assert.equal(response.body.complete, true);
+      assert.equal(response.body.rejected, row.total);
     }
-    assert.equal((await owner.query('SELECT count(*) FROM pgboss.job')).rows[0].count, '2');
+    assert.equal((await owner.query('SELECT count(*) FROM pgboss.job')).rows[0].count, '1001');
+  },
+  async oracles() {
+    const { fixture, expected } = globalThis.nexoHttpOracle;
+    const body = '{"events":[' + fixture.trim().split('\n').join(',') + ']}';
+    for (const run of [1, 2]) {
+      const response = await call(run === 2, '/api/events/batch', { body });
+      assert.equal(response.status, 200);
+      assert.equal(response.body.complete, true);
+      assert.equal(response.body.total, 24);
+      assert.equal(response.body.revision, 24);
+      assert.deepEqual(
+        [response.body.accepted, response.body.duplicates, response.body.rejected],
+        run === 1 ? [20, 2, 2] : [0, 22, 2],
+      );
+      assert.deepEqual(response.body.errors, expected.rejections_at_input_indexes_zero_based);
+      assert.equal(response.body.results.length, 24);
+      assert.deepEqual(response.body.pendingIndexes, []);
+      assert.deepEqual(response.body.failedIndexes, []);
+      assert.deepEqual(response.body.failures, []);
+      if (run === 1)
+        assert.deepEqual(
+          response.body.results
+            .filter((r) => r.outcome === 'duplicate')
+            .map(({ index, eventId }) => ({ index, eventId })),
+          expected.duplicates_at_input_indexes_zero_based,
+        );
+      const receipt = await read(true, response.body.ingestionId);
+      const { requestId: readId, ...durable } = receipt.body;
+      const { requestId: writeId, ...posted } = response.body;
+      assert.notEqual(readId, writeId);
+      assert.deepEqual(durable, posted);
+      const counts = (
+        await owner.query(`SELECT
+        (SELECT count(*)::int FROM telemetry_events) AS events,
+        (SELECT count(*)::int FROM vehicle_latest) AS vehicles,
+        (SELECT count(*)::int FROM alerts) AS alerts,
+        (SELECT count(*)::int FROM outbox_messages) AS messages`)
+      ).rows[0];
+      assert.deepEqual(counts, { events: 20, vehicles: 8, alerts: 4, messages: 43 });
+      const latest = await owner.query(
+        'SELECT v.vehicle_key,e.event_key FROM vehicle_latest v JOIN telemetry_events e ON e.event_pk=v.event_pk',
+      );
+      assert.deepEqual(
+        Object.fromEntries(
+          latest.rows.map((r) => [decodeIdentity(r.vehicle_key), decodeIdentity(r.event_key)]),
+        ),
+        expected.latest_by_vehicle,
+      );
+      const alerts = await owner.query(
+        'SELECT e.event_key FROM alerts a JOIN telemetry_events e ON e.event_pk=a.event_pk',
+      );
+      assert.deepEqual(
+        alerts.rows.map((r) => decodeIdentity(r.event_key)).sort(),
+        [...expected.overspeed_event_ids].sort(),
+      );
+    }
   },
 };
 try {

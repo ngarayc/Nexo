@@ -1,6 +1,6 @@
 # Admisión durable — E1-I02
 
-La [issue #14](https://github.com/ngarayc/Nexo/issues/14) prepara pg-boss, admite lotes mediante HTTP y permite consultar sus recibos durables. **Todavía no ejecuta el consumidor de clasificación de E1-I03.** Las peticiones admitidas permanecen pendientes y devuelven 503 al vencer la espera; no se presentan como ingesta finalizada. La pantalla conserva el acceso inicial de E0.
+La [issue #14](https://github.com/ngarayc/Nexo/issues/14) prepara pg-boss, admite lotes mediante HTTP y permite consultar sus recibos durables. El [consumidor de E1-I03](classification.md) clasifica cada posición y confirma sus efectos y continuación conjuntamente. Un lote que termina dentro del plazo devuelve 200 con resultados durables; un trabajo aún pendiente conserva su respuesta 503 consultable. La pantalla conserva el acceso inicial de E0.
 
 ## Contratos HTTP y acceso
 
@@ -38,7 +38,7 @@ Se fija pg-boss 12.38.0 con su esquema 46 separado en `pgboss`; sus objetos pert
 | Aviso de trabajo                     | NOTIFY habilitado; listener con polling de respaldo al incorporar consumidores |
 | Supervisión, monitor y mantenimiento | 5 segundos en la instancia de ejecución                                        |
 
-Estas cantidades son elecciones de Nexo. No garantizan tiempo de finalización. Las tablas propias conservan entrada/resultados hasta reset; limpiar un job no elimina un recibo. La recuperación acotada de generaciones y tres oportunidades se completa con los consumidores y el reconciliador posteriores. No se utiliza el contador de jobs como contador de eventos.
+Estas cantidades son elecciones de Nexo. No garantizan tiempo de finalización. Las tablas propias conservan entrada/resultados hasta reset; limpiar un job no elimina un recibo. El consumidor comprueba generación/jobId/cursor/notBefore y reserva la primera oportunidad de cada posición siguiente. La recuperación de fallos y tres oportunidades se completa con el reconciliador de E1-I04. No se utiliza el contador de jobs como contador de eventos.
 
 `platform/queue/prepare.ts` usa el propietario; `policy.ts` y `QueueConnection` distinguen esa preparación de la instancia runtime con `migrate: false`, `createSchema: false`, pool máximo 4 y listener dedicado. Se inicia antes de servir HTTP, con `nexo_app` y sin CREATE en el esquema. Puede leer/escribir/eliminar los objetos internos de la biblioteca y ejecutar sus funciones; los permisos de las tablas de dominio continúan separados. Esto no concede DDL o borrado de eventos/recibos al runtime.
 
@@ -78,4 +78,4 @@ La suite nativa comprueba esquema/política, publicación/reclamación/confirmac
 
 La integración HTTP adicional pasa por API y NGINX reales sin puertos de host, y verifica clave antes de JSON, formato/tamaño/número, cuerpos fragmentados, 1.000 posiciones y exactamente 2 MiB, reutilización/conflicto, lectura por sesión y conservación de recibos/jobs tras reinicio. Comprueba los bytes lógicos originales; no publica cuerpos, claves o cookies. Un buffer de captura SQL insuficiente y una carrera de readiness del test se corrigieron sin modificar límites de la aplicación.
 
-Faltan clasificación, recuperación completa, consultas del dominio y sus oráculos. Los tests HTTP con resultados finales usan un puerto de aplicación sustituido explícitamente; el recorrido PostgreSQL conserva trabajo pendiente real. No acredita aún 20/2/2 ni 0/22/2, ni ejecución exactamente una vez o capacidad productiva.
+E1-I03 añade clasificación y resultado final real, incluyendo ambas pasadas del fixture por HTTP y sin reset entre ellas. Las pruebas unitarias de transporte siguen sustituyendo puertos explícitamente; los casos nativos ejecutan consumidor, SQL y proxy reales. Faltan recuperación completa bajo fallos, consultas del dominio y despacho SSE. No se afirma ejecución exactamente una vez ni capacidad productiva.

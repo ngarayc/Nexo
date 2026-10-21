@@ -119,6 +119,20 @@ export function testStack({ webPort = 8080, publishWeb = true } = {}) {
     apiScript(source) {
       return compose('exec', '-T', 'api', 'node', '--input-type=module', '-e', source);
     },
+    apiTool(source) {
+      return compose(
+        'run',
+        '--rm',
+        '-T',
+        '--no-deps',
+        '--entrypoint',
+        'node',
+        'api',
+        '--input-type=module',
+        '-e',
+        source,
+      );
+    },
     async waitHealthy() {
       const deadline = Date.now() + 30000;
       while (Date.now() < deadline) {
