@@ -4,11 +4,14 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-export function testStack({ webPort = 8080 } = {}) {
+export function testStack({ webPort = 8080, publishWeb = true } = {}) {
   if (![8080, 8081].includes(webPort)) throw new Error('Puerto de stack de pruebas no permitido.');
   const project = `nexo-e0-check-${randomBytes(6).toString('hex')}`;
   const directory = mkdtempSync(join(tmpdir(), 'nexo-test-config-'));
   const envFile = join(directory, 'environment');
+  const webOverride = join(directory, 'without-published-web.yaml');
+  if (!publishWeb)
+    writeFileSync(webOverride, 'services:\n  web:\n    ports: !reset []\n', { mode: 0o600 });
   writeFileSync(
     envFile,
     [
@@ -22,27 +25,24 @@ export function testStack({ webPort = 8080 } = {}) {
     ].join('\n') + '\n',
     { mode: 0o600 },
   );
+  const composeOptions = [
+    'compose',
+    '--project-name',
+    project,
+    '--env-file',
+    envFile,
+    '-f',
+    'infra/compose.yaml',
+    ...(!publishWeb ? ['-f', webOverride] : []),
+  ];
   const compose = (...args) => {
     try {
-      return execFileSync(
-        'docker',
-        [
-          'compose',
-          '--project-name',
-          project,
-          '--env-file',
-          envFile,
-          '-f',
-          'infra/compose.yaml',
-          ...args,
-        ],
-        {
-          encoding: 'utf8',
-          timeout: 180000,
-          maxBuffer: 8 * 1024 * 1024,
-          stdio: ['pipe', 'pipe', 'pipe'],
-        },
-      ).trim();
+      return execFileSync('docker', [...composeOptions, ...args], {
+        encoding: 'utf8',
+        timeout: 180000,
+        maxBuffer: 8 * 1024 * 1024,
+        stdio: ['pipe', 'pipe', 'pipe'],
+      }).trim();
     } catch {
       throw new Error(
         'Falló una operación del stack de pruebas. Consultar su estado sin volcar configuración o credenciales.',
@@ -54,13 +54,7 @@ export function testStack({ webPort = 8080 } = {}) {
       return execFileSync(
         'docker',
         [
-          'compose',
-          '--project-name',
-          project,
-          '--env-file',
-          envFile,
-          '-f',
-          'infra/compose.yaml',
+          ...composeOptions,
           'exec',
           '-T',
           'db',
@@ -81,6 +75,7 @@ export function testStack({ webPort = 8080 } = {}) {
           input: statement,
           encoding: 'utf8',
           timeout: 10000,
+          maxBuffer: 8 * 1024 * 1024,
           stdio: ['pipe', 'pipe', 'pipe'],
         },
       ).trim();
@@ -104,24 +99,11 @@ export function testStack({ webPort = 8080 } = {}) {
     );
   const expectedFailure = (args) => {
     try {
-      execFileSync(
-        'docker',
-        [
-          'compose',
-          '--project-name',
-          project,
-          '--env-file',
-          envFile,
-          '-f',
-          'infra/compose.yaml',
-          ...args,
-        ],
-        {
-          encoding: 'utf8',
-          timeout: 30000,
-          stdio: ['ignore', 'pipe', 'pipe'],
-        },
-      );
+      execFileSync('docker', [...composeOptions, ...args], {
+        encoding: 'utf8',
+        timeout: 30000,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      });
       return false;
     } catch (error) {
       return (
@@ -138,8 +120,13 @@ export function testStack({ webPort = 8080 } = {}) {
       return compose('exec', '-T', 'api', 'node', '--input-type=module', '-e', source);
     },
     async waitHealthy() {
-      for (let i = 0; i < 20; i += 1) {
-        if (health().status === 200) return;
+      const deadline = Date.now() + 30000;
+      while (Date.now() < deadline) {
+        try {
+          if (health().status === 200) return;
+        } catch {
+          /* Durante el reinicio el proceso todavía puede no aceptar conexiones. */
+        }
         await new Promise((resolve) => setTimeout(resolve, 250));
       }
       throw new Error('La API no recuperó salud dentro del plazo.');

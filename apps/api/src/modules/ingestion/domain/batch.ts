@@ -21,10 +21,14 @@ export interface BatchInput {
 }
 
 export const batchLimits = Object.freeze({ bodyBytes: 2 * 1024 * 1024, events: 1000 });
+export interface BatchLimits {
+  readonly bodyBytes: number;
+  readonly events: number;
+}
 
-export function readBatch(source: string): BatchInput {
+export function readBatch(source: string, limits: BatchLimits = batchLimits): BatchInput {
   const bytes = Buffer.byteLength(source);
-  if (bytes > batchLimits.bodyBytes) throw new AdmissionError('BODY_TOO_LARGE');
+  if (bytes > limits.bodyBytes) throw new AdmissionError('BODY_TOO_LARGE');
   let document: OriginalJson;
   try {
     document = OriginalJson.parse(source);
@@ -36,7 +40,7 @@ export function readBatch(source: string): BatchInput {
   if (events?.kind !== 'array') throw new AdmissionError('INVALID_BATCH');
   const total = events.arrayLength!;
   if (total === 0) throw new AdmissionError('EMPTY_BATCH');
-  if (total > batchLimits.events) throw new AdmissionError('BATCH_TOO_LARGE');
+  if (total > limits.events) throw new AdmissionError('BATCH_TOO_LARGE');
   const items = events.elements()!;
   const inputBytes = BigInt(
     bytes + items.reduce((sum, item) => sum + Buffer.byteLength(item.raw), 0),

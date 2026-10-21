@@ -19,6 +19,26 @@ vi.mock('../../../../platform/database/database.service.js', () => ({
   },
 }));
 
+// La suite mantiene los controles de sesión reales y sustituye la ingesta ajena a su alcance.
+vi.mock('../../../ingestion/public.js', async () => {
+  const { Module } = await import('@nestjs/common');
+  class IngressStub {}
+  class IngestionStubModule {}
+  Module({
+    providers: [
+      {
+        provide: IngressStub,
+        useValue: {
+          middleware: (_request: unknown, _response: unknown, next: () => void) => next(),
+          isProducerRequest: () => false,
+        },
+      },
+    ],
+    exports: [IngressStub],
+  })(IngestionStubModule);
+  return { IngestionModule: IngestionStubModule, IngestionIngress: IngressStub };
+});
+
 @Controller('unclassified')
 class UnclassifiedController {
   @Get()

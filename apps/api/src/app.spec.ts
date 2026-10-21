@@ -12,6 +12,26 @@ vi.mock('./platform/database/database.service.js', () => ({
   },
 }));
 
+// Esta suite comprueba el bootstrap; SQL y la canalización de ingesta tienen suites propias.
+vi.mock('./modules/ingestion/public.js', async () => {
+  const { Module } = await import('@nestjs/common');
+  class IngressStub {}
+  class IngestionStubModule {}
+  Module({
+    providers: [
+      {
+        provide: IngressStub,
+        useValue: {
+          middleware: (_request: unknown, _response: unknown, next: () => void) => next(),
+          isProducerRequest: () => false,
+        },
+      },
+    ],
+    exports: [IngressStub],
+  })(IngestionStubModule);
+  return { IngestionModule: IngestionStubModule, IngestionIngress: IngressStub };
+});
+
 describe('bootstrap HTTP y metadatos de inyección Nest', () => {
   let app: INestApplication | undefined;
   beforeEach(() => {
