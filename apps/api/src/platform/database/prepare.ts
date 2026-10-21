@@ -40,8 +40,19 @@ export async function prepareDatabase(config: DatabaseConfig): Promise<void> {
         }
       }
       await client.query('REVOKE ALL ON SCHEMA public FROM PUBLIC');
+      await client.query('REVOKE TEMPORARY ON DATABASE nexo FROM PUBLIC');
       await client.query('GRANT USAGE ON SCHEMA public, drizzle TO nexo_app');
       await client.query('GRANT SELECT ON public.users, drizzle.__drizzle_migrations TO nexo_app');
+      await client.query(`GRANT SELECT, INSERT ON public.telemetry_events, public.vehicle_latest,
+        public.alerts, public.ingestion_batches, public.ingestion_items, public.outbox_messages TO nexo_app`);
+      await client.query('GRANT UPDATE (event_pk) ON public.vehicle_latest TO nexo_app');
+      await client.query(
+        'GRANT UPDATE ON public.ingestion_batches, public.ingestion_items TO nexo_app',
+      );
+      await client.query(`GRANT UPDATE (available_at, published_at, attempts, last_error_code)
+        ON public.outbox_messages TO nexo_app`);
+      await client.query(`GRANT USAGE, SELECT ON SEQUENCE public.telemetry_events_event_pk_seq,
+        public.vehicle_latest_vehicle_pk_seq TO nexo_app`);
     } finally {
       await client.query('SELECT pg_advisory_unlock(72416001)').catch(() => undefined);
       client.release();

@@ -14,6 +14,10 @@ Los requisitos suministrados se conservan en [requirements](requirements/common-
 
 La investigación de telemetría, colas, recuperación y cartografía se incorporará a la documentación pública junto al comportamiento realmente implementado: fuente, adaptación, motivo, coste, archivos y prueba observada. El catálogo privado de planeación no forma parte del repositorio.
 
+## Identidad, tiempo y evidencia — E1-I01
+
+[Persistencia](persistence.md) enlaza las fuentes PostgreSQL de exclusiones, hash, B-tree, JSON y aislamiento con su adaptación, coste y pruebas. La codificación por puntos de código y el comparador exacto son propios. [Temporal](https://github.com/js-temporal/temporal-polyfill), fijado en 0.5.1, aporta validación de calendario/zona; Nexo conserva por separado la cola decimal que excede nanosegundos. [jsonc-parser](https://github.com/microsoft/node-jsonc-parser), fijado en 3.3.1, aporta AST y offsets; Nexo exige JSON estricto y añade conservación de fragmentos e igualdad decimal sin Number. No se ha copiado código de una plataforma de seguimiento.
+
 ## Persistencia, arranque y CSP
 
 [Drizzle: migraciones](https://orm.drizzle.team/docs/migrations) aporta generación SQL revisable y aplicación antes de servir; Nexo añade seed comprobado y separación de permisos. [PostgreSQL oficial en Docker](https://hub.docker.com/_/postgres) establece el montaje de datos de la versión 18. [Compose: orden de arranque](https://docs.docker.com/compose/how-tos/startup-order/) sustenta las dependencias por salud; las pruebas desconectan la base para comprobar que salud no equivale a contenedor iniciado.

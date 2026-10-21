@@ -21,7 +21,7 @@ Compose espera la salud de PostgreSQL antes de iniciar API y la de API antes de 
 
 Repetir el arranque conserva ID y hash. En una base inicializada, una cuenta ausente o incompatible impide preparar el servicio: no se reemplaza silenciosamente. SQL permite únicamente el nombre `demo` y su unicidad. `DEMO_ENABLED=false` omite seed y deniega login/sesiones sin borrar la cuenta. Reiniciar API invalida sesiones; volver a ingresar conserva los datos durables.
 
-Las migraciones usan `nexo_owner`. HTTP usa `nexo_app`, sin superusuario, creación de bases/roles, DDL o modificación de credenciales; este incremento solo le concede lectura de usuarios y metadatos de migración. El entrypoint elimina `DB_OWNER_PASSWORD` del entorno heredado por HTTP. La configuración administrativa de Docker contiene las variables necesarias para preparar el contenedor y no debe publicarse.
+Las migraciones usan `nexo_owner`. HTTP usa `nexo_app`, sin superusuario, creación de bases/roles, DDL o modificación de credenciales. Lee usuarios y metadatos de migración; E1 añade escritura acotada de sus seis tablas, con inmutabilidad de eventos, evidencia y payloads según [persistencia](persistence.md). El entrypoint elimina `DB_OWNER_PASSWORD` del entorno heredado por HTTP. La configuración administrativa de Docker contiene las variables necesarias para preparar el contenedor y no debe publicarse.
 
 Se rechazan configuración ausente, secretos inválidos y reutilización del secreto de sesión como API key. La generación acredita el origen aleatorio; la longitud de un valor arbitrario no demuestra entropía. Los fallos HTTP no exponen cadenas de conexión, contraseñas o stacks.
 
@@ -51,6 +51,8 @@ npm run test:integration
 ```
 
 La integración necesita las imágenes locales construidas y Docker. Crea su stack db/api con configuración sintética, sin publicar puertos, comprueba migración/seed, permisos, indisponibilidad, recuperación y persistencia, y elimina su volumen propio al finalizar. Sus reportes contienen métricas, no hashes ni entornos.
+
+`npm run schema:check` comprueba esquema/snapshots sobre una copia temporal y rechaza cambios o un generador inconcluso. No modifica migraciones ni reemplaza las pruebas SQL de exclusiones y triggers. Para ampliar el esquema, revisar el SQL generado y conservar las garantías manuales documentadas; no editar migraciones ya publicadas.
 
 `npm run start:web` sirve el desarrollo Angular en `127.0.0.1:4200`. La API compilada necesita configuración completa y acceso de red a PostgreSQL; el recorrido soportado es Compose, cuya red privada no publica la base para procesos nativos del host.
 

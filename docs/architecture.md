@@ -8,7 +8,7 @@ Se verificaron instalación limpia, calidad, compilación, pruebas unitarias, mi
 
 `modules/access` separa validación pura, caso de autenticación y puertos de sus adaptadores Argon2/PostgreSQL/HTTP. Su composición conecta proveedores y guard global. `platform/http` define la política explícita y parser acotado, sin importar implementaciones de módulos. En Angular la fachada coordina el adaptador HTTP y estado efímero; guard e interceptor consumen ese estado compartido. [Acceso](access.md) describe reservas, revocación, CSRF y costes del almacenamiento en una instancia.
 
-La primera migración crea `users`; Drizzle mantiene su registro técnico de migraciones en su propio esquema. No se adelantan las tablas de telemetría ni se presenta ese registro como otra entidad del negocio. La salud exige conexión, migración vigente y cuenta preparada cuando la demo está habilitada.
+La primera migración crea `users`; la segunda incorpora las seis tablas de [persistencia de E1](persistence.md), restricciones, triggers y adaptadores puros de identidad, instante y JSON. Drizzle mantiene su registro técnico de migraciones en su propio esquema. La salud exige conexión, migración vigente y cuenta preparada cuando la demo está habilitada; no acredita procesamiento de telemetría antes de implementar sus casos de uso.
 
 ## Dirección aceptada
 

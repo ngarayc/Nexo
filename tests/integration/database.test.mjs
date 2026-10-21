@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { before, after, test } from 'node:test';
+import { readFileSync } from 'node:fs';
 import { testStack } from '../support/stack.mjs';
 
 const stack = testStack();
@@ -9,7 +10,9 @@ before(() => stack.compose('up', '-d', '--no-build', '--wait', 'db', 'api'), { t
 after(() => stack.close(), { timeout: 180000 });
 
 test('migra desde vacío antes de anunciar salud real', () => {
-  assert.equal(stack.sql('SELECT count(*) FROM drizzle.__drizzle_migrations'), '1');
+  const expected = JSON.parse(readFileSync('apps/api/migrations/meta/_journal.json', 'utf8'))
+    .entries.length;
+  assert.equal(stack.sql('SELECT count(*) FROM drizzle.__drizzle_migrations'), String(expected));
   assert.deepEqual(stack.health(), {
     status: 200,
     body: { status: 'ok', database: 'ok', schema: 'ok' },
