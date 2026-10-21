@@ -1,17 +1,10 @@
-import { hash, verify, needsRehash, argon2id } from 'argon2';
+import { hash, verify, needsRehash } from 'argon2';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { Pool } from 'pg';
 import type { DatabaseConfig } from './config.js';
 import { users } from './schema.js';
-
-const hashOptions = {
-  type: argon2id,
-  memoryCost: 19456,
-  timeCost: 2,
-  parallelism: 1,
-  version: 0x13,
-} as const;
+import { passwordHashOptions as hashOptions } from './password-policy.js';
 
 export async function prepareDatabase(config: DatabaseConfig): Promise<void> {
   const pool = new Pool(config.pool);

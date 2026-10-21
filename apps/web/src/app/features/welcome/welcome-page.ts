@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { AccessFacade } from '../access/access-facade';
 
 @Component({
   selector: 'nexo-welcome-page',
@@ -6,4 +7,6 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
   styleUrl: './welcome-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WelcomePage {}
+export class WelcomePage {
+  readonly access = inject(AccessFacade);
+}

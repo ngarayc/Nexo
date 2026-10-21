@@ -2,7 +2,7 @@
 
 ## Estado
 
-Los workflows de Actions y los módulos de `scripts/ci/` implementan el protocolo de E0-I04. Calidad, validadores y los tres recorridos Chromium pasaron localmente. La primera ejecución remota y las demostraciones de bloqueo siguen pendientes; esta configuración todavía no acredita que GitHub haya bloqueado una integración.
+Los workflows de Actions y los módulos de `scripts/ci/` implementan el protocolo de E0-I04. [La primera ejecución remota](https://github.com/ngarayc/Nexo/actions/runs/39552267643) pasó quality, unit, integration, security-source, system y ci-required para el origen `7d65bd2518e2501687123b3c702b142ed8a98e02`; sus cinco artefactos saneados se descargaron y revalidaron contra el candidato de integración `9d373779aa138bbb27152ee34e89dfe2b03415f4`. La [PR #7](https://github.com/ngarayc/Nexo/pull/7) se integró en test tras revisión técnica. Las demostraciones negativas remotas siguen pendientes: un recorrido verde no acredita un rechazo.
 
 ```sh
 node scripts/ci/run-node-tests.mjs ci-controls
@@ -30,13 +30,13 @@ El adaptador de reportes Vitest contrasta cada archivo del inventario con el res
 
 ## Evidencia y límites
 
-Las pruebas de los controles incluyen omisiones, reportes antiguos, discrepancias de conteo, ramas incorrectas, referencias a PR, metadatos ausentes y recuperación con un conjunto válido. Acreditan el comportamiento local de los validadores. El CI, los escaneos remotos y la demostración de protección de main permanecen pendientes en [E0-I04](https://github.com/ngarayc/Nexo/issues/4).
+Las 31 pruebas de los controles incluyen omisiones, reportes antiguos, discrepancias de conteo, ramas incorrectas, referencias a PR, metadatos ausentes y recuperación con un conjunto válido. Acreditan el comportamiento local de los validadores. CI y escaneos pasaron remotamente para el primer candidato; las demostraciones de rechazo y recuperación permanecen pendientes en [E0-I04](https://github.com/ngarayc/Nexo/issues/4).
 
 ## Workflows y revisión del candidato
 
 [CI](../.github/workflows/ci.yml) se ejecuta en pushes de las tres ramas permanentes y PR hacia test/main. Quality precede a los otros cuatro controles. `ci-required` se ejecuta con `always()` y verifica sus resultados y cinco reportes del mismo SHA, ejecución e intento. Los uploads nombran únicamente cada JSON saneado, exigen su existencia y conservan siete días. No hay despliegue automático.
 
-[La revisión de main](../.github/workflows/main-review.yml) solo se ejecuta para PR con destino main y espera el entorno `main-review`, cuyo revisor requerido es el autor y cuyo bypass administrativo está deshabilitado. Después de su intervención valida la promoción y checkout exactos. `main` requiere ambos contextos, `ci-required` y `main-review`; `test` requiere `ci-required`. Se conserva PR, base actualizada y protección contra force push/borrado. La configuración está consultada; su primer recorrido real sigue pendiente.
+[La revisión de main](../.github/workflows/main-review.yml) solo se ejecuta para PR con destino main y espera el entorno `main-review`, cuyo revisor requerido es el autor y cuyo bypass administrativo está deshabilitado. Después de su intervención valida la promoción y checkout exactos. `main` requiere ambos contextos, `ci-required` y `main-review`; `test` requiere `ci-required`, vinculados a la aplicación GitHub Actions observada. Se conserva PR, base actualizada y protección contra force push/borrado. En la [PR #8](https://github.com/ngarayc/Nexo/pull/8) el CI pasó y main-review quedó esperando revisión del autor; no se acredita aprobación ni integración humana todavía.
 
 El contexto de revisión no se genera como job omitido de un push a test: GitHub acepta estados skipped/neutral para algunos checks requeridos y puede usar checks de head cuando no hay resultados del merge de prueba. Un workflow exclusivo de PR hacia main evita reutilizar ese contexto desde pushes ordinarios. Un nuevo commit candidato reinicia el recorrido y cancela la ejecución anterior. [Estados requeridos en GitHub](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks), [revisores de entornos](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments).
 

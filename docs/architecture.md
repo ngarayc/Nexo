@@ -2,9 +2,11 @@
 
 ## Estado implementado
 
-Nexo contiene dos aplicaciones de un workspace npm: API NestJS/TypeScript ESM y frontend Angular standalone. La API compone controladores, servicios y acceso PostgreSQL mediante inyección; Angular presenta una pantalla inicial mediante el router. Docker Compose integra web, API y PostgreSQL bajo un mismo origen.
+Nexo contiene dos aplicaciones de un workspace npm: API NestJS/TypeScript ESM y frontend Angular standalone. La API compone controladores, servicios y acceso PostgreSQL mediante inyección; Angular presenta acceso y pantalla inicial protegida mediante el router. Docker Compose integra web, API y PostgreSQL bajo un mismo origen.
 
-Se verificaron instalación limpia, calidad, compilación, pruebas unitarias, migración y seed sobre PostgreSQL real, salud y conservación del usuario/hash tras recrear contenedores. Las credenciales de migración y ejecución se distinguen; la API HTTP no hereda la contraseña del propietario. Sesiones, ingesta, SSE y reproductor se incorporan después.
+Se verificaron instalación limpia, calidad, compilación, pruebas unitarias, migración y seed sobre PostgreSQL real, salud y conservación del usuario/hash tras recrear contenedores. Las credenciales de migración y ejecución se distinguen; la API HTTP no hereda la contraseña del propietario. Ingesta, SSE y reproductor se incorporan después.
+
+`modules/access` separa validación pura, caso de autenticación y puertos de sus adaptadores Argon2/PostgreSQL/HTTP. Su composición conecta proveedores y guard global. `platform/http` define la política explícita y parser acotado, sin importar implementaciones de módulos. En Angular la fachada coordina el adaptador HTTP y estado efímero; guard e interceptor consumen ese estado compartido. [Acceso](access.md) describe reservas, revocación, CSRF y costes del almacenamiento en una instancia.
 
 La primera migración crea `users`; Drizzle mantiene su registro técnico de migraciones en su propio esquema. No se adelantan las tablas de telemetría ni se presenta ese registro como otra entidad del negocio. La salud exige conexión, migración vigente y cuenta preparada cuando la demo está habilitada.
 

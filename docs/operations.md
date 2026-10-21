@@ -13,13 +13,13 @@ docker compose --env-file .env.local -f infra/compose.yaml up --build -d --wait
 
 El script requiere Bash y OpenSSL. Genera cuatro valores independientes de 32 bytes aleatorios en hexadecimal, usa permisos privados y rechaza reemplazar un `.env.local` existente. `.env.example` describe las variables sin valores utilizables. La configuración real queda fuera de Git y del contexto de build. Usar `compose config --quiet` para validar sin volcar secretos.
 
-Abrir `http://localhost:8080`. Actualmente se presenta la pantalla inicial; el formulario de acceso pertenece a E0-I05. `GET /api` identifica Nexo y `GET /api/health` comprueba conexión, versión de migración y usuario preparado. La salud no anuncia cola o SSE antes de que existan.
+Abrir `http://localhost:8080` e ingresar con `demo` / `demo`. `PUBLIC_ORIGIN` se deriva en Compose de ese puerto canónico; no usar otro host en el navegador. `GET /api` identifica Nexo y `GET /api/health` comprueba conexión, versión de migración y usuario preparado. La salud no anuncia cola o SSE antes de que existan.
 
 ## Arranque y credenciales
 
 Compose espera la salud de PostgreSQL antes de iniciar API y la de API antes de iniciar web. La API aplica migraciones y prepara `demo` / `demo` antes de aceptar tráfico. El seed utiliza Argon2id con 19 MiB, dos iteraciones y paralelismo uno; revisa los parámetros mediante la biblioteca, sin depender de su orden serializado.
 
-Repetir el arranque conserva ID y hash. En una base inicializada, una cuenta ausente o incompatible impide preparar el servicio: no se reemplaza silenciosamente. SQL permite únicamente el nombre `demo` y su unicidad. `DEMO_ENABLED=false` no ejecuta el seed; su denegación de acceso se comprueba al incorporar las sesiones.
+Repetir el arranque conserva ID y hash. En una base inicializada, una cuenta ausente o incompatible impide preparar el servicio: no se reemplaza silenciosamente. SQL permite únicamente el nombre `demo` y su unicidad. `DEMO_ENABLED=false` omite seed y deniega login/sesiones sin borrar la cuenta. Reiniciar API invalida sesiones; volver a ingresar conserva los datos durables.
 
 Las migraciones usan `nexo_owner`. HTTP usa `nexo_app`, sin superusuario, creación de bases/roles, DDL o modificación de credenciales; este incremento solo le concede lectura de usuarios y metadatos de migración. El entrypoint elimina `DB_OWNER_PASSWORD` del entorno heredado por HTTP. La configuración administrativa de Docker contiene las variables necesarias para preparar el contenedor y no debe publicarse.
 
@@ -62,6 +62,6 @@ npm run test:ci-controls
 npm run test:e2e
 ```
 
-El recorrido de navegador crea un stack sintético en `127.0.0.1:8081`, manteniendo `8080` para la aplicación local. Comprueba Angular compilado, proxy, cabeceras y CSP en Chromium; no guarda trace, HAR, vídeo, capturas o storageState. El reporte crudo queda local y solo se generan métricas para publicación. Los casos de acceso se incorporan con E0-I05.
+El recorrido de navegador crea un stack sintético en `127.0.0.1:8081`, con origen canónico `http://localhost:8081`, manteniendo `8080` para la aplicación local. Comprueba Angular compilado, acceso desde dos contextos, logout independiente, proxy, cabeceras y CSP en Chromium; no guarda trace, HAR, vídeo, capturas o storageState. El reporte crudo queda local y solo se generan métricas para publicación.
 
 Los jobs de Actions preparan Node/npm y construyen sus propias imágenes. Usan tokens de lectura y una lista explícita de artefactos; los controles y su estado se describen en [CI](ci-controls.md).

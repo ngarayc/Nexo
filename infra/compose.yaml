@@ -30,6 +30,7 @@ services:
     environment:
       HOST: 0.0.0.0
       PORT: '3000'
+      PUBLIC_ORIGIN: http://localhost:${WEB_PORT:-8080}
       DB_HOST: ${DB_HOST:?Falta DB_HOST}
       DB_NAME: ${DB_NAME:?Falta DB_NAME}
       DB_PASSWORD: ${DB_PASSWORD:?Falta DB_PASSWORD}

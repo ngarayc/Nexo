@@ -2,9 +2,10 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller.js';
 import { ApplicationInfoService } from './application-info.service.js';
 import { DatabaseModule } from './platform/database/database.module.js';
+import { AccessModule } from './modules/access/public.js';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, AccessModule],
   controllers: [AppController],
   providers: [ApplicationInfoService],
 })

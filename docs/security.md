@@ -2,7 +2,7 @@
 
 ## Controles de esta base
 
-La API y el servidor de desarrollo escuchan en loopback por defecto. Se rechaza configuración de puerto/host inválida. El bootstrap no recibe credenciales de aplicación ni datos de telemetría; login, API key, CSRF, cuotas y controles SSE se incorporan con sus capacidades y pruebas.
+Solo web publica loopback mediante Compose. Acceso verifica Argon2id contra PostgreSQL, sesiones absolutas, origen/CSRF, capacidad, cuotas y políticas explícitas de rutas; su contrato y límites están en [acceso](access.md). API key de ingesta y controles SSE se incorporan con sus módulos. No hay telemetría ficticia para simular esas capacidades.
 
 Las credenciales de GitHub se utilizan mediante las herramientas de autenticación y no forman parte del repositorio, del frontend o de las imágenes. `.gitignore` excluye entornos reales, dependencias, builds y reportes. Los artefactos publicables se seleccionarán explícitamente; trazas, HAR, cookies y logs crudos no se suben por defecto.
 
@@ -22,7 +22,7 @@ La ausencia de hallazgos es evidencia del árbol y la base de avisos consultados
 
 ## Verificación pendiente
 
-Los controles remotos de PR/CI, las demostraciones de bloqueo/recuperación, imágenes, acceso demo y seguridad de la ingesta se verificarán en sus issues. Esta página se actualiza con el comportamiento observado y no presenta políticas pendientes como controles activos.
+El primer CI remoto pasó y la base se promovió a test por PR. Las demostraciones negativas remotas, revisión humana de main y seguridad de ingesta/SSE conservan comprobaciones pendientes en sus issues. Cada imagen nueva repite el escaneo: resultados anteriores no acreditan una revisión posterior.
 
 ## Escaneo previo a la publicación inicial
 
