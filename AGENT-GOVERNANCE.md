@@ -8,15 +8,21 @@ Los procedimientos del agente orientan su trabajo; no son barreras del sistema o
 
 ## Estado comprobado durante la preparación
 
-| Control                | Evidencia y límite                                                                                                                   |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| Issue antes del cambio | [E0-I01 #1](https://github.com/ngarayc/Nexo/issues/1) publicada antes de incorporar archivos al repositorio                          |
-| Autenticación Git      | SSH autenticó la cuenta ngarayc sin mostrar el material de las llaves; esta comprobación no acredita permisos de la API de Issues/PR |
-| Autenticación API      | Cuenta ngarayc verificada mediante la API del repositorio; milestones e issues de E0 publicados                                      |
-| Primer commit y ramas  | Pendientes; no se crea un commit vacío ni se inventa una referencia a issue                                                          |
-| Protecciones, PR y CI  | Pendientes de configuración y demostración remota; ninguna negativa de autenticación demuestra un ruleset                            |
+| Control                | Evidencia y límite                                                                                                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Issue antes del cambio | [E0-I01 #1](https://github.com/ngarayc/Nexo/issues/1) publicada antes de incorporar archivos al repositorio                                      |
+| Autenticación Git      | SSH autenticó la cuenta ngarayc sin mostrar el material de las llaves; esta comprobación no acredita permisos de la API de Issues/PR             |
+| Autenticación API      | Cuenta ngarayc verificada mediante la API del repositorio; milestones e issues de E0 publicados                                                  |
+| Primer commit y ramas  | Base `e23cd475a960d691d21cef1ea409a08636378cee` con `Refs #1` y firma SSH verificada localmente; main, development y test nacieron del mismo SHA |
+| Protecciones, PR y CI  | Pendientes de configuración y demostración remota; ninguna negativa de autenticación demuestra un ruleset                                        |
 
 La documentación y el código públicos se incorporan por la issue #1; las notas privadas quedan fuera de Git. Las demostraciones de bloqueo remoto y recuperación pertenecen a la issue #4 y permanecen pendientes; autenticarse no prueba esas barreras.
+
+## Promociones
+
+El trabajo continúa en `development`. Las ramas `test` y `main` reciben PR; se conservan las tres ramas y merge commits. Las plantillas de issue y PR identifican origen, alcance, aceptación, comprobaciones y estado de resolución. Una referencia a una issue no acredita su cierre.
+
+La protección de ambas ramas exige PR, `ci-required`, conversaciones resueltas y rama actualizada; incluye administradores y prohíbe force push y borrado. El check todavía debe implementarse y ejecutarse en #4: la configuración no demuestra el funcionamiento del CI. La revisión humana de main se configura y comprueba con ese incremento; no se atribuye a una autoaprobación nativa de GitHub.
 
 ## Evidencia que se incorporará al ejecutar
 
