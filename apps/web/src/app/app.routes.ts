@@ -12,6 +12,11 @@ export const routes: Routes = [
     loadComponent: () => import('./platform/layout/app-shell').then((module) => module.AppShell),
     children: [
       {
+        path: 'alerts',
+        loadComponent: () =>
+          import('./features/alerts/alerts-page').then((module) => module.AlertsPage),
+      },
+      {
         path: '',
         pathMatch: 'full',
         loadComponent: () =>

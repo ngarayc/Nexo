@@ -48,5 +48,15 @@
     <p>Los totales estarán disponibles cuando confirmemos la primera carga.</p>
     }
   </section>
+  <nav aria-label="Secciones del panel">
+    <a
+      routerLink="/"
+      routerLinkActive="active"
+      [routerLinkActiveOptions]="{ exact: true }"
+      ariaCurrentWhenActive="page"
+      >Flota</a
+    >
+    <a routerLink="/alerts" routerLinkActive="active" ariaCurrentWhenActive="page">Alertas</a>
+  </nav>
   <router-outlet />
 </main>

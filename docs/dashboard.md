@@ -1,6 +1,6 @@
 # Flota e historial en Angular
 
-La [issue #30](https://github.com/ngarayc/Nexo/issues/30) incorpora la historia EP-01 visible: tabla de último estado, búsqueda y detalle de observaciones. Reutiliza la [coordinación de snapshot/SSE](frontend-sync.md), sin otro stream o estado duplicado. La lista de alertas base y su posterior cambio CR-01 conservan sus incrementos; el contador global ya representa las alertas confirmadas.
+La [issue #30](https://github.com/ngarayc/Nexo/issues/30) incorpora la historia EP-01 visible: tabla de último estado, búsqueda y detalle de observaciones. Reutiliza la [coordinación de snapshot/SSE](frontend-sync.md), sin otro stream o estado duplicado. [EP-03](agent-cycles/EP-03.md) incorpora la lista global de alertas y acceso al evento, antes del filtro CR-01.
 
 ## Recorrido
 
@@ -11,6 +11,10 @@ Buscar vehículo filtra por subcadena sin distinguir mayúsculas. `%` y `_` son 
 Ver historial selecciona la identidad original y enfoca el panel. Sus observaciones se ordenan cronológicamente, con evento, fecha/hora, velocidad, encendido, latitud y longitud recibidas. No se deducen nuevos atributos GPS. Un evento tardío puede aparecer en el historial sin cambiar la fila del último estado. Cambiar o cerrar selección cancela su captura/HTTP; las respuestas antiguas no reemplazan el vehículo actual. La búsqueda puede ocultar esa fila sin cambiar la selección.
 
 Cerrar historial devuelve foco a la fila si sigue visible; si no, a la búsqueda. Carga, espera por reconexión, error con Reintentar y vacío confirmado tienen mensajes distintos. Un historial previo pendiente se señala como posiblemente desactualizado; un error no borra la flota válida. Si la nueva base ya no contiene el vehículo, la respuesta vacía confirmada lo indica explícitamente.
+
+## Alertas globales
+
+La navegación Flota/Alertas conserva la base y conexión de la sesión. Alertas presenta eventos confirmados con más de 80 km/h, orden descendente exacto y contador global; buscar en flota no filtra esa lista. Ver evento abre el historial del vehículo, conserva eventId y destaca/enfoca la observación original. Otra observación recibida después no roba el foco de búsqueda. Vacío confirmado, primera carga y datos desactualizados se distinguen igual que en flota. La lista todavía no ofrece filtro por vehículo: ese es el cambio CR-01 posterior.
 
 ## Identificadores, transporte y seguridad
 

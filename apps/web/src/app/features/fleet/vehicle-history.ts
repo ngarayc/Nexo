@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ElementRef, input, viewChildren } from '@angular/core';
 import type { EventView } from '@nexo/contracts';
 import { IdentityText } from '../../platform/presentation/identity-text';
 import { formatTime } from '../../platform/presentation/format-time';
@@ -30,8 +30,19 @@ import { formatTime } from '../../platform/presentation/format-time';
         </thead>
         <tbody>
           @for (event of items(); track event.eventId) {
-            <tr [attr.data-event-id]="event.eventId">
-              <th scope="row"><nexo-identity [value]="event.eventId" /></th>
+            <tr
+              #eventRow
+              tabindex="-1"
+              [attr.data-event-id]="event.eventId"
+              [class.highlighted]="event.eventId === highlighted()"
+              [attr.aria-current]="event.eventId === highlighted() ? 'true' : null"
+            >
+              <th scope="row">
+                <nexo-identity [value]="event.eventId" />
+                @if (event.eventId === highlighted()) {
+                  <span class="selected-label">Observación seleccionada</span>
+                }
+              </th>
               <td>{{ formatTime(event.observedAt) }}</td>
               <td>{{ event.speedKph }}</td>
               <td>{{ event.ignitionOn ? 'Sí' : 'No' }}</td>
@@ -43,9 +54,18 @@ import { formatTime } from '../../platform/presentation/format-time';
       </table>
     </div>
   `,
-  styleUrl: './telemetry-table.css',
+  styleUrl: '../../platform/presentation/telemetry-table.css',
 })
 export class VehicleHistory {
   readonly items = input.required<readonly EventView[]>();
+  readonly highlighted = input<string | null>(null);
   readonly formatTime = formatTime;
+  private readonly rows = viewChildren<ElementRef<HTMLTableRowElement>>('eventRow');
+  focusEvent(eventId: string): boolean {
+    const index = this.items().findIndex((event) => event.eventId === eventId);
+    const row = this.rows()[index];
+    if (!row) return false;
+    row.nativeElement.focus();
+    return true;
+  }
 }

@@ -13,8 +13,11 @@ function setup() {
     phase = signal<DetailPhase>('closed');
   const hasBase = signal(false),
     items = signal<readonly EventView[]>([]);
+  const focusedEvent = signal<string | null>(null);
   const detail = {
     selected,
+    focusedEvent,
+    focusedObservation: computed(() => items().find((item) => item.eventId === focusedEvent())),
     phase,
     hasBase,
     items,

@@ -95,3 +95,20 @@ button {
   gap: 1rem;
   align-items: center;
 }
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-block: 1.5rem;
+}
+nav a {
+  color: #16543d;
+  padding: 0.5rem;
+  text-decoration: none;
+  border-block-end: 3px solid transparent;
+}
+nav a.active {
+  border-color: #13766d;
+  font-weight: 700;
+}

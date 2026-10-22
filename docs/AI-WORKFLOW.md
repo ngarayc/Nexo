@@ -1,5 +1,7 @@
 # Uso de IA durante la construcción
 
+El [ciclo EP-03](agent-cycles/EP-03.md) registra la historia funcional de alertas base, propuesta, workflows aplicados, pruebas/correcciones observadas y estado de revisión humana. Conserva su referencia anterior al filtro CR-01 y no anticipa el resultado de la comparación posterior.
+
 ## Preparación de E0-I01
 
 Solicitud: comenzar la implementación del plan, relacionar commits con issues y preparar PR, continuando hasta un bloqueo que requiera intervención, preservando los controles del reto.

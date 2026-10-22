@@ -179,3 +179,24 @@ it('espera la base global y cerrar libera captura, petición y suscripciones al 
   expect(monitor.frames.size).toBe(0);
   expect(monitor.ready.size).toBe(0);
 });
+
+it('enlazar una alerta conserva su evento y seleccionarlo en el mismo vehículo no repite HTTP', async () => {
+  const { detail, requests, monitor } = setup();
+  detail.select('A', 'late');
+  requests[0]!.resolve({
+    vehicleId: 'A',
+    items: [observation('late'), observation('new')],
+    total: 2,
+  });
+  await flush();
+  expect(detail.focusedEvent()).toBe('late');
+  expect(detail.focusedObservation()?.eventId).toBe('late');
+  detail.select('A', 'new');
+  expect(requests.length).toBe(1);
+  expect(detail.focusedObservation()?.eventId).toBe('new');
+  monitor.invalidate();
+  expect(detail.focusedEvent()).toBe('new');
+  monitor.invalidate(true);
+  expect(detail.focusedEvent()).toBeNull();
+  expect(detail.focusedObservation()).toBeUndefined();
+});

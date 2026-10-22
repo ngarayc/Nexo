@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { AccessFacade } from '../../features/access/access-facade';
 import { LiveMonitor } from '../../features/live-monitoring/live-monitor';
 import { FleetFacade } from '../../features/fleet/fleet-facade';
@@ -8,7 +8,7 @@ import { formatTime } from '../presentation/format-time';
 
 @Component({
   selector: 'nexo-app-shell',
-  imports: [RouterOutlet],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

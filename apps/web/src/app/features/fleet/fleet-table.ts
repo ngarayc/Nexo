@@ -74,7 +74,7 @@ export const stateLabels: Readonly<Record<VehicleState, string>> = {
       </table>
     </div>
   `,
-  styleUrl: './telemetry-table.css',
+  styleUrl: '../../platform/presentation/telemetry-table.css',
 })
 export class FleetTable {
   readonly items = input.required<readonly VehicleView[]>();

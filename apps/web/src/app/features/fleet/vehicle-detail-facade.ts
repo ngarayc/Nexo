@@ -14,11 +14,18 @@ export class VehicleDetailFacade implements OnDestroy {
   private readonly api = inject(TelemetryApi);
   private readonly clock = inject(LIVE_CLOCK);
   private readonly selectedValue = signal<string | null>(null);
+  private readonly focusedValue = signal<string | null>(null);
   private readonly phaseValue = signal<DetailPhase>('closed');
   private readonly baseValue = signal(false);
   private readonly revision = signal(0);
   private readonly observations = new Map<string, EventView>();
   readonly selected = this.selectedValue.asReadonly();
+  readonly focusedEvent = this.focusedValue.asReadonly();
+  readonly focusedObservation = computed(() => {
+    this.revision();
+    const id = this.focusedValue();
+    return id === null ? undefined : this.observations.get(id);
+  });
   readonly phase = this.phaseValue.asReadonly();
   readonly hasBase = this.baseValue.asReadonly();
   readonly items = computed(() => {
@@ -48,7 +55,8 @@ export class VehicleDetailFacade implements OnDestroy {
     ];
   }
 
-  select(vehicleId: string): void {
+  select(vehicleId: string, eventId: string | null = null): void {
+    this.focusedValue.set(eventId);
     if (vehicleId === this.selected()) return;
     this.cancel();
     this.selectedValue.set(vehicleId);
@@ -65,6 +73,7 @@ export class VehicleDetailFacade implements OnDestroy {
   close(): void {
     this.cancel();
     this.selectedValue.set(null);
+    this.focusedValue.set(null);
     this.observations.clear();
     this.changed();
     this.baseValue.set(false);
