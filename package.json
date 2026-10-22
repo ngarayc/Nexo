@@ -23,7 +23,7 @@
     "lint": "eslint apps packages scripts tests",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
-    "boundaries": "depcruise apps packages --config .dependency-cruiser.cjs",
+    "boundaries": "depcruise apps/api/src apps/web/src packages/contracts/src --config .dependency-cruiser.cjs",
     "docs:check": "node scripts/check-docs.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
     "quality": "npm run format:check && npm run lint && npm run typecheck && npm run boundaries && npm run docs:check && npm run fixtures:check && npm run schema:check",

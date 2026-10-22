@@ -20,6 +20,7 @@ for (const [scenario, description] of Object.entries({
   catalog: 'catálogo conserva nueve tablas, exclusiones hash, triggers y fracción C',
   unicode: 'driver conserva mayúsculas, Unicode, nulo y sustitutos sin normalizar',
   canonical: 'SQL rechaza identidades binarias no canónicas',
+  compressed_identity: 'actualiza la proyección con identidad comprimida sin descomprimir por byte',
   long_identity: 'IDs largos conservados y conflicto sin actualización mediante exclusión',
   collision: 'dos IDs con colisión real del índice permanecen distintos',
   concurrency: 'dos conexiones compiten por el ID y relectura posterior ve al ganador',

@@ -3,7 +3,7 @@
   "info": {
     "title": "Nexo API",
     "version": "0.1.0",
-    "description": "Contratos efectivos de Nexo: backend, dashboard SSE y motor HTTP compartido de demo. Monolito NestJS y perfil HTTP local. Panel/reset de demo y filtro CR-01 conservan sus incrementos propios. Ver api.md, realtime.md y replay-emitter.md para límites, incertidumbre y recuperación."
+    "description": "Contratos efectivos de Nexo: backend, dashboard SSE y motor HTTP compartido de demo. Monolito NestJS y perfil HTTP local. CR-01 incorpora filtro exacto de alertas por GET y POST JSON; la selección visual mantiene su incremento posterior. Ver api.md, realtime.md y replay-emitter.md para límites, incertidumbre y recuperación."
   },
   "servers": [
     {
@@ -585,11 +585,96 @@
         }
       }
     },
+    "/queries/alerts": {
+      "post": {
+        "operationId": "queryAlerts",
+        "summary": "Alertas filtradas equivalentes mediante JSON",
+        "description": "Sesión, Origin, CSRF y cuota antes del parser. Reserva el cupo compartido antes de leer; no adquiere SQL mientras espera cuerpo. No crea efectos de negocio. Campos ajenos son inertes.",
+        "responses": {
+          "200": {
+            "description": "Mismos items, orden, total y overallTotal del GET filtrado sobre datos estables",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alerts"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "408": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "413": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "415": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Hasta 2 MiB reales, JSON UTF-8 sin compresión; cuerpo recibido en 15 s.",
+          "x-max-body-bytes": 2097152,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HistoryInput"
+              }
+            }
+          }
+        }
+      }
+    },
     "/alerts": {
       "get": {
         "operationId": "readAlerts",
-        "summary": "Todas las alertas históricas de exceso",
-        "description": "Incluye eventos tardíos; no duplica por duplicados o rechazos. El filtro vehicleId y su alternativa JSON se incorporarán en CR-01; esta versión todavía no filtra.",
+        "summary": "Alertas históricas con filtro exacto opcional",
+        "description": "Incluye eventos tardíos; sin filtro conserva todas las alertas. vehicleId compara identidad completa exacta sin recortar, normalizar o cambiar mayúsculas. Vacío, repetido, estructuras, parámetros ajenos o URI inválida: 400. Desconocido: items vacío y total 0. overallTotal siempre es global de la misma lectura coherente.",
+        "parameters": [
+          {
+            "name": "vehicleId",
+            "in": "query",
+            "required": false,
+            "style": "form",
+            "explode": false,
+            "description": "Un único string no vacío, igualdad exacta. Usar POST /queries/alerts para IDs largos o no representables fielmente en URL.",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Alertas OVERSPEED por speedKph estrictamente superior a 80",
@@ -1276,7 +1361,7 @@
           }
         },
         "additionalProperties": false,
-        "description": "Colección global completa, descendente por instante exacto y eventId. El filtro CR-01 aún no forma parte de esta versión."
+        "description": "Colección descendente por instante exacto y eventId. total es items.length; overallTotal es el total global de esa misma lectura. Sin filtro y en snapshot la colección es global; con filtro puede estar vacía y conservar overallTotal mayor que cero."
       },
       "Snapshot": {
         "type": "object",

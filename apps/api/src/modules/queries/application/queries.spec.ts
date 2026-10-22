@@ -3,8 +3,9 @@ import {
   DomainQueries,
   InvalidQuery,
   readSearch,
+  readAlertsQuery,
   readVehicleId,
-  readHistoryBody,
+  readVehicleQueryBody,
 } from './queries.js';
 import type { ReadModel } from './queries.js';
 import type { EventView } from '../../telemetry/public.js';
@@ -22,7 +23,7 @@ function model(events: readonly EventView[] = []): ReadModel {
   return {
     fleet: vi.fn().mockResolvedValue(events),
     history: vi.fn().mockResolvedValue(events),
-    alerts: vi.fn().mockResolvedValue([]),
+    alerts: vi.fn().mockResolvedValue({ items: [], total: 0, overallTotal: 0 }),
     snapshot: vi.fn().mockResolvedValue({ vehicles: events, alerts: [] }),
   };
 }
@@ -80,9 +81,9 @@ it('errores del modelo se propagan y parámetros no string o cuerpos incorrectos
   for (const value of [undefined, '', 2, null])
     expect(() => readVehicleId(value)).toThrow(InvalidQuery);
   for (const value of [[], null, {}, { vehicleId: 2 }, { vehicleId: '' }])
-    expect(() => readHistoryBody(value)).toThrow(InvalidQuery);
+    expect(() => readVehicleQueryBody(value)).toThrow(InvalidQuery);
   expect(
-    readHistoryBody(JSON.parse('{"vehicleId":"\\ud800","__proto__":{"vehicleId":"wrong"}}')),
+    readVehicleQueryBody(JSON.parse('{"vehicleId":"\\ud800","__proto__":{"vehicleId":"wrong"}}')),
   ).toBe('\ud800');
   expect(readSearch(undefined)).toBe('');
 });
@@ -104,4 +105,36 @@ it('renovar instancia no etiqueta una lectura iniciada antes como si pertenecier
   release();
   expect((await first).instanceId).toBe('before');
   expect((await queries.snapshot()).instanceId).toBe('after');
+});
+
+it('filtro de alertas distingue ausencia de identidad inválida y conserva valores literales', () => {
+  expect(readAlertsQuery({})).toBeUndefined();
+  for (const vehicleId of [' ', " A_%'\u0000\ud800 ", 'x'.repeat(12000)])
+    expect(readAlertsQuery({ vehicleId })).toBe(vehicleId);
+  for (const query of [
+    { vehicleId: undefined },
+    { vehicleId: '' },
+    { vehicleId: null },
+    { vehicleId: 1 },
+    { vehicleId: [] },
+    { vehicleId: ['A', 'A'] },
+    { vehicleId: {} },
+    { other: 'A' },
+  ])
+    expect(() => readAlertsQuery(query)).toThrow(InvalidQuery);
+});
+
+it('alertas delega la identidad exacta y conserva el total global aun sin coincidencias', async () => {
+  const source = model();
+  const result = { items: [], total: 0, overallTotal: 4 };
+  const read = vi.fn().mockResolvedValue(result);
+  source.alerts = read;
+  const queries = new DomainQueries(source, { id: 'instance' });
+  const id = ' A_%\u0000\ud800 ';
+  expect(await queries.alerts(id)).toBe(result);
+  expect(read).toHaveBeenCalledExactlyOnceWith(id);
+  await queries.alerts();
+  expect(read).toHaveBeenLastCalledWith(undefined);
+  read.mockRejectedValueOnce(new Error('unavailable'));
+  await expect(queries.alerts(id)).rejects.toThrow('unavailable');
 });

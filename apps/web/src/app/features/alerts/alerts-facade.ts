@@ -6,6 +6,8 @@ import { compareViews } from '../../platform/telemetry/order';
 export class AlertsFacade {
   private alerts = new Map<string, AlertView>();
   private readonly revision = signal(0);
+  private readonly vehicleValue = signal<string | null>(null);
+  readonly vehicleId = this.vehicleValue.asReadonly();
   readonly items = computed(() => {
     this.revision();
     return Object.freeze([...this.alerts.values()].sort((a, b) => compareViews(b, a)));
@@ -14,6 +16,16 @@ export class AlertsFacade {
     this.revision();
     return this.alerts.size;
   });
+  readonly visibleItems = computed(() => {
+    const vehicleId = this.vehicleValue();
+    return vehicleId === null
+      ? this.items()
+      : Object.freeze(this.items().filter((item) => item.vehicleId === vehicleId));
+  });
+  readonly visibleTotal = computed(() => this.visibleItems().length);
+  selectVehicle(vehicleId: string | null): void {
+    this.vehicleValue.set(vehicleId);
+  }
   install(items: readonly AlertView[]): void {
     this.alerts = new Map(items.map((view) => [view.eventId, view]));
     this.revision.update((value) => value + 1);
@@ -34,6 +46,7 @@ export class AlertsFacade {
     this.revision.update((value) => value + 1);
   }
   clear(): void {
+    this.vehicleValue.set(null);
     this.install([]);
   }
 }

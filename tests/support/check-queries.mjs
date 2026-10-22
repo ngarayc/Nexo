@@ -118,6 +118,40 @@ async function history(vehicleId) {
   assert.equal(r.status, 200);
   return r.body;
 }
+async function queryAlerts(vehicleId, options = {}) {
+  const result = await request('/api/queries/alerts', { ...options, body: { vehicleId } });
+  assert.equal(result.status, 200);
+  assert.equal(result.headers['cache-control'], 'no-store');
+  return result.body;
+}
+async function officialAlerts(expected) {
+  const all = await get('/api/alerts');
+  assert.deepEqual([all.total, all.overallTotal], [4, 4]);
+  assert.deepEqual(
+    all.items.map((a) => a.eventId).sort(),
+    [...expected.overspeed_event_ids].sort(),
+  );
+  for (const [vehicleId, ids] of [
+    ['VEH-005', ['E-005-03', 'E-005-02']],
+    ['VEH-001', ['E-001-00']],
+    ['VEH-004', []],
+    ['unknown', []],
+    ['veh-005', []],
+  ]) {
+    const direct = await get('/api/alerts?vehicleId=' + encodeURIComponent(vehicleId));
+    assert.deepEqual(direct, await queryAlerts(vehicleId));
+    assert.deepEqual(
+      direct.items.map((a) => a.eventId),
+      ids,
+    );
+    assert.deepEqual(direct, {
+      items: all.items.filter((a) => a.vehicleId === vehicleId),
+      total: ids.length,
+      overallTotal: 4,
+    });
+  }
+  return all;
+}
 async function settled() {
   for (let n = 0; n < 750; n++) {
     const state = (
@@ -141,6 +175,8 @@ async function snapshotRows() {
     outbox_messages: 'message_id',
     ingestion_batches: 'ingestion_id',
     ingestion_items: 'ingestion_id,item_index',
+    replay_runs: 'run_id',
+    replay_attempts: 'run_id,line_number',
   }))
     rows[table] = (
       await owner.query(
@@ -150,6 +186,11 @@ async function snapshotRows() {
   rows.jobs = (
     await owner.query(
       "SELECT coalesce(json_agg(t ORDER BY id),'[]'::json)::text AS data FROM pgboss.job t WHERE name='telemetry.ingest'",
+    )
+  ).rows[0].data;
+  rows.accountVersions = (
+    await owner.query(
+      "SELECT coalesce(json_agg(t ORDER BY id),'[]'::json)::text AS data FROM (SELECT id,xmin::text AS row_version FROM users) t",
     )
   ).rows[0].data;
   return rows;
@@ -367,7 +408,7 @@ const cases = {
           {
             hostname: '127.0.0.1',
             port: 3000,
-            path: '/api/queries/vehicle-events',
+            path: n % 2 === 0 ? '/api/queries/vehicle-events' : '/api/queries/alerts',
             method: 'POST',
             headers: {
               Host: 'localhost',
@@ -397,6 +438,14 @@ const cases = {
       const seventeenth = await request('/api/queries/vehicle-events', { raw: '{', proxy: false });
       assert.equal(seventeenth.status, 503);
       assert.equal(seventeenth.body.code, 'QUERY_CAPACITY_EXCEEDED');
+      for (const [path, options] of [
+        ['/api/alerts', { proxy: false }],
+        ['/api/queries/alerts', { raw: '{', proxy: false }],
+      ]) {
+        const response = await request(path, options);
+        assert.equal(response.status, 503);
+        assert.equal(response.body.code, 'QUERY_CAPACITY_EXCEEDED');
+      }
     } finally {
       for (const call of held) call.destroy();
     }
@@ -417,9 +466,11 @@ const cases = {
     const started = Date.now();
     for (const [path, options, status] of [
       ['/api/vehicles', {}, 200],
+      ['/api/alerts?vehicleId=unknown', {}, 200],
       ['/api/queries/vehicle-events', { raw: '{' }, 400],
+      ['/api/queries/alerts', { raw: '{' }, 400],
     ]) {
-      for (let group = 0; group < 30; group++) {
+      for (let group = 0; group < 15; group++) {
         const responses = await Promise.all(
           Array.from({ length: 10 }, () => request(path, options)),
         );
@@ -429,7 +480,9 @@ const cases = {
     assert.ok(Date.now() - started < 60000, 'La cuota se observa dentro de una ventana.');
     for (const [path, options] of [
       ['/api/vehicles', {}],
+      ['/api/alerts?vehicleId=unknown', {}],
       ['/api/queries/vehicle-events', { raw: '{' }],
+      ['/api/queries/alerts', { raw: '{' }],
     ]) {
       const response = await request(path, options);
       assert.equal(response.status, 429);
@@ -439,6 +492,7 @@ const cases = {
       (await request('/api/queries/vehicle-events', { raw: '{', csrf: 'invalid' })).status,
       403,
     );
+    assert.equal((await request('/api/queries/alerts', { raw: '{', csrf: 'invalid' })).status, 403);
     assert.deepEqual(await snapshotRows(), before);
   },
   async official() {
@@ -454,6 +508,7 @@ const cases = {
       const receipt = await ingest(events);
       assert.deepEqual([receipt.accepted, receipt.duplicates, receipt.rejected], counts);
       assert.deepEqual(receipt.errors, expected.rejections_at_input_indexes_zero_based);
+      await officialAlerts(expected);
     }
     await settled();
     const before = await snapshotRows();
@@ -494,7 +549,7 @@ const cases = {
     const unknown = { vehicleId: 'unknown', items: [], total: 0 };
     assert.deepEqual(await get('/api/vehicles/unknown/events'), unknown);
     assert.deepEqual(await history('unknown'), unknown);
-    const alerts = await get('/api/alerts');
+    const alerts = await officialAlerts(expected);
     assert.deepEqual([alerts.total, alerts.overallTotal], [4, 4]);
     assert.deepEqual(
       alerts.items.map((a) => a.eventId).sort(),
@@ -508,11 +563,6 @@ const cases = {
         ['type', 'eventId', 'vehicleId', 'observedAt', 'latitude', 'longitude', 'speedKph'].sort(),
       );
     }
-    assert.deepEqual(
-      await get('/api/alerts?vehicleId=VEH-005'),
-      alerts,
-      'CR-01 no está incorporado en la base.',
-    );
     const snapshot = await get('/api/snapshot');
     assert.equal(snapshot.schemaVersion, 1);
     assert.match(snapshot.instanceId, /^[a-f\d-]{36}$/);
@@ -635,6 +685,132 @@ const cases = {
       )
     ).rows[0]['QUERY PLAN'][0];
     assert.equal(plan.Plan['Actual Rows'], 3);
+  },
+  async alerts() {
+    assert.deepEqual(await get('/api/alerts'), { items: [], total: 0, overallTotal: 0 });
+    assert.deepEqual(await queryAlerts('unknown'), { items: [], total: 0, overallTotal: 0 });
+    const longId = 'x'.repeat(12000) + '\u0000\ud800';
+    const ids = ['A_%', 'a_%', '%', '_', "x' OR 1=1 --", ' A ', '\u0000', longId];
+    const sources = ids.map((vehicleId, n) => event({ vehicleId, eventId: 'literal-' + n }));
+    sources.push(
+      event({
+        vehicleId: 'A_%',
+        eventId: 'a\ud800',
+        observedAt: '2026-01-01T01:00:00.1234567890001+01:00',
+      }),
+      event({
+        vehicleId: 'A_%',
+        eventId: 'z',
+        observedAt: '2026-01-01T00:00:00.1234567890001Z',
+      }),
+      event({
+        vehicleId: 'A_%',
+        eventId: 'late',
+        observedAt: '2026-01-01T00:00:00.123456789Z',
+      }),
+    );
+    assert.equal((await ingest(sources)).accepted, sources.length);
+    await settled();
+    const before = await snapshotRows();
+    const all = await get('/api/alerts');
+    assert.deepEqual([all.total, all.overallTotal], [sources.length, sources.length]);
+    const selected = await queryAlerts('A_%');
+    assert.deepEqual(
+      selected.items.map((a) => a.eventId),
+      ['z', 'a\ud800', 'late', 'literal-0'],
+    );
+    assert.equal(selected.items[0].observedAt, '2026-01-01T00:00:00.1234567890001Z');
+    assert.deepEqual((await get('/api/snapshot')).alerts, all);
+    for (const proxy of [false, true]) {
+      for (const vehicleId of [...ids, 'missing', 'A', 'a', 'A_% ']) {
+        const wanted = all.items.filter((a) => a.vehicleId === vehicleId);
+        const expected = { items: wanted, total: wanted.length, overallTotal: all.total };
+        assert.deepEqual(await queryAlerts(vehicleId, { proxy }), expected);
+        if (vehicleId !== longId) {
+          const response = await request('/api/alerts?vehicleId=' + encodeURIComponent(vehicleId), {
+            proxy,
+          });
+          assert.equal(response.status, 200);
+          assert.deepEqual(response.body, expected);
+        }
+      }
+      for (const query of [
+        'vehicleId=',
+        'vehicleId=A&vehicleId=A',
+        'vehicleId=A&vehicl%65Id=A',
+        'vehicleId=A' + '&'.repeat(1100) + 'vehicleId=B',
+        'vehicleId[]=A',
+        'vehicleId[x]=A',
+        'vehicleId=%',
+        'vehicleId=%FF',
+        'vehicleId=%ED%A0%80',
+      ]) {
+        const invalid = await request('/api/alerts?' + query, { proxy });
+        assert.equal(invalid.status, 400);
+        assert.equal(invalid.body.code, 'INVALID_QUERY');
+      }
+      const path = '/api/queries/alerts';
+      const exact = '{"vehicleId":"missing"}'.padEnd(2 * 1024 * 1024);
+      assert.equal((await request(path, { raw: exact, proxy })).status, 200);
+      assert.equal((await request(path, { raw: exact + ' ', proxy })).status, 413);
+      assert.equal((await request(path, { raw: '{', proxy })).body.code, 'MALFORMED_JSON');
+      assert.equal(
+        (await request(path, { raw: Buffer.from([0xc3, 0x28]), proxy })).body.code,
+        'MALFORMED_JSON',
+      );
+      for (const body of [null, [], {}, { vehicleId: '' }, { vehicleId: [] }])
+        assert.equal((await request(path, { body, proxy })).status, 400);
+      assert.equal(
+        (await request(path, { raw: '{', proxy, authenticated: false, key: true })).status,
+        403,
+      );
+      assert.equal(
+        (await request(path, { raw: '{', proxy, requestOrigin: 'http://foreign.invalid' })).status,
+        403,
+      );
+      assert.equal((await request(path, { raw: '{', proxy, csrf: 'invalid' })).status, 403);
+      assert.equal(
+        (await request(path, { raw: '{}', proxy, headers: { 'Content-Type': 'text/plain' } }))
+          .status,
+        415,
+      );
+    }
+    const expired = await request('/api/queries/alerts', {
+      raw: '{',
+      proxy: false,
+      headers: { 'Content-Length': '100' },
+    });
+    assert.equal(expired.status, 408);
+    assert.equal(expired.body.code, 'REQUEST_TIMEOUT');
+    assert.deepEqual(await snapshotRows(), before);
+  },
+  async alertsConsistency() {
+    const vehicleId = 'coherent';
+    await ingest([event({ vehicleId, eventId: 'before' })]);
+    const expected = await queryAlerts(vehicleId);
+    const calls = [];
+    const measured = new PostgresReadModel({
+      query: async (...args) => {
+        calls.push(args);
+        const result = await runtime.query(...args);
+        if (calls.length === 1) await ingest([event({ vehicleId, eventId: 'after' })]);
+        return result;
+      },
+    });
+    assert.deepEqual(await measured.alerts(vehicleId), expected);
+    assert.equal(calls.length, 1, 'Items y total global se obtienen en una única sentencia real.');
+    assert.deepEqual(calls[0][1], [Buffer.from(encodeIdentity(vehicleId))]);
+    const current = await queryAlerts(vehicleId);
+    assert.deepEqual([current.total, current.overallTotal], [2, 2]);
+    const plan = (
+      await runtime.query('EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) ' + calls[0][0], calls[0][1])
+    ).rows[0]['QUERY PLAN'][0];
+    assert.equal(plan.Plan['Actual Rows'], 2);
+    await settled();
+    const before = await snapshotRows();
+    assert.deepEqual(await queryAlerts('missing'), { items: [], total: 0, overallTotal: 2 });
+    assert.deepEqual(await get('/api/alerts?vehicleId=coherent'), current);
+    assert.deepEqual(await snapshotRows(), before);
   },
   async snapshot() {
     await ingest([event({ vehicleId: 'first' })]);

@@ -382,6 +382,8 @@ it('logout limpia datos, listeners, HTTP y capturas; una nueva sesión ignora ca
   await flush();
   const capture = monitor.capture(() => true);
   expect(fleet.total()).toBe(1);
+  alerts.selectVehicle('A');
+  expect(alerts.vehicleId()).toBe('A');
   sessions.clear();
   TestBed.tick();
   expect(monitor.phase()).toBe('idle');
@@ -389,6 +391,7 @@ it('logout limpia datos, listeners, HTTP y capturas; una nueva sesión ignora ca
   expect(capture.active).toBe(false);
   expect(fleet.total()).toBe(0);
   expect(alerts.total()).toBe(0);
+  expect(alerts.vehicleId()).toBeNull();
   expect(old.closed).toBe(true);
   expect(transport.resumes.size).toBe(0);
   sessions.accept({ ...session, csrfToken: 'b'.repeat(256) }, sessions.epoch);

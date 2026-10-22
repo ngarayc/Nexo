@@ -1,5 +1,11 @@
 # Controles de integración
 
+## Fronteras sobre fuentes
+
+`npm run boundaries` comienza en los tres directorios de fuentes `apps/api/src`, `apps/web/src` y `packages/contracts/src`, con las mismas cinco reglas de ciclos y dependencias prohibidas. [#65](https://github.com/ngarayc/Nexo/issues/65) corrige el falso positivo del cierre E4: un build previo dejaba bundles cíclicos entre las entradas del inventario. Las importaciones encontradas desde fuentes siguen analizándose, incluso si apuntan a una salida generada. No se eliminan builds para obtener verde ni se excluyen carpetas homónimas dentro de `src`.
+
+Siete controles ejecutan el comando y configuración reales sobre fixtures temporales: mantienen fuentes no vacías, dejan fuera salidas ajenas al grafo de fuentes y rechazan ciclos de fuentes, web→servidor, servidor→web, contratos→aplicaciones y contratos→Node. El caso adicional rechaza también web→servidor compilado: detectó que una exclusión global de `dist` ocultaba esa dependencia y motivó reemplazarla por entradas explícitas de fuentes antes de publicar. Revisan las violaciones estructuradas del reporte JSON; la ejecución ordinaria sigue usando la salida de errores y su código de fallo.
+
 ## Preparación verificable de Chromium
 
 La [issue #48](https://github.com/ngarayc/Nexo/issues/48) separa la descarga del navegador fijado de la instalación de dependencias del sistema. Se descarga el headless shell que ya utiliza la configuración Chromium sin channel; después un proceso acotado debe abrir ese navegador, navegar y comprobar contenido real del DOM. Una validación nativa deshabilitada bloquea el probe.
@@ -24,7 +30,7 @@ El comando ejecuta el inventario de archivos `.test.mjs`, exige pruebas ejecutad
 
 `scripts/ci/traceability.mjs` usa los metadatos del evento, el historial Git y la API de GitHub mediante su cliente autenticado. Comprueba el checkout real, las ramas permanentes y las promociones development → test → main. Rechaza forks y eventos de CI no contemplados.
 
-Los commits propios deben incluir un trailer `Refs #<issue>`; pueden declarar varias referencias separadas por coma. Cada número se comprueba como una issue del repositorio, abierta o cerrada. Un número de PR no sirve como issue. Esto comprueba la existencia de la referencia; no demuestra por sí solo que la issue precedió a cada edición o que todos sus criterios estén resueltos.
+Los commits propios deben incluir un trailer `Refs #<issue>`; pueden declarar varias referencias separadas por coma. Se admite un único punto final opcional después de la lista completa; para nuevos commits se recomienda omitirlo. No se admiten decimales, puntos intermedios, doble punto, texto adicional o números no seguros. Cada número se comprueba como una issue del repositorio, abierta o cerrada. Un número de PR no sirve como issue. Esto comprueba la existencia de la referencia; no demuestra por sí solo que la issue precedió a cada edición o que todos sus criterios estén resueltos.
 
 Los merges sin trailer solo se admiten si la API acredita una PR integrada por el flujo permitido y el SHA exacto de merge. Un push a test/main también necesita esa procedencia. Un fallo de autenticación o consulta impide verificar la trazabilidad.
 
@@ -77,3 +83,7 @@ La política Compose se comprueba sobre el JSON realmente expandido por el CLI c
 El escenario HTTP de 10.000 eventos y su repetición forman parte del inventario de integración. El comando de integración dispone de 1.200 segundos en su orquestador; el runner admite hasta 360 por archivo, y el escenario de volumen hasta 330. Los jobs tienen límites de 25 minutos para integration y 35 para system, incluyendo preparación, construcción y verificaciones. Se ampliaron después de que el intento 2 de [CI 39711647349](https://github.com/ngarayc/Nexo/actions/runs/39711647349) agotara los límites anteriores de 15/20 minutos: la preparación consumió unos cinco minutos y dejó un margen insuficiente para el inventario completo. Los plazos HTTP/SQL de la aplicación y todos los casos obligatorios se conservan.
 
 La preparación instala npm y el lockfile con `--no-audit` para concentrar la consulta de vulnerabilidades en el `npm audit --audit-level=high` obligatorio de security-source. No se duplica esa consulta en cada instalación. Los dos primeros intentos de esa ejecución fallaron al consultar el endpoint de avisos de npm; una auditoría inconclusa sigue bloqueando el reporte y la promoción. Una nueva ejecución conserva las comprobaciones completas y exige cinco artefactos del mismo intento.
+
+## Compatibilidad de puntuación de Refs — #62
+
+La [issue #62](https://github.com/ngarayc/Nexo/issues/62) corrige la compatibilidad del trailer publicado en db75242: `Refs #57, #59.`. [CI propio de PR61,39828497893](https://github.com/ngarayc/Nexo/actions/runs/39828497893) rechazó ese punto final conforme a la gramática anterior, después de pasar calidad de fuentes; los jobs funcionales dependientes no se ejecutaron. La corrección admite solo ese signo opcional final y mantiene extracción de números, identidad real de cada issue, rechazo de PR/repositorio ajeno y reglas de contexto/promoción. No hay excepción por commit, exclusión de historia, cambio de workflows o reducción de controles. El historial y el intento fallido se conservan; el candidato nuevo requiere CI propio completo.

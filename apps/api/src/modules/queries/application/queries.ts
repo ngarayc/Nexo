@@ -12,7 +12,7 @@ export type {
 export interface ReadModel {
   fleet(): Promise<readonly EventView[]>;
   history(vehicleId: string): Promise<readonly EventView[]>;
-  alerts(): Promise<readonly AlertView[]>;
+  alerts(vehicleId?: string): Promise<AlertCollection>;
   snapshot(): Promise<{
     readonly vehicles: readonly EventView[];
     readonly alerts: readonly AlertView[];
@@ -48,8 +48,8 @@ export class DomainQueries {
     const items = await this.model.history(vehicleId);
     return { vehicleId, items, total: items.length };
   }
-  async alerts() {
-    return alertView(await this.model.alerts());
+  async alerts(vehicleId?: string) {
+    return this.model.alerts(vehicleId);
   }
   async snapshot() {
     const instanceId = this.instance.id;
@@ -77,11 +77,15 @@ export function readFleetQuery(query: Readonly<Record<string, unknown>>): string
   if (Object.keys(query).some((name) => name !== 'q')) throw new InvalidQuery();
   return readSearch(query['q']);
 }
+export function readAlertsQuery(query: Readonly<Record<string, unknown>>): string | undefined {
+  if (Object.keys(query).some((name) => name !== 'vehicleId')) throw new InvalidQuery();
+  return Object.hasOwn(query, 'vehicleId') ? readVehicleId(query['vehicleId']) : undefined;
+}
 export function readVehicleId(value: unknown): string {
   if (typeof value !== 'string' || value.length === 0) throw new InvalidQuery();
   return value;
 }
-export function readHistoryBody(value: unknown): string {
+export function readVehicleQueryBody(value: unknown): string {
   if (
     typeof value !== 'object' ||
     value === null ||

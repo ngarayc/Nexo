@@ -12,9 +12,13 @@ Ver historial selecciona la identidad original y enfoca el panel. Sus observacio
 
 Cerrar historial devuelve foco a la fila si sigue visible; si no, a la búsqueda. Carga, espera por reconexión, error con Reintentar y vacío confirmado tienen mensajes distintos. Un historial previo pendiente se señala como posiblemente desactualizado; un error no borra la flota válida. Si la nueva base ya no contiene el vehículo, la respuesta vacía confirmada lo indica explícitamente.
 
-## Alertas globales
+## Alertas por vehículo
 
-La navegación Flota/Alertas conserva la base y conexión de la sesión. Alertas presenta eventos confirmados con más de 80 km/h, orden descendente exacto y contador global; buscar en flota no filtra esa lista. Ver evento abre el historial del vehículo, conserva eventId y destaca/enfoca la observación original. Otra observación recibida después no roba el foco de búsqueda. Vacío confirmado, primera carga y datos desactualizados se distinguen igual que en flota. La lista todavía no ofrece filtro por vehículo: ese es el cambio CR-01 posterior.
+La navegación Flota/Alertas conserva la base y conexión de la sesión. Alertas presenta eventos confirmados con más de 80 km/h, orden descendente exacto y contador global; buscar en flota no filtra esa lista. Ver evento abre el historial del vehículo, conserva eventId y destaca/enfoca la observación original. Otra observación recibida después no roba el foco de búsqueda. Vacío confirmado, primera carga y datos desactualizados se distinguen igual que en flota.
+
+[CR-01](agent-cycles/CR-01.md) añade un selector nativo con Todos los vehículos y la flota completa, incluidos aquellos sin alertas. La selección es exacta e independiente por cliente: muestra, por ejemplo, 2 de 4 alertas y conserva el contador general. Las actualizaciones SSE mantienen ese subconjunto sin otra conexión o consulta por selección. Reconectar conserva el ID elegido; una selección ausente de la nueva flota queda identificada y puede limpiarse. Cerrar sesión elimina la selección. El vacío del filtro tiene un mensaje distinto al vacío global.
+
+El selector tiene etiqueta, uso por teclado y claves estables derivadas del ID original; ninguna identidad colisiona con Todos. Mostrar todos devuelve el foco al selector. El ID seleccionado puede expandirse íntegramente mediante IdentityText y el control conserva el ancho disponible en pantallas de360px. La UI deriva la lista desde la colección global; la aceptación compara sus resultados con GET/POST de la API sobre datos estables.
 
 ## Identificadores, transporte y seguridad
 
