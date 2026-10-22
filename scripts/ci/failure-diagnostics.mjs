@@ -22,3 +22,20 @@ export function pressureFailureStage(error) {
   }
   return undefined;
 }
+
+// Solo se publica una categoría cerrada; mensajes, trazas y datos del reporte
+// permanecen privados. La clasificación nunca decide el resultado del job.
+export function browserFailureStage(report) {
+  const pending = [report];
+  const visited = new Set();
+  while (pending.length) {
+    const node = pending.pop();
+    if (!node || typeof node !== 'object' || visited.has(node)) continue;
+    visited.add(node);
+    if (typeof node.message === 'string' && node.message.includes('strict mode violation:'))
+      return 'locator-ambiguity';
+    for (const key of ['suites', 'specs', 'tests', 'results', 'errors'])
+      if (Array.isArray(node[key])) pending.push(...node[key]);
+  }
+  return undefined;
+}

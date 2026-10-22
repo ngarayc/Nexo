@@ -1,5 +1,13 @@
 # Verificación de Nexo
 
+## Selectores de conexión y diagnóstico cerrado — #71
+
+El CI propio39848095971 de PR69, sobre986c791, pasó los nuevos casos cartográficos y el resto de archivos Chromium salvo synchronization.spec.mjs. El log público conservó el archivo fallido, pero su detalle privado no quedó disponible para recuperar la causa exacta de esa ejecución. La repetición local del caso original sobre las fuentes publicadas pasó; no se declara probado el motivo histórico.
+
+Una reproducción controlada retuvo la respuesta real de configuración cartográfica y demostró el defecto del selector global: «En vivo» y «Preparando mapa…» convivían correctamente, pero getByRole('status') produjo strict mode violation al encontrar ambos. La aserción se acotó a la región accesible Supervisión en tiempo real en los dos archivos que usaban ese selector. No se alteraron los valores esperados, errores de página, controles de sesión o conteos SSE. Pasaron los dos casos de sincronización, incluida la carga retenida, y los dos casos de flota afectados.
+
+El runner conserva los reportes privados y puede publicar únicamente la categoría cerrada locator-ambiguity cuando aparece en un error; no imprime mensajes, trazas o datos del reporte ni cambia el fallo del job. Sus cinco pruebas focalizadas pasaron, incluidas dos nuevas de clasificación segura y estructura ausente/cíclica. El candidato corregido requiere otro CI propio completo y cinco artefactos antes de promover; el intento anterior fallido no se reutiliza.
+
 ## Trayectoria y selección de observaciones — E5-I03 / #70
 
 Pasaron tipos web y22 pruebas focalizadas en cinco archivos: fachada de detalle, historial, trayectoria, mapa y página. El primer intento de tipos y compilación de pruebas falló al asignar undefined a una propiedad opcional bajo exactOptionalPropertyTypes; se declaró explícitamente la unión y se repitió ese alcance, sin relajar TypeScript.
