@@ -1,5 +1,13 @@
 # Verificación de Nexo
 
+## Gráfico de velocidad — E5-I04 / #72
+
+Pasaron tipos web y14 pruebas focalizadas en tres archivos: modelo temporal del gráfico, componente y página. Conservan entradas/identidades, velocidades80/81, puntos visualmente coincidentes con instantes exactos distintos, vacío, muestra única y máximo finito, alternativa accesible, selección y destrucción. La auditoría de la dependencia fijada informó cero vulnerabilidades.
+
+Los dos primeros recorridos de canvas encontraron puntos incompletos en los límites explícitos del área gráfica. Se ajustó el recorte del dataset observado para mostrar esos puntos completos; no se bajó el requisito visual de las pruebas. Tras construir otra vez, ambos recorridos Chromium pasaron con API/PostgreSQL/NGINX reales y tiles sintéticos. Inspeccionan píxeles del canvas y pulsan el punto dibujado, sin acceder a una instancia global de Chart.js o a hooks agregados al producto.
+
+El caso oficial verifica dos clientes, selección gráfico/historial/trayectoria/alerta, cambio visible de color, avisos de licencia y ambos replays20/2/2→0/22/2 con20 eventos/8 vehículos/4 alertas/43 mensajes. El adversarial conserva muestras coincidentes y subnanosegundos,80sin alerta/81con alerta, selección estable y foco de búsqueda ante un tardío, duplicado sin puntos nuevos, ancho360px, una velocidad Number.MAX_VALUE sin errores y destrucción al cerrar sesión. La compilación y lint afectados pasaron. La batería local general permanece reservada al cierre E5; estos resultados no la sustituyen.
+
 ## Normalización temporal entre entrada, API y presentación — #73
 
 Un recorrido Chromium con API/PostgreSQL/SSE reales pasó sobre el formateador original: tres observaciones con coma decimal, forma básica y offset ingresan fuera de orden; tabla, historial y mapas muestran hora Bogotá 24h, latest correcto y selección sin errores de página. El DTO devuelve UTC canónico y conserva la fracción exacta, incluida `2026-01-01T05:00:01.999999999999Z`.

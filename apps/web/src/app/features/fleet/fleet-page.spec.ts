@@ -10,6 +10,7 @@ import { LiveMonitor } from '../live-monitoring/live-monitor';
 import { MapProviderStore } from '../../platform/maps/map-provider-store';
 import { FLEET_MAP_FACTORY } from './adapters/fleet-map-factory';
 import { TRAJECTORY_FACTORY } from './adapters/trajectory-factory';
+import { SPEED_CHART_FACTORY } from './adapters/speed-chart-factory';
 
 function setup() {
   const selected = signal<string | null>(null),
@@ -66,6 +67,7 @@ function setup() {
       },
       { provide: FLEET_MAP_FACTORY, useValue: () => map },
       { provide: TRAJECTORY_FACTORY, useValue: () => ({ ...map, focusEvent: vi.fn() }) },
+      { provide: SPEED_CHART_FACTORY, useValue: () => ({ sync: vi.fn(), destroy: vi.fn() }) },
     ],
   });
   const fixture = TestBed.createComponent(FleetPage);

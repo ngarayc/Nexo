@@ -2,6 +2,8 @@
 
 [Flota e historial](dashboard.md) relaciona tablas semánticas W3C WAI e interpolación Angular con los componentes, foco, representación de IDs y pruebas reales aplicadas.
 
+[Velocidad observada](speed-chart.md) relaciona escala lineal, integración modular, opciones de línea y accesibilidad de Chart.js con el adaptador, selección compartida y pruebas reales de canvas. El modelo temporal aproximado para dibujar y sus límites conservan el modelo exacto de Nexo.
+
 [Cartografía](cartography.md) relaciona Leaflet1.9.4, la política de tiles de OpenStreetMap y el soporte TypeScript de Node24 con el adaptador, la configuración común de proveedor/CSP y las pruebas que interceptan imágenes externas. No se copió código de una plataforma de seguimiento ni se atribuye al proveedor la coordinación de estado de Nexo.
 
 La [coordinación de Angular](frontend-sync.md) relaciona las fuentes de Signals y EventSource con las fachadas, captura y recuperación propias de Nexo, sus pruebas y límites.
