@@ -1,5 +1,15 @@
 # Verificación
 
+## Corrección del feed incompleto y musl — #43
+
+El aviso registrado durante #40 se investigó en las fuentes del proveedor: musl/musl-utils1.2.6-r2 estaban presentes en API/web/DB y Alpine3.24 publicaba1.2.6-r3 como corrección. Se actualizaron paquetes fijados sin cambiar versiones/digests base o controles de ejecución. La nueva barrera de CI rechazó el reporte real anterior, que devolvía0 pero carecía de detalles de vulnerabilidad. Los34controles del pipeline pasaron, sin omisiones.
+
+Las imágenes reconstruidas y escaneadas completaron inventario y no reportaron HIGH/CRITICAL ni detalles ausentes: API `sha256:b6612fb7f2562163db3e4e776354b22fbd2d108f2ef603813cfe0a6821fabe9b`, web `sha256:8484a7f0c25cfbb30eb680224a4c37493871e7a9441c0d2ffccec84c025013a5` y DB `sha256:a703efe740a6bc34fe154b9b008431a57ce3bb6392879ebad0053bd80240519c`. Se comprobaron ambos paquetes1.2.6-r3 y la correspondencia con los digests de Docker. La regresión y el CI de este candidato se verifican por separado; las pruebas anteriores de #40 no se atribuyen a estas imágenes.
+
+Esta comprobación corrige una carencia de la evidencia del escáner, sin afirmar una severidad o rechazo del CVE que el feed no aportó. [Seguridad](security.md) enlaza las fuentes primarias. Los logs/JSON crudos permanecen fuera de Git y de los artefactos publicables.
+
+La regresión de esas mismas tres imágenes pasó102casos de integración y13Chromium, sin omisiones; sus digests permanecieron idénticos a los escaneados. Incluye inicialización/Argon2, preservación/upgrade, recepción/cola, recuperación, consultas/SSE, diario/verificador y10.000eventos más repetición. Los tres Dockerfiles pasaron20controles de configuración cada uno, con0fallos. La promoción conserva QA y CI propios del nuevo candidato; un verde de05e12c8 no sustituye esas comprobaciones.
+
 ## Preparación y comparación del replay — E3-I02
 
 La [issue #40](https://github.com/ngarayc/Nexo/issues/40) incorpora el [verificador](replay-verification.md) sobre el diario #38. La calidad completa pasó con340pruebasAPI y70Angular; los31controles del pipeline permanecen aprobados. Fuentes originales y esquema/snapshots se conservaron, sin omisiones o exclusiones nuevas.

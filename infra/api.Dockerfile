@@ -1,6 +1,7 @@
 FROM node:24.22.0-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS toolchain
 WORKDIR /app
-RUN npm install --global npm@12.2.0
+RUN apk add --no-cache --upgrade musl=1.2.6-r3 musl-utils=1.2.6-r3 \
+    && npm install --global npm@12.2.0
 COPY package.json package-lock.json .npmrc ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
@@ -18,7 +19,8 @@ RUN npm ci --no-audit --omit=dev --workspace @nexo/api --include-workspace-root=
 
 FROM node:24.22.0-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS runtime
 ENV NODE_ENV=production
-RUN rm -rf /usr/local/lib/node_modules/npm /opt/yarn* /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/yarn /usr/local/bin/yarnpkg
+RUN apk add --no-cache --upgrade musl=1.2.6-r3 musl-utils=1.2.6-r3 \
+    && rm -rf /usr/local/lib/node_modules/npm /opt/yarn* /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/yarn /usr/local/bin/yarnpkg
 WORKDIR /app
 COPY --from=production-dependencies --chown=node:node /app/node_modules ./node_modules
 COPY --from=build --chown=node:node /app/apps/api/dist ./apps/api/dist

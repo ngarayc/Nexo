@@ -22,6 +22,8 @@ La prueba local contra la API real validó el commit de plantillas y su issue #2
 
 ## Resultados y artefactos
 
+La [corrección #43](https://github.com/ngarayc/Nexo/issues/43) exige que el escaneo de imágenes termine correctamente, identifique el digest y aporte inventario Alpine —y Node en API—. Un aviso de detalles de vulnerabilidad ausentes bloquea aunque el proceso devuelva0; un hallazgo de severidad desconocida tampoco acredita aprobación. Se conserva el log del scanner únicamente en reports/raw, fuera de la lista de artefactos publicables. El aviso general de selección de severidad entre proveedores no se confunde con falta de metadatos. Los controles incluyen salida0 con detalles ausentes, inventario incompleto y severidad desconocida/alta.
+
 `scripts/ci/results.mjs` exige los cinco controles: quality, unit, integration, security-source y system. Su evaluación rechaza fallo, ausencia, cancelación, skip, reportes de otra revisión/ejecución/intento y comprobaciones obligatorias incompletas. La revisión hacia main utiliza un contexto separado y obligatorio, descrito a continuación.
 
 Los reportes publicables solo contienen versión de formato, job, SHA, ejecución, intento, nombres de controles, resultado y métricas de pruebas. Campos adicionales se rechazan. No se publican respuestas de aplicación, logs crudos, cookies, hashes, entornos o trazas.

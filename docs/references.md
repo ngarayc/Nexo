@@ -82,4 +82,6 @@ La selección de variantes usa [las imágenes oficiales de Node](https://github.
 
 ## Preparación y comparación del replay
 
+La [corrección musl #43](security.md) consulta el registro oficial [Alpine3.24](https://secdb.alpinelinux.org/v3.24/main.json) y [su paquete musl](https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/musl) para fijar1.2.6-r3 cuando el feed central del scanner carece de detalles. Nexo añade el bloqueo de escaneo inconcluso incluso con salida0 y comprueba el inventario de las imágenes reales; no atribuye al proveedor la política de promoción ni inventa la severidad ausente.
+
 [Verificador](replay-verification.md) aplica el aislamiento [REPEATABLE READ de PostgreSQL18](https://www.postgresql.org/docs/18/transaction-iso.html#XACT-REPEATABLE-READ) y las APIs públicas de [jobs](https://pgboss.io/api/jobs) y [adaptadores pg-boss](https://pgboss.io/api/adapters). El inventario usa la misma transacción que los recibos/dominio; no depende de estadísticas en caché ni confunde queued con active. Fuentes originales, expectativas, límites de lectura y conservación histórica son decisiones de Nexo. La integración concurrente verifica visibilidad conjunta de una recepción y su job; no acredita el motor HTTP o la evidencia visual todavía pendientes.
