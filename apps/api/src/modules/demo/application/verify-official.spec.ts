@@ -159,6 +159,78 @@ async function second(): Promise<Mutable<ReplayEvidence>> {
   return data;
 }
 
+describe('condiciones para otro recorrido exploratorio', () => {
+  it('comprueba cierre y disponibilidad, sin acreditar un primer o segundo replay', async () => {
+    const result = await verifier(facts()).prepareContinuation(firstId);
+    expect(result.phase).toBe('preparation');
+    expect(result.result).toBe('conformant');
+    expect(result.checks.some((item) => item.key === 'accepted-identities')).toBe(false);
+  });
+  it('un recibo todavía activo bloquea aunque el inventario de jobs esté ocioso', async () => {
+    const data = facts();
+    data.counts.activeReceipts = 1;
+    const result = await verifier(data).prepareContinuation(firstId);
+    expect(result.result).toBe('inconclusive');
+    expect(check(result, 'receipts-idle').state).toBe('pending');
+  });
+  it.each(['running', 'closed', 'fixture'] as const)(
+    '%s impide continuar el escenario',
+    async (cause) => {
+      const data = facts();
+      if (cause === 'running') data.runs[0]!.state = 'running';
+      else if (cause === 'closed') data.runs[0]!.scenarioClosedAt = '2026-10-22T12:00:00Z';
+      else data.runs[0]!.fixtureSha256 = 'f'.repeat(64);
+      expect((await verifier(data).prepareContinuation(firstId)).result).toBe('non_conformant');
+    },
+  );
+  it('una ejecución ausente es no comprobable y no una base disponible', async () => {
+    const data = facts();
+    data.runs = [];
+    const result = await verifier(data).prepareContinuation(firstId);
+    expect(result.result).toBe('inconclusive');
+    expect(check(result, 'prior-terminal').state).toBe('unavailable');
+  });
+});
+
+describe('segunda preparación después de confirmar su intención', () => {
+  async function prepared() {
+    const data = facts(),
+      first = data.runs[0]!;
+    first.verificationDocument = JSON.stringify(await verifier(data).evaluate(firstId));
+    first.verification = 'conformant';
+    first.revision++;
+    data.runs.push({
+      ...first,
+      runId: secondId,
+      previousRunId: firstId,
+      stage: 'second',
+      state: 'preparing',
+      nextLine: 1,
+      revision: 0,
+      verification: 'pending',
+      verificationDocument: null,
+    });
+    data.counts.runs = 2;
+    return data;
+  }
+  it('revalida primero/oráculos/contexto y únicamente permite su segunda preparación sin intentos', async () => {
+    const data = await prepared();
+    expect((await verifier(data).prepareSecond(firstId, secondId)).result).toBe('conformant');
+    expect((await verifier(data).prepareSecond(firstId)).result).toBe('non_conformant');
+  });
+  it.each(['state', 'instance', 'attempts', 'foreign'] as const)(
+    '%s no se oculta como preparación propia',
+    async (cause) => {
+      const data = await prepared();
+      if (cause === 'state') data.runs[1]!.state = 'running';
+      else if (cause === 'instance') data.runs[1]!.instanceId = randomUUID();
+      else if (cause === 'attempts') data.counts.attempts++;
+      else data.counts.runs++;
+      expect((await verifier(data).prepareSecond(firstId, secondId)).result).toBe('non_conformant');
+    },
+  );
+});
+
 describe('comparación oficial de datos y respuestas, sin sustituir evidencia visual', () => {
   it('primero20/2/2 exige identidades, contenido, historiales, estados y43mensajes', async () => {
     const result = await verifier(facts()).evaluate(firstId);
@@ -412,4 +484,44 @@ describe('comparación oficial de datos y respuestas, sin sustituir evidencia vi
       expect(check(report, 'original-result').state).toBe('unavailable');
     },
   );
+});
+
+describe('cierre separado del escenario', () => {
+  async function closedPair() {
+    const data = await second();
+    const saved = await verifier(data).evaluate(secondId);
+    data.runs[1]!.verification = saved.result;
+    data.runs[1]!.verificationDocument = JSON.stringify(saved);
+    data.runs[1]!.revision++;
+    return { data, saved };
+  }
+  it('par originalmente conforme y receptor sin cambios permiten un cierre conforme', async () => {
+    const { data } = await closedPair();
+    expect((await verifier(data).evaluateScenario(secondId)).result).toBe('conformant');
+  });
+  it('una recepción ajena posterior invalida el cierre y conserva el resultado individual original', async () => {
+    const { data, saved } = await closedPair();
+    data.receiptIds.push(randomUUID());
+    data.counts.receipts++;
+    expect((await verifier(data).evaluateScenario(secondId)).result).toBe('non_conformant');
+    expect(await verifier(data).evaluate(secondId)).toEqual(saved);
+  });
+  it('resolver un pendiente posterior no transforma el segundo informe inconcluso en éxito del par', async () => {
+    const data = await second();
+    data.jobs.active = 1;
+    const saved = await verifier(data).evaluate(secondId);
+    data.runs[1]!.verification = saved.result;
+    data.runs[1]!.verificationDocument = JSON.stringify(saved);
+    data.jobs.active = 0;
+    const result = await verifier(data).evaluateScenario(secondId);
+    expect(result.result).toBe('inconclusive');
+    expect(check(result, 'original-pair').state).toBe('unavailable');
+  });
+  it('un primer recorrido solo no cierra como par completo', async () => {
+    const data = facts();
+    const saved = await verifier(data).evaluate(firstId);
+    data.runs[0]!.verification = saved.result;
+    data.runs[0]!.verificationDocument = JSON.stringify(saved);
+    expect((await verifier(data).evaluateScenario(firstId)).result).toBe('inconclusive');
+  });
 });

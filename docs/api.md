@@ -2,7 +2,7 @@
 
 La [issue #24](https://github.com/ngarayc/Nexo/issues/24) consolida el contrato del backend E1. La descripción [OpenAPI 3.1.1 versionada](openapi.json) enumera las catorce operaciones actuales, incluido el transporte SSE de la [issue #26](https://github.com/ngarayc/Nexo/issues/26). Las pruebas HTTP, reglas de dominio y respuestas reales conservan la autoridad sobre su comportamiento; OpenAPI no sustituye la validación del servidor.
 
-Origen predeterminado: `http://localhost:8080`; prefijo: `/api`. Una copia de comprobación puede configurar otro puerto/origen. El perfil soportado es HTTP local con una instancia API. No habilita CORS ni ofrece transporte de producción. El [dashboard](dashboard.md) consume estas operaciones; reproductor y filtro CR-01 conservan sus incrementos posteriores.
+Origen predeterminado: `http://localhost:8080`; prefijo: `/api`. Una copia de comprobación puede configurar otro puerto/origen. El perfil soportado es HTTP local con una instancia API. No habilita CORS ni ofrece transporte de producción. El [dashboard](dashboard.md) consume estas operaciones; el motor de demo tiene controles protegidos descritos abajo; su panel y el filtro CR-01 conservan sus incrementos posteriores.
 
 ## Rutas y acceso
 
@@ -122,3 +122,9 @@ npm run test:e2e
 La integración crea proyectos/volúmenes sintéticos propios. Comprueba ambos oráculos, GET mínimos, alternativa JSON, ausencia de efectos, fallos y 10.000 eventos ordinarios. El recorrido de navegador añade las dos vistas Angular, carreras y recuperación sobre servicios reales. Ninguno sustituye el reproductor controlable E3. [Verificación](verification.md) identifica resultados y SHAs reales.
 
 Al cambiar rutas o respuestas, actualizar OpenAPI, esta página y las pruebas pertinentes en la misma issue. La descripción sigue [OpenAPI 3.1.1](https://spec.openapis.org/oas/v3.1.1.html); el [esquema oficial OAS 3.1](https://spec.openapis.org/oas/3.1/schema/2025-09-15) comprueba estructura, y la revisión debe contrastarla además con DTO/controladores y comportamiento HTTP. Los límites en bytes, igualdad exacta, partición de recibos y reglas temporales necesitan validación y pruebas del servidor: no se deducen de un generador de clientes.
+
+## Motor compartido de demo
+
+[Contrato de control](replay-emitter.md) y [OpenAPI](openapi.json) describen GET /api/demo/replay y POST /api/demo/replay/commands. GET ofrece control actual o selectores excluyentes de ejecución/historial/recibo; POST admite intención durable con sesión, origen, CSRF, cuota de 60/min y JSON de 4 KiB. Un 202 no equivale a resolución completada. COMMIT desconocido 503 conserva incertidumbre y exige consultar el estado/recibo; no autoriza reenvío automático. Modo demo deshabilitado404 antes del parser.
+
+La misma SSE publica demo.replay.updated con vista completa y dos revisiones; la época del stream no sustituye la instancia estable del control. La pausa no cancela cola del receptor. El informe de escenario y los individuales se conservan separados. Estos endpoints no aceptan destino/fixture/clave del navegador ni ofrecen borrado. El panel y reset seguro mantienen sus incrementos propios.

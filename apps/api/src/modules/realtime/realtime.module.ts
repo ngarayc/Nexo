@@ -22,5 +22,6 @@ import { OutboxDispatcher } from './outbox-dispatcher.js';
     StreamConnections,
     OutboxDispatcher,
   ],
+  exports: [StreamConnections],
 })
 export class RealtimeModule {}

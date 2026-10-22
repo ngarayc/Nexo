@@ -28,7 +28,7 @@ export class AccessGuard implements CanActivate {
       if (!isAuthenticatedProducer(request)) throw accessError('INVALID_API_KEY');
       return true;
     }
-    if (policy === 'demo-read' && !this.sessions.demoEnabled)
+    if ((policy === 'demo-read' || policy === 'demo-write') && !this.sessions.demoEnabled)
       throw accessError('DEMO_DISABLED', 404, 'Recurso no disponible.');
     if (policy === 'login') {
       this.sessions.requireOrigin(request);
@@ -39,7 +39,8 @@ export class AccessGuard implements CanActivate {
       policy !== 'session-query' &&
       policy !== 'session-stream' &&
       policy !== 'session-write' &&
-      policy !== 'demo-read'
+      policy !== 'demo-read' &&
+      policy !== 'demo-write'
     )
       throw accessError('ACCESS_POLICY_REQUIRED');
     this.sessions.require(request);
@@ -48,13 +49,13 @@ export class AccessGuard implements CanActivate {
     if (policy === 'session-stream' && request.get('Origin') !== undefined) {
       this.sessions.requireOrigin(request);
     }
-    if (policy === 'session-write' || policy === 'session-query') {
+    if (policy === 'session-write' || policy === 'session-query' || policy === 'demo-write') {
       this.sessions.requireOrigin(request);
       this.sessions.requireCsrf(request);
     }
     if (policy !== 'session-write') {
       await this.limits.consume(
-        policy === 'session-stream' ? 'stream' : 'read',
+        policy === 'session-stream' ? 'stream' : policy === 'demo-write' ? 'demo-command' : 'read',
         request,
         http.getResponse<Response>(),
       );

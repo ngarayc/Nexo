@@ -19,6 +19,12 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
     this.pool.on('error', () => console.error('Conexión inactiva de base interrumpida.'));
   }
 
+  get migrationHash(): string {
+    const hash = this.migrations.at(-1)?.hash;
+    if (!hash) throw new Error('No hay migración verificable.');
+    return hash;
+  }
+
   async onModuleInit(): Promise<void> {
     if (!(await this.isHealthy())) throw new Error('Base o esquema no disponibles.');
   }

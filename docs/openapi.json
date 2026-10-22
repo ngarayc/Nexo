@@ -3,7 +3,7 @@
   "info": {
     "title": "Nexo API",
     "version": "0.1.0",
-    "description": "Contratos efectivos del backend E1 y transporte SSE E2. Monolito NestJS y demo HTTP local. Reproductor, dashboard y filtro CR-01 mantienen sus incrementos posteriores. Ver api.md y realtime.md para incertidumbre, límites y recuperación."
+    "description": "Contratos efectivos de Nexo: backend, dashboard SSE y motor HTTP compartido de demo. Monolito NestJS y perfil HTTP local. Panel/reset de demo y filtro CR-01 conservan sus incrementos propios. Ver api.md, realtime.md y replay-emitter.md para límites, incertidumbre y recuperación."
   },
   "servers": [
     {
@@ -664,7 +664,7 @@
       "get": {
         "operationId": "streamCommittedChanges",
         "summary": "Notificaciones SSE de cambios confirmados",
-        "description": "Sesión vigente; si Origin existe debe coincidir con el canónico. Ready primero, heartbeat cada quince segundos. Cuatro conexiones por SID, dieciséis globales y treinta aperturas/minuto por cuenta. Sin replay histórico por Last-Event-ID; resincronizar snapshot al reconectar/cambiar generación. La API key no autoriza. Ver realtime.md.",
+        "description": "Sesión vigente; si Origin existe debe coincidir con el canónico. Ready primero, heartbeat cada quince segundos. Cuatro conexiones por SID, dieciséis globales y treinta aperturas/minuto por cuenta. Sin replay histórico por Last-Event-ID; resincronizar snapshot al reconectar/cambiar generación. La API key no autoriza. Ver realtime.md. El mismo stream incorpora demo.replay.updated: schemaVersion1, streamInstanceId de época SSE y representación ReplayControl completa, cuyo instanceId es estable durante la vida de API. Se publica tras cambios durables y cada2s con suscriptores; no tiene eventId de dominio ni fila en outbox. Una lectura fallida no emite una copia vieja como recién verificada.",
         "parameters": [
           {
             "name": "Origin",
@@ -720,6 +720,201 @@
             "$ref": "#/components/responses/Failure"
           },
           "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      }
+    },
+    "/demo/replay": {
+      "get": {
+        "operationId": "readReplay",
+        "summary": "Consultar control, ejecución, historial o recibo del emisor",
+        "description": "Modo demo y sesión. Selectores excluyentes: sin parámetros; runId; view=history con limit/cursor opcionales; commandId junto con instanceId. Mezclas, repetidos, desconocidos y formas inválidas400. Cuota compartida de lecturas600/min. Un recibo404 no demuestra ausencia de admisión. Instancia de API distinta409. El detalle omite intención, cuerpos originales y secretos; conserva informe individual y escenario separados. Sin efectos de negocio; puede confirmar/reconciliar el diario incierto sin enviar telemetría.",
+        "parameters": [
+          {
+            "name": "runId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+            },
+            "description": "Detalle de una ejecución conservada; hasta24intentos."
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "const": "history"
+            },
+            "description": "Selecciona historial."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "description": "Solo historial; predeterminado20, forma decimal canónica sin ceros iniciales."
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 512,
+              "pattern": "^[a-zA-Z0-9_-]+$"
+            },
+            "description": "Solo historial; cursor opaco devuelto por la página anterior."
+          },
+          {
+            "name": "commandId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+            },
+            "description": "Requiere instanceId y excluye los demás selectores."
+          },
+          {
+            "name": "instanceId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+            },
+            "description": "Instancia de API del recibo, independiente de la época SSE."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Representación completa del selector solicitado",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ReplayControl"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReplayDetail"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReplayHistory"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReplayCommandReceipt"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      }
+    },
+    "/demo/replay/commands": {
+      "post": {
+        "operationId": "commandReplay",
+        "summary": "Admitir una intención de control durable",
+        "description": "Modo demo → sesión → Origin → CSRF → cuota global60/min → JSON4KiB UTF-8 → validación estricta → coordinación corta. Una intención confirmada devuelve202 y recibo consultable; no acredita finalización. Repetir mismoID/cuerpo dentro de retención devuelve la admisión; otro contenido409. Recibos hasta1024/10min desde admisión; pendientes fijados. UUIDAPI/revisión/ejecución obsoletos409; vencimiento no autoriza repetir efectos. Resultado de COMMIT desconocido503 con admission=unknown, sin segundo envío. La pausa/finalización no cancelan la ingesta ya recibida. No acepta destino, archivo, cabeceras o clave del navegador.",
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "x-max-body-bytes": 4096,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayCommand"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Intención durable confirmada; resolución pendiente/completada/fallida consultable",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayAdmission"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "408": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "413": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "415": {
             "$ref": "#/components/responses/Failure"
           }
         }
@@ -1803,6 +1998,1002 @@
           }
         ],
         "description": "JSON del cambio confirmado. SSE id coincide con messageId y event con type. Top-level IDs/instante coinciden con data; esa igualdad se valida en el servidor. Puede repetirse un UUID ante marcado no confirmado."
+      },
+      "ReplayProgress": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "accepted",
+          "duplicates",
+          "rejected",
+          "classified",
+          "unattempted",
+          "inFlight",
+          "uncertain",
+          "technicalFailure",
+          "total",
+          "nextLine"
+        ],
+        "properties": {
+          "accepted": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 24
+          },
+          "duplicates": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 24
+          },
+          "rejected": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 24
+          },
+          "classified": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 24
+          },
+          "unattempted": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 24
+          },
+          "inFlight": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "uncertain": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "technicalFailure": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "total": {
+            "const": 24
+          },
+          "nextLine": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 25
+          }
+        }
+      },
+      "ReplayRun": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "runId",
+          "scenarioId",
+          "previousRunId",
+          "instanceId",
+          "stage",
+          "state",
+          "intervalMs",
+          "nextLine",
+          "revision",
+          "verification",
+          "closeCode",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "runId": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+          },
+          "scenarioId": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+          },
+          "previousRunId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "instanceId": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+          },
+          "stage": {
+            "enum": ["first", "second", "exploratory"]
+          },
+          "state": {
+            "enum": [
+              "preparing",
+              "running",
+              "pausing",
+              "paused",
+              "restarting",
+              "finalizing",
+              "completed",
+              "stopped",
+              "error",
+              "interrupted"
+            ]
+          },
+          "intervalMs": {
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 5000
+          },
+          "nextLine": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 25
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "verification": {
+            "enum": ["pending", "conformant", "non_conformant", "inconclusive"]
+          },
+          "closeCode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "TRANSPORT_UNCERTAIN",
+                  "RESPONSE_PENDING",
+                  "RESPONSE_INVALID",
+                  "JOURNAL_UNCERTAIN",
+                  "NOT_ADMITTED",
+                  "PROCESSING_FAILED",
+                  "API_RESTARTED",
+                  "USER_RESTARTED",
+                  "VERIFICATION_CLOSED"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ReplayScenario": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scenarioId", "verification", "closedAt"],
+        "properties": {
+          "scenarioId": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+          },
+          "verification": {
+            "enum": ["pending", "conformant", "non_conformant", "inconclusive"]
+          },
+          "closedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "ReplayControl": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "instanceId",
+          "controlVersion",
+          "viewRevision",
+          "observedAt",
+          "blockedReason",
+          "allowedActions",
+          "pendingAction",
+          "scenario",
+          "run"
+        ],
+        "properties": {
+          "instanceId": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+          },
+          "controlVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "viewRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "blockedReason": {
+            "anyOf": [
+              {
+                "enum": ["RECOVERING", "JOURNAL_UNCERTAIN", "SHUTTING_DOWN"]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "allowedActions": {
+            "type": "array",
+            "items": {
+              "enum": ["start", "pause", "resume", "restart", "finishVerification"]
+            },
+            "maxItems": 5
+          },
+          "pendingAction": {
+            "anyOf": [
+              {
+                "enum": ["start", "pause", "resume", "restart", "finishVerification"]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReplayScenario"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "run": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "runId",
+                  "scenarioId",
+                  "stage",
+                  "state",
+                  "verification",
+                  "intervalMs",
+                  "nextLine",
+                  "closeCode",
+                  "progress"
+                ],
+                "properties": {
+                  "runId": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+                  },
+                  "scenarioId": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+                  },
+                  "stage": {
+                    "enum": ["first", "second", "exploratory"]
+                  },
+                  "state": {
+                    "enum": [
+                      "preparing",
+                      "running",
+                      "pausing",
+                      "paused",
+                      "restarting",
+                      "finalizing",
+                      "completed",
+                      "stopped",
+                      "error",
+                      "interrupted"
+                    ]
+                  },
+                  "verification": {
+                    "enum": ["pending", "conformant", "non_conformant", "inconclusive"]
+                  },
+                  "intervalMs": {
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 5000
+                  },
+                  "nextLine": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 25
+                  },
+                  "closeCode": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "TRANSPORT_UNCERTAIN",
+                          "RESPONSE_PENDING",
+                          "RESPONSE_INVALID",
+                          "JOURNAL_UNCERTAIN",
+                          "NOT_ADMITTED",
+                          "PROCESSING_FAILED",
+                          "API_RESTARTED",
+                          "USER_RESTARTED",
+                          "VERIFICATION_CLOSED"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "progress": {
+                    "$ref": "#/components/schemas/ReplayProgress"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "ReplayCommand": {
+        "oneOf": [
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["commandId", "instanceId", "expectedControlVersion", "runId", "action"],
+            "properties": {
+              "commandId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "instanceId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "expectedControlVersion": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "runId": {
+                "type": "null"
+              },
+              "action": {
+                "const": "start"
+              },
+              "intervalMs": {
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 5000
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["commandId", "instanceId", "expectedControlVersion", "runId", "action"],
+            "properties": {
+              "commandId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "instanceId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "expectedControlVersion": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "runId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "action": {
+                "const": "pause"
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["commandId", "instanceId", "expectedControlVersion", "runId", "action"],
+            "properties": {
+              "commandId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "instanceId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "expectedControlVersion": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "runId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "action": {
+                "const": "resume"
+              },
+              "intervalMs": {
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 5000
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["commandId", "instanceId", "expectedControlVersion", "runId", "action"],
+            "properties": {
+              "commandId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "instanceId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "expectedControlVersion": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "runId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "action": {
+                "const": "restart"
+              },
+              "intervalMs": {
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 5000
+              }
+            }
+          },
+          {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["commandId", "instanceId", "expectedControlVersion", "runId", "action"],
+            "properties": {
+              "commandId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "instanceId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "expectedControlVersion": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "runId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "action": {
+                "const": "finishVerification"
+              }
+            }
+          }
+        ]
+      },
+      "ReplayAdmission": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["commandId", "instanceId", "runId", "admittedControlVersion", "accepted"],
+        "properties": {
+          "commandId": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+          },
+          "instanceId": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+          },
+          "runId": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+          },
+          "admittedControlVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "accepted": {
+            "const": true
+          }
+        }
+      },
+      "ReplayCommandReceipt": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["admission", "resolution", "reasonCode"],
+        "properties": {
+          "admission": {
+            "$ref": "#/components/schemas/ReplayAdmission"
+          },
+          "resolution": {
+            "enum": ["pending", "completed", "failed"]
+          },
+          "reasonCode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "TRANSPORT_UNCERTAIN",
+                  "RESPONSE_PENDING",
+                  "RESPONSE_INVALID",
+                  "JOURNAL_UNCERTAIN",
+                  "NOT_ADMITTED",
+                  "PROCESSING_FAILED",
+                  "API_RESTARTED",
+                  "USER_RESTARTED",
+                  "VERIFICATION_CLOSED",
+                  "PRECONDITIONS_FAILED"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "ReplayReport": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "version",
+          "scope",
+          "phase",
+          "result",
+          "observedAt",
+          "attemptedAt",
+          "runId",
+          "scenarioId",
+          "runRevision",
+          "environment",
+          "sources",
+          "snapshotFingerprint",
+          "checks",
+          "externalEvidence"
+        ],
+        "properties": {
+          "version": {
+            "const": 1
+          },
+          "scope": {
+            "const": "data-and-replays"
+          },
+          "phase": {
+            "enum": ["preparation", "first", "second"]
+          },
+          "result": {
+            "enum": ["conformant", "non_conformant", "inconclusive"]
+          },
+          "observedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "attemptedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "runId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "scenarioId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "runRevision": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "environment": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "instanceId",
+                  "ready",
+                  "softwareFingerprint",
+                  "configurationFingerprint"
+                ],
+                "properties": {
+                  "instanceId": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+                  },
+                  "ready": {
+                    "type": "boolean"
+                  },
+                  "softwareFingerprint": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  },
+                  "configurationFingerprint": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{64}$"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sources": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            }
+          },
+          "snapshotFingerprint": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["key", "label", "source", "expected", "observed", "state"],
+              "properties": {
+                "key": {
+                  "type": "string"
+                },
+                "label": {
+                  "type": "string"
+                },
+                "source": {
+                  "type": "string"
+                },
+                "expected": {},
+                "observed": {},
+                "state": {
+                  "enum": ["pending", "matches", "differs", "unavailable"]
+                }
+              }
+            }
+          },
+          "externalEvidence": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["twoRenderedClients", "pauseResume", "ci", "video"],
+            "properties": {
+              "twoRenderedClients": {
+                "const": "not_assessed"
+              },
+              "pauseResume": {
+                "const": "not_assessed"
+              },
+              "ci": {
+                "const": "not_assessed"
+              },
+              "video": {
+                "const": "not_assessed"
+              }
+            }
+          }
+        }
+      },
+      "ReplayInspection": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["report", "currentState", "currentObservedAt"],
+        "properties": {
+          "report": {
+            "$ref": "#/components/schemas/ReplayReport"
+          },
+          "currentState": {
+            "enum": ["same", "changed", "unavailable"]
+          },
+          "currentObservedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "ReplayDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["run", "progress", "scenario", "attempts", "inspection"],
+        "properties": {
+          "run": {
+            "$ref": "#/components/schemas/ReplayRun"
+          },
+          "progress": {
+            "$ref": "#/components/schemas/ReplayProgress"
+          },
+          "scenario": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["scenarioId", "verification", "closedAt", "report"],
+            "properties": {
+              "scenarioId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "verification": {
+                "enum": ["pending", "conformant", "non_conformant", "inconclusive"]
+              },
+              "closedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "report": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ReplayReport"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "attempts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "runId",
+                "lineNumber",
+                "batchIndex",
+                "ingestionId",
+                "eventId",
+                "state",
+                "outcome",
+                "reasonCode",
+                "httpStatus",
+                "diagnostic",
+                "startedAt",
+                "finalizedAt"
+              ],
+              "properties": {
+                "runId": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+                },
+                "lineNumber": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 24
+                },
+                "batchIndex": {
+                  "const": 0
+                },
+                "ingestionId": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+                },
+                "eventId": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "state": {
+                  "enum": ["in_flight", "classified", "uncertain", "technical_failure"]
+                },
+                "outcome": {
+                  "anyOf": [
+                    {
+                      "enum": ["accepted", "duplicate", "rejected"]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "reasonCode": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "httpStatus": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 100,
+                      "maximum": 599
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "diagnostic": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": ["code", "truncated"],
+                      "properties": {
+                        "code": {
+                          "enum": [
+                            "TRANSPORT_UNCERTAIN",
+                            "RESPONSE_PENDING",
+                            "RESPONSE_INVALID",
+                            "JOURNAL_UNCERTAIN",
+                            "NOT_ADMITTED",
+                            "PROCESSING_FAILED",
+                            "API_RESTARTED",
+                            "USER_RESTARTED",
+                            "VERIFICATION_CLOSED"
+                          ]
+                        },
+                        "truncated": {
+                          "type": "boolean"
+                        },
+                        "httpStatus": {
+                          "type": "integer",
+                          "minimum": 100,
+                          "maximum": 599
+                        },
+                        "receiptRevision": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "complete": {
+                          "type": "boolean"
+                        },
+                        "resultsAvailable": {
+                          "type": "boolean"
+                        },
+                        "admission": {
+                          "enum": ["admitted", "not_admitted", "unknown"]
+                        }
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "startedAt": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "finalizedAt": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            },
+            "maxItems": 24
+          },
+          "inspection": {
+            "$ref": "#/components/schemas/ReplayInspection"
+          }
+        }
+      },
+      "ReplayHistory": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["items", "nextCursor"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ReplayRun"
+            },
+            "maxItems": 100
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 512
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
       }
     }
   }
