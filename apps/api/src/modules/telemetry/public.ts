@@ -6,3 +6,6 @@ export { encodeIdentity, decodeIdentity } from './domain/identity.js';
 export { observedInstantUtc } from './domain/observed-instant.js';
 export { vehicleState } from './domain/event.js';
 export type { EventView, VehicleState } from './domain/event.js';
+export { validateEvent, eventView, isOverspeed } from './domain/event.js';
+export { changeFrame } from './application/change-message.js';
+export type { ChangeMessage } from './application/change-message.js';

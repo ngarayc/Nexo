@@ -30,6 +30,17 @@ import {
   compareObservedInstant,
 } from '/app/apps/api/dist/modules/telemetry/domain/observed-instant.js';
 import { OriginalJson } from '/app/apps/api/dist/modules/telemetry/domain/original-json.js';
+import { validateEvent } from '/app/apps/api/dist/modules/telemetry/domain/event.js';
+import {
+  changeMessage,
+  changeFrame,
+} from '/app/apps/api/dist/modules/telemetry/application/change-message.js';
+import {
+  DispatchOutbox,
+  OutboxReadiness,
+} from '/app/apps/api/dist/modules/realtime/application/dispatch.js';
+import { PostgresOutboxStore } from '/app/apps/api/dist/modules/realtime/adapters/postgres/outbox-store.js';
+import { storedFrame } from '/app/apps/api/dist/modules/realtime/adapters/postgres/stored-frame.js';
 
 const scenario = process.env.NEXO_PERSISTENCE_SCENARIO;
 const prefix = `${scenario}:${randomUUID()}:`;
@@ -642,22 +653,41 @@ const cases = {
       "UPDATE ingestion_batches SET state='complete',next_index=1,revision=1 WHERE ingestion_id=$1",
       [receipt],
     );
+    const validated = validateEvent(OriginalJson.parse(input));
+    assert.equal(validated.valid, true);
     for (const type of ['telemetry.accepted', 'vehicle.updated', 'alert.created']) {
       const messageId = randomUUID();
-      const payload = JSON.stringify({
-        type,
-        eventId: id,
-        vehicleId: accountKey,
-        observedAt: data.observedAtOriginal,
-      });
+      const message = changeMessage(type, validated.event, messageId);
+      const payload = JSON.stringify(message);
       await db.insert(outboxMessages).values({
         messageId,
         eventPk: event.eventPk,
         type,
         payload,
-        frameBytes: Buffer.byteLength(`id:${messageId}\nevent:${type}\ndata:${payload}\n\n`),
+        frameBytes: Buffer.byteLength(changeFrame(message)),
       });
     }
+    // Comparar las seis tablas completas una vez terminado el trabajo de
+    // publicación. Recrear contenedores debe conservar también esas marcas;
+    // no se excluye metadata ni se desactiva el dispatcher del servidor.
+    const dispatcher = new DispatchOutbox(
+      new PostgresOutboxStore(runtime),
+      storedFrame,
+      () => {},
+      new OutboxReadiness(),
+    );
+    while (await dispatcher.group(new globalThis.AbortController().signal)) {
+      /* drenar los grupos */
+    }
+    assert.equal(
+      (
+        await runtime.query(
+          'SELECT count(*)::int AS n FROM outbox_messages WHERE published_at IS NULL',
+        )
+      ).rows[0].n,
+      0,
+    );
+    assert.equal(dispatcher.readiness.healthy, true);
   },
 };
 

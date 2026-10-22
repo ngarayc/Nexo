@@ -2,7 +2,7 @@
 
 ## Controles de esta base
 
-Solo web publica loopback mediante Compose. Acceso verifica Argon2id contra PostgreSQL, sesiones absolutas, origen/CSRF, capacidad, cuotas y políticas explícitas de rutas; su contrato y límites están en [acceso](access.md). API key de ingesta y controles SSE se incorporan con sus módulos. No hay telemetría ficticia para simular esas capacidades.
+Solo web publica loopback mediante Compose. Acceso verifica Argon2id contra PostgreSQL, sesiones absolutas, origen/CSRF, capacidad, cuotas y políticas explícitas de rutas; su contrato y límites están en [acceso](access.md). La ingesta comprueba API key antes del parser; [SSE](realtime.md) requiere sesión, origen válido si existe, cuota, cupos y reautorización por envío, con cierre por revocación/vencimiento. No hay telemetría ficticia para simular esas capacidades.
 
 Las credenciales de GitHub se utilizan mediante las herramientas de autenticación y no forman parte del repositorio, del frontend o de las imágenes. `.gitignore` excluye entornos reales, dependencias, builds y reportes. Los artefactos publicables se seleccionarán explícitamente; trazas, HAR, cookies y logs crudos no se suben por defecto.
 
@@ -22,7 +22,7 @@ La ausencia de hallazgos es evidencia del árbol y la base de avisos consultados
 
 ## Verificación pendiente
 
-El primer CI remoto pasó y la base se promovió a test por PR. Las [demostraciones negativas y recuperación](control-demonstrations.md) comprobaron bloqueo mediante reglas equivalentes. La revisión humana de main y seguridad de ingesta/SSE conservan comprobaciones pendientes en sus issues. Cada imagen nueva repite el escaneo: resultados anteriores no acreditan una revisión posterior.
+El primer CI remoto pasó y la base se promovió a test por PR. Las [demostraciones negativas y recuperación](control-demonstrations.md) comprobaron bloqueo mediante reglas equivalentes. Cada candidato nuevo mantiene CI, escaneos y revisión humana propia hacia main; las comprobaciones de ingesta/SSE se registran en sus incrementos y no se deducen del primer CI. Cada imagen nueva repite el escaneo: resultados anteriores no acreditan una revisión posterior.
 
 ## Escaneo previo a la publicación inicial
 

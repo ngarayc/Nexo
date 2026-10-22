@@ -3,7 +3,7 @@
   "info": {
     "title": "Nexo API",
     "version": "0.1.0",
-    "description": "Contratos efectivos del backend E1. Monolito NestJS y demo HTTP local. SSE, reproductor y CR-01 no están implementados en esta versión. Ver api.md para semántica de incertidumbre, límites de transporte y ejemplos."
+    "description": "Contratos efectivos del backend E1 y transporte SSE E2. Monolito NestJS y demo HTTP local. Reproductor, dashboard y filtro CR-01 mantienen sus incrementos posteriores. Ver api.md y realtime.md para incertidumbre, límites y recuperación."
   },
   "servers": [
     {
@@ -49,10 +49,10 @@
       "get": {
         "operationId": "readHealth",
         "summary": "Salud pública mínima",
-        "description": "",
+        "description": "Tiempo real requiere revisión satisfactoria reciente, ningún fallo pendiente y edad de pendientes no mayor de treinta segundos. No detiene la ingesta ni inventa salud por recibir heartbeat.",
         "responses": {
           "200": {
-            "description": "Base y esquema disponibles",
+            "description": "Base, esquema y dispatcher disponibles",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -70,7 +70,7 @@
             }
           },
           "503": {
-            "description": "Base/esquema no disponible",
+            "description": "Base, esquema o dispatcher no disponible",
             "headers": {
               "Cache-Control": {
                 "description": "no-store",
@@ -628,7 +628,7 @@
       "get": {
         "operationId": "readSnapshot",
         "summary": "Vista coherente de flota y alertas",
-        "description": "Una transacción corta REPEATABLE READ READ ONLY; cliente liberado antes de transmitir HTTP. schemaVersion=1 e instanceId del proceso API. No implica que el stream esté implementado.",
+        "description": "Una transacción corta REPEATABLE READ READ ONLY; cliente liberado antes de transmitir HTTP. Captura schemaVersion=1 e instanceId al comenzar la consulta. Comparar con stream.ready; una transición concurrente puede devolver la generación anterior.",
         "responses": {
           "200": {
             "description": "Colecciones de la misma vista confirmada",
@@ -644,6 +644,71 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Snapshot"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      }
+    },
+    "/stream": {
+      "get": {
+        "operationId": "streamCommittedChanges",
+        "summary": "Notificaciones SSE de cambios confirmados",
+        "description": "Sesión vigente; si Origin existe debe coincidir con el canónico. Ready primero, heartbeat cada quince segundos. Cuatro conexiones por SID, dieciséis globales y treinta aperturas/minuto por cuenta. Sin replay histórico por Last-Event-ID; resincronizar snapshot al reconectar/cambiar generación. La API key no autoriza. Ver realtime.md.",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "description": "GET del mismo origen puede omitirlo; si se aporta debe coincidir exactamente con PUBLIC_ORIGIN.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Last-Event-ID",
+            "in": "header",
+            "required": false,
+            "description": "No solicita retransmisión histórica. Siempre recuperar snapshot al reconectar.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stream abierto; cada trama termina en línea vacía y data contiene un JSON de control o dominio. OpenAPI describe el cuerpo como stream de texto; x-sse-message-schema identifica los JSON por trama.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "private, no-store, no-transform"
+                }
+              }
+            },
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                },
+                "x-sse-message-schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/StreamControl"
+                    },
+                    {
+                      "$ref": "#/components/schemas/StreamChange"
+                    }
+                  ]
                 }
               }
             }
@@ -1037,7 +1102,7 @@
           }
         },
         "additionalProperties": false,
-        "description": "Flota y alertas de una transacción común REPEATABLE READ READ ONLY. La instancia cambia al reiniciar API."
+        "description": "Flota y alertas de una transacción común REPEATABLE READ READ ONLY. La generación cambia al reiniciar API o recuperar degradación SSE; comparar con stream.ready."
       },
       "HistoryInput": {
         "type": "object",
@@ -1402,6 +1467,342 @@
           }
         },
         "additionalProperties": false
+      },
+      "StreamControl": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["type", "schemaVersion", "instanceId", "heartbeatMilliseconds"],
+            "properties": {
+              "type": {
+                "const": "stream.ready"
+              },
+              "schemaVersion": {
+                "const": 1
+              },
+              "instanceId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "heartbeatMilliseconds": {
+                "const": 15000
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "schemaVersion", "instanceId"],
+            "properties": {
+              "type": {
+                "const": "stream.heartbeat"
+              },
+              "schemaVersion": {
+                "const": 1
+              },
+              "instanceId": {
+                "type": "string",
+                "format": "uuid"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "schemaVersion", "instanceId", "reason"],
+            "properties": {
+              "type": {
+                "const": "stream.resync-required"
+              },
+              "schemaVersion": {
+                "const": 1
+              },
+              "instanceId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "reason": {
+                "const": "CLIENT_CAPACITY"
+              }
+            },
+            "additionalProperties": false
+          }
+        ],
+        "description": "JSON de controles SSE sin id de dominio. Resync es best effort; cierre exige recuperar snapshot aunque no llegue el control."
+      },
+      "StreamChange": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "messageId",
+              "schemaVersion",
+              "type",
+              "eventId",
+              "vehicleId",
+              "observedAt",
+              "data"
+            ],
+            "properties": {
+              "messageId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "schemaVersion": {
+                "const": 1
+              },
+              "type": {
+                "const": "telemetry.accepted"
+              },
+              "eventId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+              },
+              "vehicleId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+              },
+              "observedAt": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+              },
+              "data": {
+                "type": "object",
+                "required": [
+                  "eventId",
+                  "vehicleId",
+                  "observedAt",
+                  "latitude",
+                  "longitude",
+                  "speedKph",
+                  "ignitionOn"
+                ],
+                "properties": {
+                  "eventId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+                  },
+                  "vehicleId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+                  },
+                  "observedAt": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+                  },
+                  "latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "speedKph": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "ignitionOn": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "messageId",
+              "schemaVersion",
+              "type",
+              "eventId",
+              "vehicleId",
+              "observedAt",
+              "data"
+            ],
+            "properties": {
+              "messageId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "schemaVersion": {
+                "const": 1
+              },
+              "type": {
+                "const": "vehicle.updated"
+              },
+              "eventId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+              },
+              "vehicleId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+              },
+              "observedAt": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+              },
+              "data": {
+                "type": "object",
+                "required": [
+                  "eventId",
+                  "vehicleId",
+                  "observedAt",
+                  "latitude",
+                  "longitude",
+                  "speedKph",
+                  "ignitionOn",
+                  "state"
+                ],
+                "properties": {
+                  "eventId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+                  },
+                  "vehicleId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+                  },
+                  "observedAt": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+                  },
+                  "latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "speedKph": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "ignitionOn": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "enum": ["OFF", "MOVING", "STOPPED"]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "messageId",
+              "schemaVersion",
+              "type",
+              "eventId",
+              "vehicleId",
+              "observedAt",
+              "data"
+            ],
+            "properties": {
+              "messageId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "schemaVersion": {
+                "const": 1
+              },
+              "type": {
+                "const": "alert.created"
+              },
+              "eventId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+              },
+              "vehicleId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+              },
+              "observedAt": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+              },
+              "data": {
+                "type": "object",
+                "required": [
+                  "eventId",
+                  "vehicleId",
+                  "observedAt",
+                  "latitude",
+                  "longitude",
+                  "speedKph",
+                  "ignitionOn",
+                  "type"
+                ],
+                "properties": {
+                  "eventId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+                  },
+                  "vehicleId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+                  },
+                  "observedAt": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+                  },
+                  "latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "speedKph": {
+                    "type": "number",
+                    "exclusiveMinimum": 80
+                  },
+                  "ignitionOn": {
+                    "type": "boolean"
+                  },
+                  "type": {
+                    "const": "OVERSPEED"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ],
+        "description": "JSON del cambio confirmado. SSE id coincide con messageId y event con type. Top-level IDs/instante coinciden con data; esa igualdad se valida en el servidor. Puede repetirse un UUID ante marcado no confirmado."
       }
     }
   }

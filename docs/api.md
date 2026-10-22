@@ -1,26 +1,27 @@
 # API de Nexo
 
-La [issue #24](https://github.com/ngarayc/Nexo/issues/24) consolida el contrato del backend E1. La descripción [OpenAPI 3.1.1 versionada](openapi.json) enumera las trece operaciones actuales. Las pruebas HTTP, reglas de dominio y respuestas reales conservan la autoridad sobre su comportamiento; OpenAPI no sustituye la validación del servidor.
+La [issue #24](https://github.com/ngarayc/Nexo/issues/24) consolida el contrato del backend E1. La descripción [OpenAPI 3.1.1 versionada](openapi.json) enumera las catorce operaciones actuales, incluido el transporte SSE de la [issue #26](https://github.com/ngarayc/Nexo/issues/26). Las pruebas HTTP, reglas de dominio y respuestas reales conservan la autoridad sobre su comportamiento; OpenAPI no sustituye la validación del servidor.
 
-Origen predeterminado: `http://localhost:8080`; prefijo: `/api`. Una copia de comprobación puede configurar otro puerto/origen. El perfil soportado es HTTP local con una instancia API. No habilita CORS ni ofrece transporte de producción. SSE, reproductor, dashboard y filtro CR-01 conservan sus incrementos posteriores y no aparecen como operaciones disponibles.
+Origen predeterminado: `http://localhost:8080`; prefijo: `/api`. Una copia de comprobación puede configurar otro puerto/origen. El perfil soportado es HTTP local con una instancia API. No habilita CORS ni ofrece transporte de producción. Reproductor, dashboard y filtro CR-01 conservan sus incrementos posteriores y no aparecen como operaciones disponibles.
 
 ## Rutas y acceso
 
-| Método y ruta                           | Acceso                | Resultado                                         |
-| --------------------------------------- | --------------------- | ------------------------------------------------- |
-| `GET /api`                              | Público               | Identidad mínima del servicio                     |
-| `GET /api/health`                       | Público               | Salud de base/esquema, 200 o 503                  |
-| `POST /api/session`                     | Origin canónico       | Login, cookie, usuario, vencimiento y token CSRF  |
-| `GET /api/session`                      | Sesión                | Misma sesión, sin renovación del plazo            |
-| `DELETE /api/session`                   | Sesión, Origin y CSRF | 204, revocación de ese SID                        |
-| `POST /api/events/batch`                | X-API-Key             | Admisión durable y resultado o estado explícito   |
-| `GET /api/ingestions/:ingestionId`      | X-API-Key             | Recibo, incluso pendiente o con fallo técnico     |
-| `GET /api/demo/ingestions/:ingestionId` | Sesión y modo demo    | Mismo recibo sin entregar la API key al navegador |
-| `GET /api/vehicles?q=...`               | Sesión                | Flota, total filtrado y resumen global            |
-| `GET /api/vehicles/:vehicleId/events`   | Sesión                | Historial completo ascendente                     |
-| `POST /api/queries/vehicle-events`      | Sesión, Origin y CSRF | El mismo historial transportando el ID en JSON    |
-| `GET /api/alerts`                       | Sesión                | Todas las alertas históricas, orden descendente   |
-| `GET /api/snapshot`                     | Sesión                | Flota y alertas de una vista SQL coherente        |
+| Método y ruta                           | Acceso                          | Resultado                                         |
+| --------------------------------------- | ------------------------------- | ------------------------------------------------- |
+| `GET /api`                              | Público                         | Identidad mínima del servicio                     |
+| `GET /api/health`                       | Público                         | Salud de base/esquema/dispatcher, 200 o 503       |
+| `POST /api/session`                     | Origin canónico                 | Login, cookie, usuario, vencimiento y token CSRF  |
+| `GET /api/session`                      | Sesión                          | Misma sesión, sin renovación del plazo            |
+| `DELETE /api/session`                   | Sesión, Origin y CSRF           | 204, revocación de ese SID                        |
+| `POST /api/events/batch`                | X-API-Key                       | Admisión durable y resultado o estado explícito   |
+| `GET /api/ingestions/:ingestionId`      | X-API-Key                       | Recibo, incluso pendiente o con fallo técnico     |
+| `GET /api/demo/ingestions/:ingestionId` | Sesión y modo demo              | Mismo recibo sin entregar la API key al navegador |
+| `GET /api/vehicles?q=...`               | Sesión                          | Flota, total filtrado y resumen global            |
+| `GET /api/vehicles/:vehicleId/events`   | Sesión                          | Historial completo ascendente                     |
+| `POST /api/queries/vehicle-events`      | Sesión, Origin y CSRF           | El mismo historial transportando el ID en JSON    |
+| `GET /api/alerts`                       | Sesión                          | Todas las alertas históricas, orden descendente   |
+| `GET /api/snapshot`                     | Sesión                          | Flota y alertas de una vista SQL coherente        |
+| `GET /api/stream`                       | Sesión; Origin válido si existe | SSE de cambios confirmados y controles            |
 
 La API key procede del entorno del servidor/productor. No autoriza rutas de sesión ni se entrega a Angular. Una cookie o un token CSRF tampoco sustituyen la API key. Las rutas sin política explícita se deniegan por defecto.
 
@@ -77,9 +78,13 @@ Flota devuelve items, total filtrado, overallTotal y summary global. q es subcad
 
 Historial usa identidad exacta y contiene todos los eventos aceptados por `(instante, eventId)` ascendente. Vehículo desconocido: 200 con vehicleId, items vacío y total cero. El POST `{"vehicleId":"VEH-001"}` usa el mismo caso de uso; resuelve IDs largos o unidades no representables fielmente en URL. Sobre datos estables, GET/POST devuelven igual contenido, orden y total. Entre peticiones separadas puede haber commits distintos.
 
-Alertas devuelve items/total/overallTotal globales, por instante/eventId descendente. Esta versión todavía no implementa el filtro vehicleId de CR-01; tampoco existe su futuro POST complementario. El snapshot reúne vehicles y alerts con schemaVersion 1 e instanceId, de una misma transacción de lectura. Las colecciones son completas y no tienen paginación o truncamiento implícitos.
+Alertas devuelve items/total/overallTotal globales, por instante/eventId descendente. Esta versión todavía no implementa el filtro vehicleId de CR-01; tampoco existe su futuro POST complementario. El snapshot reúne vehicles y alerts con schemaVersion 1 e instanceId, de una misma transacción de lectura. Comparar generación con stream.ready; cambia al reiniciar API o recuperar degradación del dispatcher. Las colecciones son completas y no tienen paginación o truncamiento implícitos.
 
 Las vistas omiten extras arbitrarios y detalles internos. observedAt se serializa en UTC con Z y fracción exacta; no se limita a Date o nanosegundos. La presentación posterior usa español, America/Bogota y 24 horas. [Consultas](queries.md) describe campos, orden, cuotas, consistencia, planes y costes.
+
+## Actualizaciones en vivo
+
+El [protocolo SSE](realtime.md) define ready primero, heartbeat cada quince segundos, las notificaciones telemetry.accepted/vehicle.updated/alert.created y resincronización mediante snapshot. La API key no abre streams; no existe replay histórico por Last-Event-ID. La distribución local puede repetir un UUID ante marcado no confirmado y no acredita un ACK del navegador. Salud y acceso se vuelven a comprobar durante el uso.
 
 ## Límites y errores
 
@@ -90,6 +95,8 @@ Las vistas omiten extras arbitrarios y detalles internos. observedAt se serializ
 | Consulta de recibo por API key   | 1.200 lecturas/minuto, separadas del contador POST                                                 |
 | Lecturas de sesión, GET y POST   | 600/minuto compartidas por cuenta; 16 operaciones y pool compartido de cuatro conexiones           |
 | Cuerpo de historial JSON         | 2 MiB y recepción de 15 segundos, tras comprobar acceso y reservar cupo                            |
+| Aperturas SSE                    | 30/minuto por cuenta; cuatro streams por SID y dieciséis globales                                  |
+| Salida SSE por conexión          | 1.000 tramas/2 MiB, incluyendo writableLength; cierre tras 15 s sin progreso                       |
 | Espera HTTP de ingesta           | 60 segundos totales; proxy 75; no retiene conexión SQL mientras espera                             |
 | Espera/sentencia/transacción SQL | Adquisición 2 s, lock 1 s, sentencia 5 s, cliente 6 s y transacción 10 s donde aplica              |
 

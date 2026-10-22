@@ -37,17 +37,27 @@ export class AccessGuard implements CanActivate {
     if (
       policy !== 'session-read' &&
       policy !== 'session-query' &&
+      policy !== 'session-stream' &&
       policy !== 'session-write' &&
       policy !== 'demo-read'
     )
       throw accessError('ACCESS_POLICY_REQUIRED');
     this.sessions.require(request);
+    // EventSource del mismo origen puede omitir Origin en GET. Si lo aporta,
+    // debe coincidir; un origen ajeno no consume cuota ni abre la respuesta.
+    if (policy === 'session-stream' && request.get('Origin') !== undefined) {
+      this.sessions.requireOrigin(request);
+    }
     if (policy === 'session-write' || policy === 'session-query') {
       this.sessions.requireOrigin(request);
       this.sessions.requireCsrf(request);
     }
     if (policy !== 'session-write') {
-      await this.limits.consume('read', request, http.getResponse<Response>());
+      await this.limits.consume(
+        policy === 'session-stream' ? 'stream' : 'read',
+        request,
+        http.getResponse<Response>(),
+      );
     }
     return true;
   }

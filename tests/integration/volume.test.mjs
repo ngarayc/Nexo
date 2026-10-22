@@ -20,7 +20,7 @@ test(
       assert.equal(result.metrics.events, 10000);
       assert.equal(result.metrics.vehicles, 100);
       assert.equal(result.metrics.alerts, 4000);
-      assert.ok(result.metrics.peakRuntimeConnections <= 15);
+      assert.ok(result.metrics.peakRuntimeConnections <= 16);
       mkdirSync('reports', { recursive: true });
       writeFileSync('reports/volume-sample.json', JSON.stringify(result.metrics) + '\n');
     } finally {

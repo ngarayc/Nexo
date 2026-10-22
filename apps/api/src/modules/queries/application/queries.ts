@@ -48,7 +48,7 @@ const alertView = (items: readonly AlertView[]): AlertCollection => ({
 export class DomainQueries {
   constructor(
     private readonly model: ReadModel,
-    private readonly instanceId: string,
+    private readonly instance: { readonly id: string },
   ) {}
   async fleet(q = '') {
     return fleetView(await this.model.fleet(), q);
@@ -61,10 +61,11 @@ export class DomainQueries {
     return alertView(await this.model.alerts());
   }
   async snapshot() {
+    const instanceId = this.instance.id;
     const result = await this.model.snapshot();
     return {
       schemaVersion: 1 as const,
-      instanceId: this.instanceId,
+      instanceId,
       vehicles: fleetView(result.vehicles, ''),
       alerts: alertView(result.alerts),
     };

@@ -5,6 +5,7 @@ export type AccessPolicy =
   | 'login'
   | 'session-read'
   | 'session-query'
+  | 'session-stream'
   | 'session-write'
   | 'producer'
   | 'demo-read';

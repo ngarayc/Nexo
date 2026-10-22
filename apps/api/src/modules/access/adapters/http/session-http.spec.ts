@@ -47,6 +47,14 @@ class UnclassifiedController {
   }
 }
 
+// El transporte de sesión conserva su doble SQL; SSE tiene su suite propia.
+vi.mock('../../../realtime/public.js', async () => {
+  const { Module } = await import('@nestjs/common');
+  class RealtimeStubModule {}
+  Module({})(RealtimeStubModule);
+  return { RealtimeModule: RealtimeStubModule };
+});
+
 describe('sesión HTTP con bibliotecas reales y credenciales sustituidas explícitamente', () => {
   let app: NestExpressApplication;
   const origin = 'http://localhost:8080';
