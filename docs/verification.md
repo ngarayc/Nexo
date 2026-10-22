@@ -1,5 +1,11 @@
 # Verificación
 
+## Aprovisionamiento de Chromium — #48
+
+El [CI propio de PR47, 39784174425](https://github.com/ngarayc/Nexo/actions/runs/39784174425), origen b641ee9, pasó calidad, unidades, seguridad e integración 107/107, pero agotó 600 segundos durante descargas apt de fuentes/libglib en install --with-deps, antes de ejecutar navegador. El push 39784168398 del mismo código pasó. Ambos resultados permanecen diferenciados; el push aprobado no reemplaza la PR fallida. Los fallos de aprovisionamiento anteriores también se conservan.
+
+La preparación nueva descarga el shell fijado y comprueba el navegador real antes de instalar dependencias del sistema. Pasaron los 43 controles de CI, incluidos seis nuevos; el probe local abrió Chromium y comprobó DOM. Una comprobación negativa rechazó explícitamente deshabilitar la validación nativa. No se instalaron paquetes del Ubuntu local para estas verificaciones. El CI del candidato corregido debe repetir el inventario completo y producir sus cinco reportes antes de promover.
+
 ## Componentes del emisor — avance parcial E3-I03 / #42
 
 Pasaron 397 pruebas unitarias de API, sin omisiones: las 340 anteriores más 27 de comandos/recibos, 22 del adaptador y 8 de temporización. Los 13 casos SQL del diario pasaron con la API `sha256:e6462a70922abf9a4cde14f2a22160817123c74cfab8e86684739cc7cd958030`. El nuevo cierre terminal falló inicialmente porque el caso omitía closeCode obligatorio; se completó el caso sin alterar la restricción SQL. Pérdidas de respuesta antes/después de COMMIT y espera real de la barrera quedaron comprobadas.
