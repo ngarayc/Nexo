@@ -59,3 +59,7 @@ La selección de variantes usa [las imágenes oficiales de Node](https://github.
 ## Consultas coherentes
 
 [REPEATABLE READ de PostgreSQL 18](https://www.postgresql.org/docs/18/transaction-iso.html#XACT-REPEATABLE-READ) aporta la vista común del snapshot, comprobada intercalando una ingesta real entre sus lecturas. [Índices hash](https://www.postgresql.org/docs/18/indexes-types.html#INDEXES-TYPES-HASH) y [ORDER BY](https://www.postgresql.org/docs/18/sql-select.html#SQL-ORDERBY) distinguen igualdad de ordenación; Nexo conserva comparación por identidad completa y orden exacto separado. [Consultas](queries.md) documenta la adaptación, filtros literales, presupuesto, variante JSON de historial y coste de devolver colecciones completas, con un escenario HTTP de 10.000 eventos y revisión del plan de historial. La entrega SSE conserva su incremento propio.
+
+## Descripción de API
+
+[OpenAPI 3.1.1](https://spec.openapis.org/oas/v3.1.1.html) define la descripción de operaciones, seguridad y esquemas. Nexo mantiene [su contrato versionado](openapi.json) y [la guía de API](api.md), contrastados con los controladores efectivos. El esquema de lote permite posiciones inválidas para preservar clasificación individual; bytes UTF-8, precisión temporal, igualdad y recibos inciertos requieren además reglas y pruebas del servidor. No se incorpora un generador o validador de clientes como sustituto de esas garantías.
