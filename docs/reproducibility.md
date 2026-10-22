@@ -26,7 +26,7 @@ Conservar el nombre generado hasta terminar; identifica exclusivamente sus conte
 
 ## Recorrido
 
-Comprobar `/api/health`, ingresar con demo/demo, recargar y cerrar sesión. El acceso debe verificar PostgreSQL real; la pantalla actual conserva la base de acceso y el dashboard se incorpora en E2. El backend E1 expone las [consultas autenticadas](queries.md); el recorrido nativo posterior comprueba su contenido. Repetir con dos contextos confirma sesiones independientes. Reiniciar API invalida sus sesiones y requiere login nuevo, sin borrar el usuario.
+Comprobar `/api/health`, ingresar con demo/demo, navegar entre Flota/Alertas, recargar y cerrar sesión. El acceso verifica PostgreSQL real y el [dashboard](dashboard.md) confirma la base antes de mostrar totales; una base nueva está vacía y no inicia un replay automáticamente. El backend expone las [consultas autenticadas](queries.md). Repetir con dos contextos confirma sesiones independientes. Reiniciar API invalida sus sesiones y requiere login nuevo, sin borrar el usuario o la telemetría.
 
 ```sh
 WEB_PORT=8081 docker compose --project-name "$NEXO_VERIFY_PROJECT" --env-file .env.local -f infra/compose.yaml restart api
@@ -69,4 +69,4 @@ Solo si ese proyecto se creó para esta comprobación y sus datos son sintético
 WEB_PORT=8081 docker compose --project-name "$NEXO_VERIFY_PROJECT" --env-file .env.local -f infra/compose.yaml down --volumes
 ```
 
-No ejecutar limpieza global ni reutilizar este comando sobre el proyecto habitual. Cada incremento conserva controles remotos y revisión humana de su candidato a main; una copia limpia no los sustituye. En E1 la integración también procesa ambos oráculos y 10.000 eventos ordinarios en sus propios stacks. Ese recorrido no acredita todavía el reproductor E3 o dos clientes con tiempo real E2. [Verificación](verification.md) identifica el SHA efectivamente comprobado.
+No ejecutar limpieza global ni reutilizar este comando sobre el proyecto habitual. Cada incremento conserva controles remotos y revisión humana de su candidato a main; una copia limpia no los sustituye. La integración procesa ambos oráculos y 10.000 eventos ordinarios en sus propios stacks; navegador comprueba además dos clientes con tiempo real, carreras y recuperación. El reproductor controlable E3 y la copia limpia del SHA final conservan sus comprobaciones propias. [Verificación](verification.md) identifica los SHAs efectivamente ejecutados; este procedimiento no afirma que una versión posterior ya haya pasado ese recorrido.

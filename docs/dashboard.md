@@ -32,7 +32,7 @@ AppShell mantiene cabecera, acceso y conexión a través del router; FleetPage c
 
 Las tablas usan caption, encabezados con scope y regiones de desplazamiento enfocables, siguiendo [W3C WAI](https://www.w3.org/WAI/tutorials/tables/one-header/). Los estados tienen texto además de color. El historial es una región dentro de la página, con foco explícito y cierre por teclado; no es un modal que bloquee el resto. En pantallas estrechas las tablas desplazan sus columnas dentro de su contenedor.
 
-La vista materializa todas las filas de sus colecciones; no hay paginación de servidor o promesa de capacidad productiva para miles de vehículos. Los reintentos y costes de descarga completa son los documentados en sincronización. La prueba integral de dos navegadores y fallos controlados mantiene E2-I05.
+La vista materializa todas las filas de sus colecciones; no hay paginación de servidor o promesa de capacidad productiva para miles de vehículos. Los reintentos y costes de descarga completa son los documentados en sincronización. La [issue #35](https://github.com/ngarayc/Nexo/issues/35) añade dos navegadores con el fixture original, carreras y recuperación; sus resultados/candidatos están en verificación.
 
 ## Comprobaciones
 
