@@ -33,7 +33,7 @@ test('ISO con coma, forma básica y offset conserva orden exacto y se presenta s
     {
       eventId: id + '-c',
       vehicleId: id,
-      observedAt: '2026-01-01T00:00:01,999999999999-05:00',
+      observedAt: '2026-01-01T00:00:01,99999999999999999991-05:00',
       latitude: 14.602,
       longitude: -90.498,
       speedKph: 35,
@@ -72,7 +72,7 @@ test('ISO con coma, forma básica y offset conserva orden exacto y se presenta s
   expect((await response.json()).items.map((event) => event.observedAt)).toEqual([
     '2026-01-01T05:00:01.5Z',
     '2026-01-01T05:00:01.75Z',
-    '2026-01-01T05:00:01.999999999999Z',
+    '2026-01-01T05:00:01.99999999999999999991Z',
   ]);
   expect(errors).toEqual([]);
 });

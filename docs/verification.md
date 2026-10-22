@@ -1,5 +1,13 @@
 # Verificación de Nexo
 
+## Presentación temporal consistente en WebKit — #80
+
+La preparación ampliada de E6 detectó una diferencia real del parser nativo de fechas: WebKit27.2 redondeaba una fracción canónica de12 dígitos al segundo siguiente y rechazaba otra de20. El recorrido ISO con API/PostgreSQL/SSE reales y la imagen del cierre608152b reprodujo el fallo en la tabla: recibió00:00:02 donde debía mostrar00:00:01. Un primer intento del runner no inició casos por un argumento CLI incorrecto; se conservó como fallo de preparación y no se contó como evidencia del producto. El segundo sí ejecutó WebKit y conservó la aserción fallida.
+
+El formateador ahora obtiene los milisegundos mediante el lector de instantes compartido y trunca la fracción solo para presentar. Conserva Bogotá24h, el segundo correcto, cambio de día e instantes negativos; el dominio/DTO conserva toda su precisión. Pasaron sus tres pruebas, tipos/lint y seis recorridos reales focalizados: ISO y gráfico adversarial en Chromium, Firefox y WebKit, sin omisiones. El caso ISO amplía la fracción canónica comprobada a20 dígitos sin relajar fechas, orden o errores esperados.
+
+Solo se reconstruyó y reescaneó la imagen web afectada, `sha256:e12844230f53dc51a37207f8fdfd18a526e0adc62515c1c4780077ca86e8dca2`: inventario completo y cero HIGH/CRITICAL. Las imágenes API/DB del cierre ordinario permanecieron iguales. No se repitió la batería local general ya aprobada. Este defecto reproducido en WebKit es distinto de la exploración cruda de #73; tampoco sustituye el recorrido ampliado final de E6 o el CI remoto del nuevo candidato.
+
 ## Cierre local ordinario E5 — #74
 
 La fuente `608152bac0137d2aa085314667189c32fd03b29d` completó una única batería local general al cierre de E5:463 pruebas API en46 archivos,122 Angular en27,127 PostgreSQL/HTTP y25 Chromium en19 archivos, sin fallos u omisiones. Los63 controles CI también pasaron. Quality, compilación, políticas de workflows/Compose,357 enlaces internos, fixtures y esquema quedaron comprobados. Se conservaron los oráculos20/2/2→0/22/2, identidades,20 eventos/8 vehículos/4 alertas y43 mensajes en sus escenarios propios.
