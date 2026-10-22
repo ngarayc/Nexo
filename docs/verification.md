@@ -8,6 +8,8 @@ La consolidación usa la consulta general de una sentencia y el lector JSON comp
 
 Lint de archivos afectados, enlaces y validación estructural OpenAPI oficial pasaron; el inventario AST coincide con las17 operaciones y33 esquemas descritos. No cambian fixtures, esquema, dependencias, Angular, SSE o políticas de acceso. El verificador de enlaces incluye ahora el nuevo informe raíz. Las pruebas locales fueron focalizadas; la batería local completa se reserva al cierre E4. UI #60, aceptación integral y revisión humana de CR-01 mantienen su estado pendiente; ninguna aprobación anterior los acredita.
 
+La primera publicación db75242 de esta API tuvo [CI propio39828497893](https://github.com/ngarayc/Nexo/actions/runs/39828497893) fallido: el trailer Refs terminaba en punto y el parser vigente lo rechazó correctamente. Calidad de fuentes pasó antes de esa comprobación; unidad/integración/sistema no se ejecutaron y no se acreditan cinco artefactos. [#62](https://github.com/ngarayc/Nexo/issues/62) admite un punto final opcional conservando números y comprobación de issues reales, con pruebas de formatos válidos/adversariales. El candidato corregido conserva sus checks propios; no se presenta el intento anterior como aprobado.
+
 ## Promoción integral de E3 a main
 
 [PR58](https://github.com/ngarayc/Nexo/pull/58#issuecomment-6346716237) promovió la fuente `de7fdb03b398ca5c35ae14bc5378b85a2c430ff8` a test `99912bf0ab4520767edb3150bbdb3ea0cf2bddbe`, árbol `5d86c1abdabd4d0e76d3432c509050662b6da9b4`, tras [CI propio39817992331](https://github.com/ngarayc/Nexo/actions/runs/39817992331), intento1, y cinco artefactos descargados/revalidados para checkout `bbb186657614f5d5ee1717977ad2a5fe524d84aa`:458API/90Angular/123PostgreSQL/14Chromium.

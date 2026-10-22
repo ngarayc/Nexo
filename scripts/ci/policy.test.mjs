@@ -97,6 +97,24 @@ test('Refs es un trailer explícito y admite varias issues sin duplicarlas', () 
   }
 });
 
+test('Refs admite un único punto final sin aceptar referencias parciales o puntuación intermedia', () => {
+  assert.deepEqual(issueReferences('feat: cambio\n\nRefs #57, #59.\n'), [57, 59]);
+  assert.deepEqual(issueReferences('Refs #2.\nRefs #3, #2\n'), [2, 3]);
+  for (const message of [
+    'Refs #0.',
+    'Refs #-1.',
+    'Refs #01.',
+    'Refs #2..',
+    'Refs #2.5',
+    'Refs #2 .',
+    'Refs #2, #3.extra',
+    'Refs #2., #3',
+    'Refs #2, #3. extra',
+    'Refs #9007199254740992.',
+  ])
+    assert.throws(() => issueReferences(message));
+});
+
 test('un número de PR, una issue ajena o inexistente no sirve de trazabilidad', () => {
   const issue = {
     number: 2,

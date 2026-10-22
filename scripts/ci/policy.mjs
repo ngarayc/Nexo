@@ -48,7 +48,7 @@ export function validateContext({ eventName, event, repositoryName, ref, sha }) 
 export function issueReferences(message) {
   const references = new Set();
   for (const line of message.split(/\r?\n/)) {
-    if (!/^Refs #[1-9]\d*(?:, #[1-9]\d*)*$/.test(line)) continue;
+    if (!/^Refs #[1-9]\d*(?:, #[1-9]\d*)*\.?$/.test(line)) continue;
     for (const match of line.matchAll(/#([1-9]\d*)/g)) {
       const number = Number(match[1]);
       if (!Number.isSafeInteger(number)) throw new Error('Referencia de issue inválida.');
