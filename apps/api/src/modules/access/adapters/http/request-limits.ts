@@ -10,6 +10,7 @@ export class RequestLimits implements OnModuleDestroy {
   private readonly stores: MemoryStore[] = [];
   private readonly login: RequestHandler;
   private readonly reads: RequestHandler;
+  private readonly streams: RequestHandler;
 
   constructor(@Inject(ACCESS_CONFIG) config: AccessConfig) {
     const create = (limit: number, key: string) => {
@@ -39,15 +40,18 @@ export class RequestLimits implements OnModuleDestroy {
     };
     this.login = create(config.loginLimit, 'login');
     this.reads = create(config.readLimit, 'demo');
+    this.streams = create(30, 'demo-stream');
   }
 
-  async consume(kind: 'login' | 'read', request: Request, response: Response): Promise<void> {
+  async consume(
+    kind: 'login' | 'read' | 'stream',
+    request: Request,
+    response: Response,
+  ): Promise<void> {
     await new Promise<void>((resolve, reject) => {
-      const result = (kind === 'login' ? this.login : this.reads)(
-        request,
-        response,
-        (error?: unknown) => (error ? reject(error) : resolve()),
-      );
+      const result = (
+        kind === 'login' ? this.login : kind === 'stream' ? this.streams : this.reads
+      )(request, response, (error?: unknown) => (error ? reject(error) : resolve()));
       Promise.resolve(result).catch(reject);
     });
   }

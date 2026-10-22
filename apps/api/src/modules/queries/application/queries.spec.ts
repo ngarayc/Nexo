@@ -29,7 +29,7 @@ function model(events: readonly EventView[] = []): ReadModel {
 it('búsqueda literal preserva identidades y resumen global incluso al filtrar a cero', async () => {
   const queries = new DomainQueries(
     model([event('A_%', false, 90), event('b', true, 0), event('B', true, 1)]),
-    'instance',
+    { id: 'instance' },
   );
   const result = await queries.fleet('a_%');
   expect(result.items.map((v) => v.vehicleId)).toEqual(['A_%']);
@@ -42,14 +42,14 @@ it('búsqueda literal preserva identidades y resumen global incluso al filtrar a
   expect(await queries.fleet('unknown')).toMatchObject({ total: 0, overallTotal: 3 });
 });
 it('ausencia de búsqueda y cadena vacía conservan toda la colección', async () => {
-  const queries = new DomainQueries(model([event('A', true, 1)]), 'instance');
+  const queries = new DomainQueries(model([event('A', true, 1)]), { id: 'instance' });
   expect(await queries.fleet()).toEqual(await queries.fleet(''));
   expect(await queries.fleet()).toMatchObject({ total: 1, overallTotal: 1 });
 });
 it('consulta exacta no recorta ni normaliza y desconocido conserva vacío explícito', async () => {
   const source = model();
   const id = ' A\u0000\ud800 ';
-  expect(await new DomainQueries(source, 'instance').history(id)).toEqual({
+  expect(await new DomainQueries(source, { id: 'instance' }).history(id)).toEqual({
     vehicleId: id,
     items: [],
     total: 0,
@@ -58,7 +58,7 @@ it('consulta exacta no recorta ni normaliza y desconocido conserva vacío explí
 });
 it('snapshot usa el puerto coherente y conserva instancia/versión sin consultar colecciones por separado', async () => {
   const source = model([event('A', true, 1)]);
-  const snapshot = await new DomainQueries(source, 'instance').snapshot();
+  const snapshot = await new DomainQueries(source, { id: 'instance' }).snapshot();
   expect(snapshot).toMatchObject({
     instanceId: 'instance',
     schemaVersion: 1,
@@ -72,7 +72,9 @@ it('snapshot usa el puerto coherente y conserva instancia/versión sin consultar
 it('errores del modelo se propagan y parámetros no string o cuerpos incorrectos no se convierten en vacío', async () => {
   const source = model();
   source.history = vi.fn().mockRejectedValue(new Error('unavailable'));
-  await expect(new DomainQueries(source, 'instance').history('A')).rejects.toThrow('unavailable');
+  await expect(new DomainQueries(source, { id: 'instance' }).history('A')).rejects.toThrow(
+    'unavailable',
+  );
   for (const value of [[], ['a'], {}, null, 2])
     expect(() => readSearch(value)).toThrow(InvalidQuery);
   for (const value of [undefined, '', 2, null])
@@ -83,4 +85,23 @@ it('errores del modelo se propagan y parámetros no string o cuerpos incorrectos
     readHistoryBody(JSON.parse('{"vehicleId":"\\ud800","__proto__":{"vehicleId":"wrong"}}')),
   ).toBe('\ud800');
   expect(readSearch(undefined)).toBe('');
+});
+
+it('renovar instancia no etiqueta una lectura iniciada antes como si perteneciera a la etapa nueva', async () => {
+  const source = model();
+  let release!: () => void;
+  const pending = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  source.snapshot = vi.fn(async () => {
+    await pending;
+    return { vehicles: [], alerts: [] };
+  });
+  const instance = { id: 'before' };
+  const queries = new DomainQueries(source, instance);
+  const first = queries.snapshot();
+  instance.id = 'after';
+  release();
+  expect((await first).instanceId).toBe('before');
+  expect((await queries.snapshot()).instanceId).toBe('after');
 });

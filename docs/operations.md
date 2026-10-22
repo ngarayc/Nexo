@@ -13,11 +13,11 @@ docker compose --env-file .env.local -f infra/compose.yaml up --build -d --wait
 
 El script requiere Bash y OpenSSL. Genera cuatro valores independientes de 32 bytes aleatorios en hexadecimal, usa permisos privados y rechaza reemplazar un `.env.local` existente. `.env.example` describe las variables sin valores utilizables. La configuración real queda fuera de Git y del contexto de build. Usar `compose config --quiet` para validar sin volcar secretos.
 
-Abrir `http://localhost:8080` e ingresar con `demo` / `demo`. `PUBLIC_ORIGIN` se deriva en Compose de ese puerto canónico; no usar otro host en el navegador. `GET /api` identifica Nexo y `GET /api/health` comprueba conexión, versión de migración y usuario preparado. La salud no anuncia cola o SSE antes de que existan.
+Abrir `http://localhost:8080` e ingresar con `demo` / `demo`. `PUBLIC_ORIGIN` se deriva en Compose de ese puerto canónico; no usar otro host en el navegador. `GET /api` identifica Nexo y `GET /api/health` comprueba conexión, versión de migración, usuario preparado y disponibilidad real del [dispatcher SSE](realtime.md).
 
 ## Arranque y credenciales
 
-Compose espera la salud de PostgreSQL antes de iniciar API y la de API antes de iniciar web. La API aplica migraciones y prepara `demo` / `demo` antes de aceptar tráfico. El seed utiliza Argon2id con 19 MiB, dos iteraciones y paralelismo uno; revisa los parámetros mediante la biblioteca, sin depender de su orden serializado.
+Compose espera la salud de PostgreSQL antes de iniciar API. Web inicia después de que arranque el contenedor API, para mantener accesibles ingesta y diagnóstico si la outbox comienza degradada. La API aplica migraciones y prepara `demo` / `demo` antes de aceptar tráfico; durante esa preparación el proxy puede responder 502. Los probes de API/web conservan la salud completa y `up --wait` no aprueba mientras persista indisponibilidad. El seed utiliza Argon2id con 19 MiB, dos iteraciones y paralelismo uno; revisa los parámetros mediante la biblioteca, sin depender de su orden serializado.
 
 Repetir el arranque conserva ID y hash. En una base inicializada, una cuenta ausente o incompatible impide preparar el servicio: no se reemplaza silenciosamente. SQL permite únicamente el nombre `demo` y su unicidad. `DEMO_ENABLED=false` omite seed y deniega login/sesiones sin borrar la cuenta. Reiniciar API invalida sesiones; volver a ingresar conserva los datos durables.
 

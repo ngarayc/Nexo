@@ -14,7 +14,7 @@ import { QueryController } from './adapters/http/query-controller.js';
       provide: DomainQueries,
       inject: [DatabaseService, RuntimeInstance],
       useFactory: (database: DatabaseService, instance: RuntimeInstance) =>
-        new DomainQueries(new PostgresReadModel(database.pool), instance.id),
+        new DomainQueries(new PostgresReadModel(database.pool), instance),
     },
   ],
 })

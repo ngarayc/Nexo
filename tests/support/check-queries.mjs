@@ -119,16 +119,18 @@ async function history(vehicleId) {
   return r.body;
 }
 async function settled() {
-  for (let n = 0; n < 100; n++) {
-    const active = (
-      await owner.query(
-        "SELECT count(*) FROM pgboss.job WHERE name='telemetry.ingest' AND state IN ('created','retry','active')",
-      )
-    ).rows[0].count;
-    if (active === '0') return;
+  for (let n = 0; n < 750; n++) {
+    const state = (
+      await owner.query(`SELECT
+        (SELECT count(*) FROM pgboss.job WHERE name='telemetry.ingest' AND state IN ('created','retry','active'))::int AS jobs,
+        (SELECT count(*) FROM outbox_messages WHERE published_at IS NULL)::int AS messages`)
+    ).rows[0];
+    // Comparar antes/después de lecturas cuando ambos procesos autónomos están
+    // quietos: el marcado del dispatcher no es un efecto de la consulta HTTP.
+    if (state.jobs === 0 && state.messages === 0) return;
     await pause(20);
   }
-  throw new Error('El consumidor no terminó sus ACK dentro del plazo.');
+  throw new Error('Consumidor y dispatcher no terminaron dentro del plazo de prueba.');
 }
 async function snapshotRows() {
   const rows = {};
@@ -164,7 +166,7 @@ const cases = {
         ignitionOn: n % 7 !== 0,
       }),
     );
-    const stats = { total: 0, writes: 0, queries: 0, queue: 0 };
+    const stats = { total: 0, writes: 0, queries: 0, queue: 0, outbox: 0 };
     let sampling,
       samplingFailure,
       stopped = false;
@@ -180,12 +182,13 @@ const cases = {
         ['nexo-queries', 'queries', 4],
         // pg-boss usa el mismo application_name para su pool (4) y listener (1).
         ['nexo-queue', 'queue', 5],
+        ['nexo-outbox', 'outbox', 1],
       ]) {
         const n = rows.find((r) => r.application_name === name)?.n ?? 0;
         stats[key] = Math.max(stats[key], n);
         assert.ok(n <= limit);
       }
-      assert.ok(total <= 15, 'Los pools y listener del runtime respetan su presupuesto.');
+      assert.ok(total <= 16, 'Los pools y listener del runtime respetan su presupuesto.');
     };
     const timer = setInterval(() => {
       if (sampling || stopped) return;

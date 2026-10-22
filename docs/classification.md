@@ -1,6 +1,6 @@
 # Clasificación transaccional — E1-I03
 
-La [issue #17](https://github.com/ngarayc/Nexo/issues/17) conecta el consumidor de la cola con la clasificación de cada posición. El contrato y los oráculos suministrados siguen siendo la autoridad. El consumidor no depende de que el productor siga conectado y la espera HTTP no controla su avance. El dashboard y SSE se incorporan después; [recuperación](recovery.md) documenta el tratamiento de fallos de E1-I04.
+La [issue #17](https://github.com/ngarayc/Nexo/issues/17) conecta el consumidor de la cola con la clasificación de cada posición. El contrato y los oráculos suministrados siguen siendo la autoridad. El consumidor no depende de que el productor siga conectado y la espera HTTP no controla su avance. El dashboard conserva su incremento propio y [tiempo real](realtime.md) describe el despacho SSE; [recuperación](recovery.md) documenta el tratamiento de fallos de E1-I04.
 
 ## Fronteras y validación
 
@@ -20,7 +20,7 @@ Un evento nuevo con speedKph >80 crea OVERSPEED aunque llegue tarde o tenga igni
 
 [change-message.ts](../apps/api/src/modules/telemetry/application/change-message.ts) construye datos explícitos e inmutables del cambio: siete campos del evento; estado adicional para vehicle.updated; tipo OVERSPEED adicional para alert.created. La envoltura contiene type, eventId, vehicleId, observedAt, messageId UUID v4 y schemaVersion 1. observedAt se representa en UTC conservando fracción exacta; el original se conserva en persistencia. No se copian extras arbitrarios.
 
-Cada outbox guarda la envoltura y el tamaño UTF-8 de su trama SSE versión 1. La serialización comprueba UUID, tipo y versión; las identidades del productor solo aparecen dentro del JSON escapado. Los saltos de línea de un eventId no pueden convertirse en campos SSE. La unicidad por evento/tipo protege las identidades de los efectos. Crear una fila outbox todavía no acredita entrega al navegador; el dispatcher corresponde a E2.
+Cada outbox guarda la envoltura y el tamaño UTF-8 de su trama SSE versión 1. La serialización comprueba UUID, tipo y versión; las identidades del productor solo aparecen dentro del JSON escapado. Los saltos de línea de un eventId no pueden convertirse en campos SSE. La unicidad por evento/tipo protege las identidades de los efectos. Crear una fila outbox todavía no acredita entrega al navegador; [tiempo real](realtime.md) explica el dispatcher E2 y los límites de la distribución local.
 
 ## Consumidor y continuación
 
