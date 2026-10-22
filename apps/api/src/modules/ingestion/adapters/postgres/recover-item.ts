@@ -39,10 +39,10 @@ type CandidateRow = {
 export class RecoverItem {
   private readonly writes;
   private readonly reads;
-  private readonly control = new DatabaseSlots(1, 0);
   constructor(
     pool: Pool,
     private readonly boss: PgBoss,
+    private readonly control = new DatabaseSlots(1, 0),
   ) {
     this.writes = new WriteTransactions(pool);
     this.reads = drizzle(pool);

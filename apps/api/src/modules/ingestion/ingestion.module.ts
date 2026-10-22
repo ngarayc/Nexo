@@ -3,6 +3,7 @@ import { DatabaseModule } from '../../platform/database/database.module.js';
 import { DatabaseService } from '../../platform/database/database.service.js';
 import { WriteDatabase } from '../../platform/database/write-database.js';
 import { QueueConnection } from '../../platform/queue/connection.js';
+import { ProcessingModule } from '../../platform/queue/processing.module.js';
 import { AdmissionStore } from './adapters/postgres/admission-store.js';
 import { ReceiptReader } from './adapters/postgres/receipt-reader.js';
 import { Ingest } from './application/ingest.js';
@@ -16,11 +17,9 @@ import { IngestionReconciler } from './adapters/queue/ingestion-reconciler.js';
 import { RuntimeModule } from '../../platform/runtime/runtime.module.js';
 
 @Module({
-  imports: [DatabaseModule, RuntimeModule],
+  imports: [DatabaseModule, RuntimeModule, ProcessingModule],
   controllers: [IngestionController],
   providers: [
-    WriteDatabase,
-    QueueConnection,
     IngestionIngress,
     IngestionWorker,
     IngestionReconciler,
@@ -28,7 +27,7 @@ import { RuntimeModule } from '../../platform/runtime/runtime.module.js';
       provide: RecoverItem,
       inject: [WriteDatabase, QueueConnection],
       useFactory: (write: WriteDatabase, queue: QueueConnection) =>
-        new RecoverItem(write.pool, queue.boss),
+        new RecoverItem(write.pool, queue.boss, write.controlSlots),
     },
     {
       provide: ReconcileIngestion,

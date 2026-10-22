@@ -1,4 +1,16 @@
-# Verificación
+# Verificación de Nexo
+
+## Motor compartido y control HTTP — E3-I03 / #42
+
+El incremento compone NestJS, acceso, recursos compartidos, diario, verificador y SSE. Pasaron las 454 pruebas API existentes al completar esa composición. Después se añadieron y ejecutaron por separado cuatro pruebas focalizadas de publicación: modo deshabilitado sin carga de material, lectura compartida con suscriptores, fallo sin publicar caché antigua y época SSE independiente de instancia API. No se repitió toda la suite por ese añadido. Tipos de API y lint de los archivos afectados pasaron.
+
+La imagen `sha256:a797c07fd9ba4bc5a31cdf5fab8d16b08f0d5fbadd743cb822cf40a257f7996b` pasó los tres casos de [control real](../tests/integration/replay-control.test.mjs) y los seis de [fallos del actor](../tests/integration/replay-control-faults.test.mjs). Comprueban par oficial HTTP 20/2/2 → 0/22/2, pausa/reanudación, simultaneidad, informes e historial, reinicio parcial y de API, COMMIT antes/después de confirmación, barrera desconocida, respuesta perdida y ausencia de reenvíos. Los dos streams Node son evidencia de transporte compartido, no de renderizado Angular.
+
+También pasaron los cinco casos focalizados de [recuperación HTTP](../tests/integration/recovery-http.test.mjs), necesarios por el turno de escritura compartido entre diario y recuperación: fallo transitorio, agotamiento concurrente, caída antes del commit, SIGTERM con trabajo activo y cuotas independientes de lectura/ingesta. La imagen completó el escaneo estricto Alpine/Node sin HIGH/CRITICAL o detalles ausentes; su ID fue contrastado con el reporte. Las migraciones y fixtures permanecen intactos. OpenAPI pasó validación estructural oficial con 33 esquemas y el inventario AST coincide con las 16 operaciones implementadas.
+
+La primera ejecución unitaria de la composición encontró dobles antiguos de bootstrap/sesión que no incluían DemoModule y un Buffer que Superagent serializaba como JSON. Se conservaron los fallos, se aisló el módulo ajeno al alcance de esas suites y se envió UTF-8 inválido como bytes reales. Los controles efectivos de sesión, origen, CSRF, cuota y parser permanecieron; las suites corregidas pasaron.
+
+La regresión local general iniciada después se interrumpió antes de terminar, sin resumen aprobatorio. A partir de este incremento, el desarrollo local ejecuta verificaciones focalizadas según el cambio y reserva la validación completa para cerrar una épica. Los workflows y controles de GitHub conservan sus ejecuciones completas; los resultados remotos de cada promoción se comprueban por separado. El panel, reset seguro, dos clientes renderizados y cierre E3 siguen pendientes.
 
 ## Aprovisionamiento de Chromium — #48
 

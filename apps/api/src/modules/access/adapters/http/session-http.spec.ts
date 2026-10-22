@@ -55,6 +55,14 @@ vi.mock('../../../realtime/public.js', async () => {
   return { RealtimeModule: RealtimeStubModule };
 });
 
+// Se conserva el alcance de sesión; el motor necesita PostgreSQL/HTTP reales.
+vi.mock('../../../demo/public.js', async () => {
+  const { Module } = await import('@nestjs/common');
+  class DemoStubModule {}
+  Module({})(DemoStubModule);
+  return { DemoModule: DemoStubModule };
+});
+
 describe('sesión HTTP con bibliotecas reales y credenciales sustituidas explícitamente', () => {
   let app: NestExpressApplication;
   const origin = 'http://localhost:8080';

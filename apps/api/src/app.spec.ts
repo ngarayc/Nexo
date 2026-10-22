@@ -40,6 +40,14 @@ vi.mock('./modules/realtime/public.js', async () => {
   return { RealtimeModule: RealtimeStubModule };
 });
 
+// Motor/SQL de demo tienen pruebas de frontera propias; bootstrap no abre pools.
+vi.mock('./modules/demo/public.js', async () => {
+  const { Module } = await import('@nestjs/common');
+  class DemoStubModule {}
+  Module({})(DemoStubModule);
+  return { DemoModule: DemoStubModule };
+});
+
 describe('bootstrap HTTP y metadatos de inyección Nest', () => {
   let app: INestApplication | undefined;
   beforeEach(() => {
