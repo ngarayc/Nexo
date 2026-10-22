@@ -26,4 +26,6 @@ La [admisión](ingestion.md) prepara pg-boss y conecta rutas HTTP, autenticació
 
 El handler y reconciliador usan una transición común para sustituir una oportunidad o cerrar técnicamente la posición. Bloqueos, generaciones y relectura durable resuelven repeticiones y confirmaciones inciertas; los turnos SQL se liberan antes del backoff. `WriteTransactions` administra el cliente reservado y lo descarta ante error. No se introduce un segundo broker o un servicio de recuperación separado.
 
+`modules/queries` separa las lecturas de los comandos de ingesta sin añadir un bus o una segunda base. El caso de consulta depende de un puerto de lectura; HTTP y PostgreSQL son adaptadores. [Consultas](queries.md) define búsqueda, historial, alertas y snapshot, todos con sesión y cupo compartido. El snapshot usa una transacción breve REPEATABLE READ READ ONLY; RuntimeModule aporta la identidad de instancia que compartirá con el futuro stream. Parser y codecs se comparten donde ya existen dos consumidores reales.
+
 El coste de estas decisiones es una composición modular y controles transaccionales explícitos. Mantienen un único despliegue de API y evitan agregar un broker o servicios ajenos al alcance. No se afirma capacidad productiva para una flota real sin mediciones.
