@@ -17,7 +17,7 @@ before(
 after(() => stack.close(), { timeout: 180000 });
 
 for (const [scenario, description] of Object.entries({
-  catalog: 'catálogo conserva siete tablas, exclusiones hash, triggers y fracción C',
+  catalog: 'catálogo conserva nueve tablas, exclusiones hash, triggers y fracción C',
   unicode: 'driver conserva mayúsculas, Unicode, nulo y sustitutos sin normalizar',
   canonical: 'SQL rechaza identidades binarias no canónicas',
   long_identity: 'IDs largos conservados y conflicto sin actualización mediante exclusión',

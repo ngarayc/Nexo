@@ -1,6 +1,7 @@
 import { run } from 'node:test';
 import { readdir, mkdir, writeFile, rm } from 'node:fs/promises';
 import { resolve, relative } from 'node:path';
+import { pressureFailureStage } from './failure-diagnostics.mjs';
 
 const scope = process.argv[2];
 const directory =
@@ -24,9 +25,12 @@ for await (const event of run({
   timeout: scope === 'integration' ? 360000 : 180000,
 })) {
   if (event.type === 'test:fail') {
-    console.error(
-      `Prueba fallida: ${relative(process.cwd(), event.data.file ?? directory)}:${event.data.line ?? 0}`,
-    );
+    const file = relative(process.cwd(), event.data.file ?? directory);
+    console.error(`Prueba fallida: ${file}:${event.data.line ?? 0}`);
+    if (file === 'tests/integration/realtime-pressure.test.mjs') {
+      const stage = pressureFailureStage(event.data.details?.error);
+      if (stage !== undefined) console.error(`Etapa de presión SSE: ${stage}.`);
+    }
   }
   if (event.type === 'test:summary') {
     if (event.data.file) {

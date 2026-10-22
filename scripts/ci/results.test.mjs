@@ -6,7 +6,58 @@ import {
   validateReport,
   validateVitestReport,
   validatePlaywrightReport,
+  validateImageScan,
 } from './results.mjs';
+
+const scanReport = () => ({
+  Metadata: { ImageID: 'sha256:' + 'a'.repeat(64) },
+  Results: [
+    { Type: 'alpine', Packages: [{ Name: 'musl' }] },
+    { Type: 'node-pkg', Packages: [{ Name: '@nestjs/core' }] },
+  ],
+});
+const scanExecution = () => ({ status: 0, signal: null, stderr: '', stdout: '' });
+test('imagen exige proceso correcto e inventarios esperados reales', () => {
+  assert.doesNotThrow(() =>
+    validateImageScan(scanReport(), scanExecution(), ['alpine', 'node-pkg']),
+  );
+  for (const change of [{ status: 1 }, { signal: 'SIGTERM' }, { error: new Error('synthetic') }])
+    assert.throws(() =>
+      validateImageScan(scanReport(), { ...scanExecution(), ...change }, ['alpine']),
+    );
+  const report = scanReport();
+  report.Results.pop();
+  assert.throws(() => validateImageScan(report, scanExecution(), ['alpine', 'node-pkg']));
+  report.Results[0].Packages = [];
+  assert.throws(() => validateImageScan(report, scanExecution(), ['alpine']));
+});
+test('exit0 no convierte detalles de vulnerabilidad ausentes en un escaneo completo', () => {
+  for (const message of [
+    'WARN Unable to get vulnerability details (CVE may be rejected)',
+    '{"level":"warn","message":"no vulnerability details"}',
+  ])
+    assert.throws(
+      () => validateImageScan(scanReport(), { ...scanExecution(), stderr: message }, ['alpine']),
+      /inconcluso/,
+    );
+  assert.doesNotThrow(() =>
+    validateImageScan(
+      scanReport(),
+      {
+        ...scanExecution(),
+        stderr: 'WARN Using severities from other vendors for some vulnerabilities.',
+      },
+      ['alpine'],
+    ),
+  );
+});
+test('inventario válido no oculta severidad desconocida o alta aunque proceso diga0', () => {
+  for (const Severity of ['HIGH', 'CRITICAL', 'UNKNOWN']) {
+    const report = scanReport();
+    report.Results[0].Vulnerabilities = [{ Severity }];
+    assert.throws(() => validateImageScan(report, scanExecution(), ['alpine']));
+  }
+});
 
 const playwrightReport = () => ({
   stats: { expected: 1, skipped: 0, unexpected: 0, flaky: 0 },

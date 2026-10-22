@@ -22,6 +22,10 @@ La ausencia de hallazgos es evidencia del árbol y la base de avisos consultados
 
 ## Verificación pendiente
 
+La [issue #43](https://github.com/ngarayc/Nexo/issues/43) surgió al investigar detalles ausentes en Trivy para CVE-2026-107891. El [registro de Alpine3.24](https://secdb.alpinelinux.org/v3.24/main.json) relaciona musl con una corrección1.2.6-r3, disponible como [paquete oficial](https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/musl). Las tres imágenes contenían1.2.6-r2; API/web/DB y sus etapas de construcción pertinentes ahora instalan musl y musl-utils1.2.6-r3 fijados, manteniendo los digests base y usuarios. No se infiere una severidad ni un rechazo del CVE a partir de metadatos ausentes.
+
+El nuevo control de [escaneos](ci-controls.md) rechaza ese resultado como inconcluso aunque su salida sea0. Las imágenes parcheadas completaron escaneos nuevos con inventario/digest comprobados, sin el aviso de detalles ausentes y sin HIGH/CRITICAL reportados. No se añadió excepción. [Verificación](verification.md) distingue la comprobación del paquete/escáner de su regresión funcional y CI posteriores; los verdes anteriores no acreditan esta corrección.
+
 El primer CI remoto pasó y la base se promovió a test por PR. Las [demostraciones negativas y recuperación](control-demonstrations.md) comprobaron bloqueo mediante reglas equivalentes. Cada candidato nuevo mantiene CI, escaneos y revisión humana propia hacia main; las comprobaciones de ingesta/SSE se registran en sus incrementos y no se deducen del primer CI. Cada imagen nueva repite el escaneo: resultados anteriores no acreditan una revisión posterior.
 
 ## Escaneo previo a la publicación inicial

@@ -75,3 +75,13 @@ La selección de variantes usa [las imágenes oficiales de Node](https://github.
 ## Sincronización comprobada en navegador
 
 [Playwright Route](https://playwright.dev/docs/api/class-route) permite retener una respuesta real mediante fetch/fulfill o continuar una petición hacia otra URL HTTP. Las pruebas de carreras conservan el cuerpo obtenido de la API mientras provocan una ingesta real. El corte individual redirige solo el SSE de ese cliente a un intermediario de loopback que destruye sockets y transmite las tramas sin modificarlas. Esta herramienta de prueba es propia; no constituye una función del producto o una garantía de la emulación offline. [Sincronización](frontend-sync.md) y [verificación](verification.md) relacionan los casos y resultados.
+
+## Diario del emisor
+
+[Restricciones PostgreSQL18](https://www.postgresql.org/docs/18/ddl-constraints.html), [triggers de restricción diferidos](https://www.postgresql.org/docs/18/sql-createtrigger.html) y [bloqueos asesores transaccionales](https://www.postgresql.org/docs/18/explicit-locking.html#ADVISORY-LOCKS) sustentan la protección al COMMIT y las altas concurrentes del [diario](replay-journal.md). Nexo añade estados, prefijo confirmado, límite reservado y marcador de intención; las pruebas fuerzan un rollback entre respuesta/cursor y compiten desde dos coordinadores. Estas transacciones no incluyen el futuro HTTP del emisor y no reconstruyen una respuesta perdida.
+
+## Preparación y comparación del replay
+
+La [corrección musl #43](security.md) consulta el registro oficial [Alpine3.24](https://secdb.alpinelinux.org/v3.24/main.json) y [su paquete musl](https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/musl) para fijar1.2.6-r3 cuando el feed central del scanner carece de detalles. Nexo añade el bloqueo de escaneo inconcluso incluso con salida0 y comprueba el inventario de las imágenes reales; no atribuye al proveedor la política de promoción ni inventa la severidad ausente.
+
+[Verificador](replay-verification.md) aplica el aislamiento [REPEATABLE READ de PostgreSQL18](https://www.postgresql.org/docs/18/transaction-iso.html#XACT-REPEATABLE-READ) y las APIs públicas de [jobs](https://pgboss.io/api/jobs) y [adaptadores pg-boss](https://pgboss.io/api/adapters). El inventario usa la misma transacción que los recibos/dominio; no depende de estadísticas en caché ni confunde queued con active. Fuentes originales, expectativas, límites de lectura y conservación histórica son decisiones de Nexo. La integración concurrente verifica visibilidad conjunta de una recepción y su job; no acredita el motor HTTP o la evidencia visual todavía pendientes.

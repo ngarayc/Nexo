@@ -156,3 +156,34 @@ export function validatePlaywrightReport(report, expectedFiles) {
   }
   return { total, passed: total, failed: 0, skipped: 0 };
 }
+export function validateImageScan(report, scan, requiredTypes) {
+  if (
+    scan.status !== 0 ||
+    scan.signal ||
+    scan.error ||
+    /unable to get vulnerability details|no vulnerability details|failed to get vulnerability/i.test(
+      `${scan.stdout ?? ''}\n${scan.stderr ?? ''}`,
+    )
+  )
+    throw new Error(
+      'Escaneo de imagen fallido o inconcluso; no se acredita ausencia de vulnerabilidades.',
+    );
+  if (
+    !/^sha256:[a-f0-9]{64}$/.test(report?.Metadata?.ImageID ?? '') ||
+    !Array.isArray(report.Results) ||
+    !requiredTypes.length ||
+    requiredTypes.some(
+      (type) =>
+        !report.Results.some(
+          (result) =>
+            result.Type === type && Array.isArray(result.Packages) && result.Packages.length > 0,
+        ),
+    ) ||
+    report.Results.some((result) =>
+      result.Vulnerabilities?.some(
+        (vulnerability) => !['LOW', 'MEDIUM'].includes(vulnerability.Severity),
+      ),
+    )
+  )
+    throw new Error('Inventario de imagen incompleto o vulnerabilidad no admitida.');
+}

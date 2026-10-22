@@ -1,8 +1,8 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { readFile, readdir, writeFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { requiredJobs } from './policy.mjs';
-import { validateReport, validateVitestReport } from './results.mjs';
+import { validateReport, validateVitestReport, validateImageScan } from './results.mjs';
 import { verifyTraceability } from './traceability.mjs';
 
 const job = process.argv[2];
@@ -97,25 +97,38 @@ if (job === 'quality') {
   command('docker', ['compose', '--env-file', '.env.local', '-f', 'infra/compose.yaml', 'build']);
   command(process.execPath, ['scripts/ci/install-tools.mjs']);
   for (const name of ['api', 'web', 'db']) {
-    command(tools('trivy'), [
-      'image',
-      '--image-src',
-      'docker',
-      '--scanners',
-      'vuln',
-      '--severity',
-      'HIGH,CRITICAL',
-      '--exit-code',
-      '1',
-      '--format',
-      'json',
-      '--output',
-      `reports/raw/image-${name}.json`,
-      `nexo-${name}:local`,
-    ]);
+    const scan = spawnSync(
+      tools('trivy'),
+      [
+        'image',
+        '--image-src',
+        'docker',
+        '--scanners',
+        'vuln',
+        '--severity',
+        'HIGH,CRITICAL',
+        '--exit-code',
+        '1',
+        '--format',
+        'json',
+        '--output',
+        `reports/raw/image-${name}.json`,
+        `nexo-${name}:local`,
+      ],
+      {
+        encoding: 'utf8',
+        timeout: 600000,
+        maxBuffer: 16 * 1024 * 1024,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    );
+    await writeFile(
+      `reports/raw/image-${name}-scanner.log`,
+      `${scan.stdout ?? ''}\n${scan.stderr ?? ''}`,
+    );
     const report = await json(`reports/raw/image-${name}.json`);
-    if (!report.Metadata?.ImageID || !report.Results?.length)
-      throw new Error('Escaneo de imagen incompleto.');
+    validateImageScan(report, scan, name === 'api' ? ['alpine', 'node-pkg'] : ['alpine']);
+    console.log(`Imagen ${name}: escaneo completo sin HIGH/CRITICAL.`);
   }
   passed('images');
   command('npx', ['--no-install', 'playwright', 'install', '--with-deps', 'chromium']);
