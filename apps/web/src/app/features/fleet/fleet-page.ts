@@ -6,8 +6,10 @@ import {
   afterNextRender,
   afterRenderEffect,
   inject,
+  computed,
   viewChild,
 } from '@angular/core';
+import type { VehicleState } from '@nexo/contracts';
 import { FleetFacade } from './fleet-facade';
 import { VehicleDetailFacade } from './vehicle-detail-facade';
 import { LiveMonitor } from '../live-monitoring/live-monitor';
@@ -26,6 +28,20 @@ export class FleetPage {
   readonly fleet = inject(FleetFacade);
   readonly detail = inject(VehicleDetailFacade);
   readonly monitor = inject(LiveMonitor);
+  readonly stateFilters: readonly { value: VehicleState | null; label: string }[] = [
+    { value: null, label: 'Todos' },
+    { value: 'MOVING', label: 'En movimiento' },
+    { value: 'STOPPED', label: 'Detenidos' },
+    { value: 'OFF', label: 'Apagados' },
+  ];
+  readonly hiddenSelection = computed(() => {
+    const id = this.detail.selected();
+    return (
+      id !== null &&
+      this.fleet.get(id) !== undefined &&
+      !this.fleet.visibleItems().some((vehicle) => vehicle.vehicleId === id)
+    );
+  });
   private readonly injector = inject(Injector);
   private readonly history = viewChild<ElementRef<HTMLElement>>('historyPanel');
   private readonly search = viewChild<ElementRef<HTMLInputElement>>('search');
@@ -47,6 +63,10 @@ export class FleetPage {
   open(vehicleId: string): void {
     this.detail.select(vehicleId);
     afterNextRender(() => this.history()?.nativeElement.focus(), { injector: this.injector });
+  }
+  clearFilters(): void {
+    this.fleet.clearFilters();
+    afterNextRender(() => this.search()?.nativeElement.focus(), { injector: this.injector });
   }
   close(): void {
     const previous = this.detail.selected();

@@ -6,7 +6,11 @@ La [issue #30](https://github.com/ngarayc/Nexo/issues/30) incorpora la historia 
 
 Después de ingresar, la aplicación confirma una base y presenta los vehículos ordenados por su identificador exacto. La tabla muestra última observación, velocidad recibida en km/h, encendido y estado: Apagado, En movimiento o Detenido. Fecha/hora usan español, America/Bogota y formato 00–23 con segundos. Si varias observaciones comparten la etiqueta visual, su orden sigue siendo el del instante exacto y eventId.
 
-Buscar vehículo filtra por subcadena sin distinguir mayúsculas. `%` y `_` son caracteres literales; limpiar restaura la colección. El resumen de estados y los totales globales no se sustituyen por el subconjunto visible. Un resultado sin coincidencias se distingue de una flota vacía confirmada y de la primera carga.
+Buscar vehículo filtra por subcadena sin distinguir mayúsculas. `%` y `_` son caracteres literales; limpiar la búsqueda conserva el estado elegido. Mostrar Todos conserva la búsqueda; Limpiar filtros de flota elimina ambos. El resumen de estados y los totales globales no se sustituyen por el subconjunto visible. Un resultado sin coincidencias se distingue de una flota vacía confirmada y de la primera carga.
+
+[#66](https://github.com/ngarayc/Nexo/issues/66) incorpora el resumen interactivo: Todos, En movimiento, Detenidos y Apagados muestran sus conteos globales y permiten elegir un estado. Búsqueda y estado se combinan con AND en `FleetFacade.visibleItems`; tabla y futuras vistas comparten esa colección. Los botones conservan foco, usan `aria-pressed` y permanecen deshabilitados sin conteos hasta confirmar una base. Un último estado nuevo cambia categoría; una observación tardía no hace retroceder el resumen.
+
+Snapshot y reconexión conservan los filtros; cerrar sesión los limpia. Si los filtros ocultan el vehículo abierto, el historial conserva su selección y aparece un aviso con Limpiar filtros de flota. Esa acción devuelve el foco a búsqueda y conserva el vehículo abierto. Filtrar no agrega solicitudes ni conexiones.
 
 Ver historial selecciona la identidad original y enfoca el panel. Sus observaciones se ordenan cronológicamente, con evento, fecha/hora, velocidad, encendido, latitud y longitud recibidas. No se deducen nuevos atributos GPS. Un evento tardío puede aparecer en el historial sin cambiar la fila del último estado. Cambiar o cerrar selección cancela su captura/HTTP; las respuestas antiguas no reemplazan el vehículo actual. La búsqueda puede ocultar esa fila sin cambiar la selección.
 

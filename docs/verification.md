@@ -1,5 +1,11 @@
 # Verificación de Nexo
 
+## Resumen interactivo — E5-I01 / #66
+
+Pasaron tipos web y15 pruebas focalizadas de fachada/página en dos archivos. Verifican filtros AND, independencia por cliente, resumen global, transición de último estado, tardío que no lo revierte, snapshot con filtros conservados, limpieza de sesión y detalle oculto sin perder selección. El foco permanece en el botón de estado ante una actualización y vuelve a búsqueda al limpiar los filtros del detalle.
+
+La revisión de primera carga añadió una comprobación de que los botones deshabilitados todavía no muestran ceros antes de confirmar la base. Sus cinco pruebas de página se repitieron y pasaron después del ajuste. Los recorridos integrados de las visualizaciones se incorporan durante E5; no se atribuyen al incremento pruebas de navegador posteriores al nuevo filtro ni otra ejecución local general.
+
 ## Aceptación local integral E4 — #64
 
 La base funcional `f1f9331508a6a613e9c09abe42e463312bdbcdc8` completó el cierre local de CR-01: compilación,463 pruebas API,95 Angular,127 integraciones PostgreSQL/HTTP y16 Chromium, sin fallos u omisiones en sus resultados finales. Los casos oficiales conservan20/2/2 y0/22/2,20 eventos/8 vehículos/4 alertas e identidades originales; los adversariales usaron datos propios.
