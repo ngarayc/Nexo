@@ -1,5 +1,13 @@
 # Verificación de Nexo
 
+## Identidades comprimidas — #63
+
+El recorrido adversarial de interfaz CR-01 detectó un timeout al enviar un segundo evento del mismo vehículo con ID de más de70 000 caracteres, NUL y un sustituto aislado. PostgreSQL estaba ejecutando `UPDATE vehicle_latest`; no había terminado de clasificar ese lote. El fallo se conservó y no se trató como rechazo de dominio ni ausencia de efectos.
+
+La reproducción SQL confirmó compresión real y `57014` con un plazo de1500ms al validar el dato almacenado mediante la función anterior. La migración0004 materializa una copia antes del recorrido, conservando las reglas. Pasó una prueba de migración/repetición que mantiene OID, propiedades, datos y CHECK; pasaron dos casos focalizados de canonicalidad y actualización persistente. La repetición del navegador pasó sin reducir el ID ni ampliar timeouts: dos clientes, alertas coincidentes/no coincidentes, duplicado, desconexión/snapshot, selección conservada y limpieza al cerrar sesión. [Persistencia](persistence.md) explica la causa y fuentes.
+
+Es un defecto anterior al filtro, descubierto por la aceptación visual posterior. No cambia parches originales ni sus resultados comparativos. La imagen corregida y el candidato publicado requieren sus controles propios antes de promover.
+
 ## API de CR-01 y comparación — E4-I01/I02
 
 [#57](https://github.com/ngarayc/Nexo/issues/57) fijó base y condiciones; [#59](https://github.com/ngarayc/Nexo/issues/59) incorpora GET filtrado y POST JSON. [El ciclo](agent-cycles/CR-01.md) y [la comparación](../AGENT-EFFICIENCY.md) conservan parches e integridad, criterios y límites. Las dos propuestas se aplicaron/verificaron secuencialmente sobre el mismo árbol: ambas pasaron tipos, sus dos casos PostgreSQL/API/proxy y los cinco recorridos comunes. La general pasó16 pruebas de aplicación/HTTP y la focalizada19; esos inventarios diferentes no son una métrica de superioridad. Ninguna propuesta necesitó correcciones de código o pruebas. El primer recorrido adversarial focalizado terminó en EPIPE y la repetición puntual pasó; su causa quedó indeterminada y se conserva el fallo.
