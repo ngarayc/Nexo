@@ -1,5 +1,13 @@
 # Verificación de Nexo
 
+## Interfaz de CR-01 — E4-I03 / #60
+
+Pasaron tipos web y25 pruebas focalizadas en tres archivos: modelo de filtro, página y monitor. Una corrección de fixture dio un eventId distinto a la entidad de reemplazo; sus cuatro pruebas de página se repitieron y pasaron, sin alterar código de aplicación u oráculos.
+
+El recorrido Chromium oficial pasó: dos clientes, selector de flota independiente de búsqueda, teclado, foco,2/4 y0/4, equivalencia GET/POST, enlace al evento y ambos replays20/2/2 y0/22/2 con20 eventos/8 vehículos/4 alertas. Un segundo recorrido adversarial pasó tras corregir #63: texto literal, ID extenso/NUL/sustituto, ancho360px, SSE coincidente/no coincidente, duplicado, reconexión con filtro conservado y limpieza al volver a ingresar en la misma aplicación. Se mantuvo un único stream por cliente y ninguna consulta de alertas por selección. Las pruebas unitarias cubren además selección ausente y sustitución de snapshot.
+
+La aceptación integral local de cierre #64 y los controles remotos del candidato actualizado se registran por separado. Las aprobaciones de EP-03/E3 no aprueban este cambio.
+
 ## Identidades comprimidas — #63
 
 El recorrido adversarial de interfaz CR-01 detectó un timeout al enviar un segundo evento del mismo vehículo con ID de más de70 000 caracteres, NUL y un sustituto aislado. PostgreSQL estaba ejecutando `UPDATE vehicle_latest`; no había terminado de clasificar ese lote. El fallo se conservó y no se trató como rechazo de dominio ni ausencia de efectos.
@@ -14,7 +22,7 @@ Es un defecto anterior al filtro, descubierto por la aceptación visual posterio
 
 La consolidación usa la consulta general de una sentencia y el lector JSON compartido focalizado. Pasaron tipos y16 pruebas de los dos archivos afectados. La imagen API `sha256:7ac8eb60f564b224ba11eaa31e70c78dcaf7dfddf722807f3b9cf234856da067` se construyó para ese refinamiento. El primer caso de integración terminó con error del ejecutor interno sin detalle capturado; una repetición con diagnóstico pasó sin cambiar aplicación. Un ensayo acotado de80 rechazos de cuerpos2MiB+1, por API/proxy en historial y alertas, obtuvo413 en todos sin reproducir el fallo. No se atribuye causa al intento original ni se lo presenta como aprobado. Formato posterior es mecánico; el CI propio construye y comprueba el candidato publicado completo.
 
-Lint de archivos afectados, enlaces y validación estructural OpenAPI oficial pasaron; el inventario AST coincide con las17 operaciones y33 esquemas descritos. No cambian fixtures, esquema, dependencias, Angular, SSE o políticas de acceso. El verificador de enlaces incluye ahora el nuevo informe raíz. Las pruebas locales fueron focalizadas; la batería local completa se reserva al cierre E4. UI #60, aceptación integral y revisión humana de CR-01 mantienen su estado pendiente; ninguna aprobación anterior los acredita.
+Lint de archivos afectados, enlaces y validación estructural OpenAPI oficial pasaron; el inventario AST coincide con las17 operaciones y33 esquemas descritos. No cambian fixtures, esquema, dependencias, Angular, SSE o políticas de acceso. El verificador de enlaces incluye ahora el nuevo informe raíz. Las pruebas locales fueron focalizadas; la batería local completa se reserva al cierre E4. En ese incremento de API aún quedaban pendientes UI #60, aceptación integral y revisión humana; ninguna aprobación anterior los acredita.
 
 La primera publicación db75242 de esta API tuvo [CI propio39828497893](https://github.com/ngarayc/Nexo/actions/runs/39828497893) fallido: el trailer Refs terminaba en punto y el parser vigente lo rechazó correctamente. Calidad de fuentes pasó antes de esa comprobación; unidad/integración/sistema no se ejecutaron y no se acreditan cinco artefactos. [#62](https://github.com/ngarayc/Nexo/issues/62) admite un punto final opcional conservando números y comprobación de issues reales, con pruebas de formatos válidos/adversariales. El candidato corregido conserva sus checks propios; no se presenta el intento anterior como aprobado.
 
