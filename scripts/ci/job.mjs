@@ -1,9 +1,10 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { readFile, readdir, writeFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { requiredJobs } from './policy.mjs';
-import { validateReport, validateVitestReport } from './results.mjs';
+import { validateReport, validateVitestReport, validateImageScan } from './results.mjs';
 import { verifyTraceability } from './traceability.mjs';
+import { prepareChromium, browserSetupSteps } from './browser-setup.mjs';
 
 const job = process.argv[2];
 if (!requiredJobs.includes(job)) throw new Error('Job de CI desconocido.');
@@ -97,28 +98,59 @@ if (job === 'quality') {
   command('docker', ['compose', '--env-file', '.env.local', '-f', 'infra/compose.yaml', 'build']);
   command(process.execPath, ['scripts/ci/install-tools.mjs']);
   for (const name of ['api', 'web', 'db']) {
-    command(tools('trivy'), [
-      'image',
-      '--image-src',
-      'docker',
-      '--scanners',
-      'vuln',
-      '--severity',
-      'HIGH,CRITICAL',
-      '--exit-code',
-      '1',
-      '--format',
-      'json',
-      '--output',
-      `reports/raw/image-${name}.json`,
-      `nexo-${name}:local`,
-    ]);
+    const scan = spawnSync(
+      tools('trivy'),
+      [
+        'image',
+        '--image-src',
+        'docker',
+        '--scanners',
+        'vuln',
+        '--severity',
+        'HIGH,CRITICAL',
+        '--exit-code',
+        '1',
+        '--format',
+        'json',
+        '--output',
+        `reports/raw/image-${name}.json`,
+        `nexo-${name}:local`,
+      ],
+      {
+        encoding: 'utf8',
+        timeout: 600000,
+        maxBuffer: 16 * 1024 * 1024,
+        stdio: ['ignore', 'pipe', 'pipe'],
+      },
+    );
+    await writeFile(
+      `reports/raw/image-${name}-scanner.log`,
+      `${scan.stdout ?? ''}\n${scan.stderr ?? ''}`,
+    );
     const report = await json(`reports/raw/image-${name}.json`);
-    if (!report.Metadata?.ImageID || !report.Results?.length)
-      throw new Error('Escaneo de imagen incompleto.');
+    validateImageScan(report, scan, name === 'api' ? ['alpine', 'node-pkg'] : ['alpine']);
+    console.log(`Imagen ${name}: escaneo completo sin HIGH/CRITICAL.`);
   }
   passed('images');
-  command('npx', ['--no-install', 'playwright', 'install', '--with-deps', 'chromium']);
+  const browserSetupAttempts = new Map();
+  await prepareChromium(async (name) => {
+    const step = browserSetupSteps[name];
+    const attempt = (browserSetupAttempts.get(name) ?? 0) + 1;
+    browserSetupAttempts.set(name, attempt);
+    console.log(`Preparación de Chromium: ${name}.`);
+    const setup = spawnSync(step.program, step.args, {
+      encoding: 'utf8',
+      timeout: step.timeout,
+      maxBuffer: 16 * 1024 * 1024,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    await writeFile(
+      `reports/raw/browser-${name}-${attempt}.log`,
+      `${setup.stdout ?? ''}\n${setup.stderr ?? ''}`,
+    );
+    return setup;
+  });
+  console.log('Chromium: lanzamiento y DOM verificados.');
   command('npm', ['run', 'test:e2e']);
   passed('browser', await json('reports/system-summary.json'));
   // La persistencia se verifica de nuevo sobre las mismas imágenes del recorrido.

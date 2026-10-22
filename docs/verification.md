@@ -1,5 +1,63 @@
 # Verificación
 
+## Aprovisionamiento de Chromium — #48
+
+El [CI propio de PR47, 39784174425](https://github.com/ngarayc/Nexo/actions/runs/39784174425), origen b641ee9, pasó calidad, unidades, seguridad e integración 107/107, pero agotó 600 segundos durante descargas apt de fuentes/libglib en install --with-deps, antes de ejecutar navegador. El push 39784168398 del mismo código pasó. Ambos resultados permanecen diferenciados; el push aprobado no reemplaza la PR fallida. Los fallos de aprovisionamiento anteriores también se conservan.
+
+La preparación nueva descarga el shell fijado y comprueba el navegador real antes de instalar dependencias del sistema. Pasaron los 43 controles de CI, incluidos seis nuevos; el probe local abrió Chromium y comprobó DOM. Una comprobación negativa rechazó explícitamente deshabilitar la validación nativa. No se instalaron paquetes del Ubuntu local para estas verificaciones. El CI del candidato corregido debe repetir el inventario completo y producir sus cinco reportes antes de promover.
+
+## Componentes del emisor — avance parcial E3-I03 / #42
+
+Pasaron 397 pruebas unitarias de API, sin omisiones: las 340 anteriores más 27 de comandos/recibos, 22 del adaptador y 8 de temporización. Los 13 casos SQL del diario pasaron con la API `sha256:e6462a70922abf9a4cde14f2a22160817123c74cfab8e86684739cc7cd958030`. El nuevo cierre terminal falló inicialmente porque el caso omitía closeCode obligatorio; se completó el caso sin alterar la restricción SQL. Pérdidas de respuesta antes/después de COMMIT y espera real de la barrera quedaron comprobadas.
+
+Los dos casos del adaptador HTTP real pasaron sobre esa misma imagen: 48 líneas originales, resultados 20/2/2 y 0/22/2, recibos exactos y dominio 20/8/4 con 43 mensajes; respuesta perdida después del procesamiento sin otro envío y clave inválida sin admisión. La primera comparación SQL del nuevo caso usaba igualdad sobre json, operador inexistente; se corrigió a comparar su representación textual exacta, manteniendo los documentos originales. Los estados de diario y el adaptador se verifican separadamente: este recorrido no demuestra todavía ritmo visual, comandos compartidos o panel.
+
+La imagen posterior `sha256:6c1c876eff10ada0967a8eac357fc3bf6e3750bbc2a6af35ccb7a896bf4b3d33` incorpora también ReplayEmitter y pasó los 107 casos de integración, incluidos 10.000 eventos HTTP y su repetición, y los 13 recorridos Chromium. Su escaneo Alpine/Node completó el inventario sin HIGH/CRITICAL o detalles ausentes; la barrera estricta comprobó el reporte y su identidad. API/web/DB conservaron los mismos digests entre escaneo y pruebas. Pasaron calidad completa, cuatro fixtures, coherencia del esquema y 37 controles de CI. Estos resultados corresponden a la base del emisor, sin el borrador posterior del coordinador; el CI de promoción conserva su ejecución propia. [Emisor](replay-emitter.md) describe el alcance y pendientes.
+
+El [CI propio de PR #41, 39775782259](https://github.com/ngarayc/Nexo/actions/runs/39775782259), intento 1, pasó para origen4230ff6856aa32e926aaca18f56f1371dc756b14 y checkoutcaeeb2a4c0dd0982e5786cf42c3a6dc54fd48561: cinco reportes descargados/revalidados, 340 API / 70 Angular / 102 integración / 13 Chromium. El push39775772883 agotó600s instalando dependencias de Chromium antes de ejecutar navegador, con integración102/102 aprobada. Su primer intento permanece fallido. El intento 2 completo pasó y sus cinco artefactos también se descargaron/revalidaron para el mismo origen, con 340 API / 70 Angular / 102 integración / 13 Chromium. PR41 se integró en test como3f4c8c7d56baa5fb845fabfd627af105c3ccffaa, con árbol idéntico al candidato4230ff6. El diagnóstico de presión #44 no cambia este fallo de aprovisionamiento ni afirma resuelta su causa histórica.
+
+## Diagnóstico de presión SSE — #44
+
+El [push39770957324](https://github.com/ngarayc/Nexo/actions/runs/39770957324) falló en realtime-pressure.test.mjs sobre05e12c8, mientras la [PR39770961770](https://github.com/ngarayc/Nexo/actions/runs/39770961770) del mismo código terminó satisfactoriamente. El runner anterior no conservó la etapa del fallo. Ese resultado fallido permanece visible; el verde paralelo no demuestra su resolución.
+
+La investigación repitió el caso tres veces en stacks nuevos con las imágenes parcheadas de #43:3/3pasaron, además de la regresión completa102/13ya descrita. No se reprodujo la causa original y no se atribuye su ausencia al parche de libc. Se añadió diagnóstico seguro de etapas, comprobado con la causa real de una aserción de Node y pruebas de rechazo de textos no permitidos. Los controles del CI pasan de34a37. No cambia la carga de128eventos/384mensajes, presupuestos del servidor, tiempos o aserciones, ni se introducen reintentos automáticos.
+
+La causa del fallo original sigue sin determinarse. Una nueva ejecución que falle conservará la etapa admitida cuando esté disponible y seguirá bloqueando la promoción; un candidato debe pasar su propio inventario y cinco reportes, sin sustituirlo por otra ejecución verde. [CI](ci-controls.md) describe el límite del diagnóstico y la publicación.
+
+## Corrección del feed incompleto y musl — #43
+
+El aviso registrado durante #40 se investigó en las fuentes del proveedor: musl/musl-utils1.2.6-r2 estaban presentes en API/web/DB y Alpine3.24 publicaba1.2.6-r3 como corrección. Se actualizaron paquetes fijados sin cambiar versiones/digests base o controles de ejecución. La nueva barrera de CI rechazó el reporte real anterior, que devolvía0 pero carecía de detalles de vulnerabilidad. Los34controles del pipeline pasaron, sin omisiones.
+
+Las imágenes reconstruidas y escaneadas completaron inventario y no reportaron HIGH/CRITICAL ni detalles ausentes: API `sha256:b6612fb7f2562163db3e4e776354b22fbd2d108f2ef603813cfe0a6821fabe9b`, web `sha256:8484a7f0c25cfbb30eb680224a4c37493871e7a9441c0d2ffccec84c025013a5` y DB `sha256:a703efe740a6bc34fe154b9b008431a57ce3bb6392879ebad0053bd80240519c`. Se comprobaron ambos paquetes1.2.6-r3 y la correspondencia con los digests de Docker. La regresión y el CI de este candidato se verifican por separado; las pruebas anteriores de #40 no se atribuyen a estas imágenes.
+
+Esta comprobación corrige una carencia de la evidencia del escáner, sin afirmar una severidad o rechazo del CVE que el feed no aportó. [Seguridad](security.md) enlaza las fuentes primarias. Los logs/JSON crudos permanecen fuera de Git y de los artefactos publicables.
+
+La regresión de esas mismas tres imágenes pasó102casos de integración y13Chromium, sin omisiones; sus digests permanecieron idénticos a los escaneados. Incluye inicialización/Argon2, preservación/upgrade, recepción/cola, recuperación, consultas/SSE, diario/verificador y10.000eventos más repetición. Los tres Dockerfiles pasaron20controles de configuración cada uno, con0fallos. La promoción conserva QA y CI propios del nuevo candidato; un verde de05e12c8 no sustituye esas comprobaciones.
+
+## Preparación y comparación del replay — E3-I02
+
+La [issue #40](https://github.com/ngarayc/Nexo/issues/40) incorpora el [verificador](replay-verification.md) sobre el diario #38. La calidad completa pasó con340pruebasAPI y70Angular; los31controles del pipeline permanecen aprobados. Fuentes originales y esquema/snapshots se conservaron, sin omisiones o exclusiones nuevas.
+
+La regresión inicial pasó102casos de integración y13Chromium. La revisión añadió después el cotejo de la identidad del intento y del evento referenciado por cada recibo. La imagen API final `sha256:b51dcff7583547a6000f6bfa05fc723b04c040df64dcc7ab247a532ae33a5205`, reconstruida con ese ajuste, volvió a pasar los9casos PostgreSQL del verificador y los13recorridos Chromium. No se atribuye la ejecución anterior de102casos a esa imagen posterior: el CI del candidato reconstruye el inventario completo desde su checkout e identifica sus propios resultados/imágenes.
+
+Los casos nuevos comprueban fuentes empaquetadas, código identificado, preparación con jobs preparados/activos, dos conjuntos controlados20/2/2→0/22/2, contenido/identidades, historial, estados, alertas,43mensajes, recibos ajenos, lectura concurrente, inventario incompleto e indisponibilidad. El escenario de identidad errónea ingresa el dato incorrecto desde el principio; no desactiva la inmutabilidad SQL. La carrera confirma un recibo/job durante la lectura: ambos quedan fuera del primer snapshot y aparecen en el siguiente.
+
+Estos estados controlados usan recepción/clasificación y diario reales, pero no el futuro emisor HTTP. La publicación se marca sintéticamente para comparar datos: no acredita SSE emitido, pausa/reanudación o dos clientes renderizados por el motor. Informe y comparación conservan ese alcance. Los recorridos de navegador existentes conservan su propia evidencia E2.
+
+La imagen terminó su escaneo Alpine/Node sin hallazgos HIGH/CRITICAL reportados y npm audit informó0vulnerabilidades. El feed de Trivy emitió un aviso de detalles ausentes para CVE-2026-107891, también al consultar su repositorio primario; se conserva esta limitación sin afirmar un estado o severidad para ese identificador y sin añadir exclusiones. Los checks/artefactos del candidato mantienen su validación independiente y los límites de la [política de CI](ci-controls.md).
+
+La [PR #41](https://github.com/ngarayc/Nexo/pull/41) reúne diario y verificador. Sus checks y evidencia remota deben atribuirse a cada SHA efectivo; aprobación del plan, pruebas locales y QA del agente no sustituyen revisión humana de main. Motor, contratos públicos de control, panel, reset e integración final continúan pendientes E3.
+
+## Diario del reproductor — E3-I01
+
+La [issue #38](https://github.com/ngarayc/Nexo/issues/38) pasó calidad, **290 pruebas API, 70 Angular, 93 de integración y 13 Chromium**, sin omisiones. La imagen API reconstruida y utilizada por esos recorridos pasó Trivy sin altos/críticos; web conserva su código/imagen revisados. Las cuatro fuentes mantienen sus hashes. Este incremento incorpora el diario; no acredita todavía motor, controles HTTP, verificador oficial, panel o reset.
+
+Diez casos nuevos usan PostgreSQL real: relaciones/permisos/identidad, intención durable, respuestas/cursor en el mismo commit, pausa en la última línea, dos coordinadores con conexiones independientes, rollback inducido entre escrituras, recuperación de pausadas/en curso, diagnóstico permitido, historial con microsegundos y capacidad exacta de 1.000 ejecuciones. La migración desde el esquema publicado 0002 conserva cuenta/hash/telemetría/proyección/alerta comparados en memoria; repetir preparación tampoco los cambia. Los informes individuales y del escenario permanecen separados. Sus clasificaciones e informes controlados prueban políticas SQL, sin presentarlos como 24 envíos HTTP o conformidad oficial.
+
+La primera integración completa falló en dos casos antiguos de recuperación. Su fixture construía el esquema E1 con dos migraciones y llamaba al preparador actual, que ahora exige las tablas nuevas: se observó SQLSTATE42P01, ausencia de replay_runs y solo dos migraciones aplicadas. Ese fallo dejaba el caso siguiente sobre el esquema anterior. La preparación histórica se realiza ahora explícitamente con su seed/permisos originales y se usa el preparador actual al verificar el upgrade. Los nueve casos de recuperación corregidos pasaron; después pasó la integración completa de 93 y el recorrido Chromium. No se condicionaron los grants del producto a que existieran tablas, ni se cambiaron oráculos o cuotas para aprobar.
+
+[Diario durable](replay-journal.md) relaciona código, transacciones, recuperación, costes y fuentes. El CI de su promoción verifica el candidato limpio; una revisión técnica o prueba del diario no completa el reproductor obligatorio. La revisión humana de la base E2/EP-03 conserva su PR/candidato propios.
+
 ## Consolidación documental del dashboard — E2-I06
 
 La [issue #36](https://github.com/ngarayc/Nexo/issues/36) actualiza README, arquitectura, operación, reproducibilidad y API para describir flota/historial/alertas ya disponibles. [Trazabilidad](traceability.md) relaciona obligaciones, implementación, pruebas y pendientes; mantiene reproductor, CR-01, complementos y cierre final separados. La revisión del AST de controladores contrastó las catorce operaciones reales con OpenAPI, incluyendo su prefijo de servidor; no hubo diferencias ni cambios de endpoints.

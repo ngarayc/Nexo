@@ -14,6 +14,7 @@ import {
   uniqueIndex,
   uuid,
 } from 'drizzle-orm/pg-core';
+import type { AnyPgColumn } from 'drizzle-orm/pg-core';
 
 const identityBytes = customType<{ data: Uint8Array; driverData: Buffer }>({
   dataType: () => 'bytea',
@@ -267,5 +268,180 @@ export const outboxMessages = pgTable(
     index('outbox_messages_unpublished')
       .on(table.availableAt, table.createdAt, table.messageId)
       .where(sql`${table.publishedAt} IS NULL`),
+  ],
+);
+
+export const replayRuns = pgTable(
+  'replay_runs',
+  {
+    runId: uuid('run_id').primaryKey(),
+    scenarioId: uuid('scenario_id')
+      .notNull()
+      .references((): AnyPgColumn => replayRuns.runId),
+    previousRunId: uuid('previous_run_id').references((): AnyPgColumn => replayRuns.runId),
+    instanceId: uuid('instance_id').notNull(),
+    fixtureSha256: text('fixture_sha256').notNull(),
+    stage: text('stage').notNull(),
+    intervalMs: integer('interval_ms').notNull().default(750),
+    state: text('state').notNull().default('preparing'),
+    nextLine: integer('next_line').notNull().default(1),
+    revision: bigint('revision', { mode: 'bigint' })
+      .notNull()
+      .default(sql`0`),
+    verification: text('verification').notNull().default('pending'),
+    verificationDocument: originalJson('verification_document'),
+    scenarioVerification: text('scenario_verification').notNull().default('pending'),
+    scenarioDocument: originalJson('scenario_document'),
+    scenarioClosedAt: technicalTime('scenario_closed_at'),
+    closeCode: text('close_code'),
+    lastCommandId: uuid('last_command_id'),
+    lastCommandInstance: uuid('last_command_instance'),
+    lastCommandExpectedVersion: bigint('last_command_expected_version', { mode: 'bigint' }),
+    lastCommandDocument: originalJson('last_command_document'),
+    createdAt: technicalTime('created_at').notNull().defaultNow(),
+    updatedAt: technicalTime('updated_at').notNull().defaultNow(),
+  },
+  (table) => [
+    check('replay_runs_fixture_valid', sql`${table.fixtureSha256} ~ '^[a-f0-9]{64}$'`),
+    check('replay_runs_interval_valid', sql`${table.intervalMs} BETWEEN 100 AND 5000`),
+    check('replay_runs_revision_valid', sql`${table.revision} BETWEEN 0 AND 9007199254740991`),
+    check('replay_runs_cursor_valid', sql`${table.nextLine} BETWEEN 1 AND 25`),
+    check('replay_runs_time_valid', sql`${table.updatedAt} >= ${table.createdAt}`),
+    check(
+      'replay_runs_stage_valid',
+      sql`
+      (${table.stage} = 'first' AND ${table.previousRunId} IS NULL AND ${table.scenarioId} = ${table.runId})
+      OR (${table.stage} IN ('second','exploratory') AND ${table.previousRunId} IS NOT NULL
+          AND ${table.previousRunId} <> ${table.runId} AND ${table.scenarioId} <> ${table.runId})
+    `,
+    ),
+    check(
+      'replay_runs_state_valid',
+      sql`
+      (${table.state} = 'preparing' AND ${table.nextLine} = 1)
+      OR (${table.state} IN ('running','pausing','paused','restarting','finalizing') AND ${table.nextLine} <= 24)
+      OR (${table.state} = 'completed' AND ${table.nextLine} = 25)
+      OR (${table.state} IN ('stopped','error','interrupted') AND ${table.nextLine} <= 24)
+    `,
+    ),
+    check(
+      'replay_runs_verification_valid',
+      sql`
+      (${table.verification} = 'pending' AND ${table.verificationDocument} IS NULL
+        AND ${table.state} NOT IN ('stopped','error','interrupted'))
+      OR (${table.verification} = 'inconclusive' AND ${table.state} IN ('completed','stopped','error','interrupted'))
+      OR (${table.verification} = 'conformant' AND ${table.verificationDocument} IS NOT NULL AND ${table.state} = 'completed')
+      OR (${table.verification} = 'non_conformant' AND ${table.verificationDocument} IS NOT NULL
+        AND ${table.state} IN ('completed','stopped','error','interrupted'))
+    `,
+    ),
+    check(
+      'replay_runs_report_object',
+      sql`
+      ${table.verificationDocument} IS NULL OR json_typeof(${table.verificationDocument}) = 'object'
+    `,
+    ),
+    check(
+      'replay_runs_scenario_result_valid',
+      sql`
+      (${table.scenarioVerification} = 'pending' AND ${table.scenarioDocument} IS NULL AND ${table.scenarioClosedAt} IS NULL)
+      OR (${table.stage} = 'first' AND ${table.scenarioClosedAt} IS NOT NULL AND ${table.scenarioClosedAt} >= ${table.createdAt}
+        AND ((${table.scenarioVerification} = 'inconclusive')
+          OR (${table.scenarioVerification} IN ('conformant','non_conformant') AND ${table.scenarioDocument} IS NOT NULL))
+        AND (${table.scenarioDocument} IS NULL OR json_typeof(${table.scenarioDocument}) = 'object'))
+    `,
+    ),
+    check(
+      'replay_runs_close_code_valid',
+      sql`
+      ${table.closeCode} IS NULL OR ${table.closeCode} IN ('TRANSPORT_UNCERTAIN','RESPONSE_PENDING',
+      'RESPONSE_INVALID','JOURNAL_UNCERTAIN','NOT_ADMITTED','PROCESSING_FAILED','API_RESTARTED',
+      'USER_RESTARTED','VERIFICATION_CLOSED')
+    `,
+    ),
+    check(
+      'replay_runs_intention_valid',
+      sql`
+      (${table.lastCommandId} IS NULL AND ${table.lastCommandInstance} IS NULL
+        AND ${table.lastCommandExpectedVersion} IS NULL AND ${table.lastCommandDocument} IS NULL)
+      OR (${table.lastCommandId} IS NOT NULL AND ${table.lastCommandInstance} IS NOT NULL
+        AND ${table.lastCommandExpectedVersion} IS NOT NULL AND ${table.lastCommandDocument} IS NOT NULL
+        AND ${table.lastCommandExpectedVersion} BETWEEN 0 AND 9007199254740990
+        AND json_typeof(${table.lastCommandDocument}) = 'object'
+        AND octet_length(${table.lastCommandDocument}::text) <= 4096)
+    `,
+    ),
+    uniqueIndex('replay_runs_one_current').on(sql`(true)`).where(sql`${table.state} IN
+      ('preparing','running','pausing','paused','restarting','finalizing')`),
+    uniqueIndex('replay_runs_one_second')
+      .on(table.scenarioId)
+      .where(sql`${table.stage} = 'second'`),
+    index('replay_runs_history').on(table.createdAt.desc(), table.runId.desc()),
+  ],
+);
+
+export const replayAttempts = pgTable(
+  'replay_attempts',
+  {
+    runId: uuid('run_id')
+      .notNull()
+      .references(() => replayRuns.runId),
+    lineNumber: integer('line_number').notNull(),
+    batchIndex: integer('batch_index').notNull().default(0),
+    ingestionId: uuid('ingestion_id').notNull().unique(),
+    eventKey: identityBytes('event_key'),
+    state: text('state').notNull().default('in_flight'),
+    outcome: text('outcome'),
+    reasonCode: text('reason_code'),
+    httpStatus: integer('http_status'),
+    diagnosticDocument: originalJson('diagnostic_document'),
+    startedAt: technicalTime('started_at').notNull().defaultNow(),
+    finalizedAt: technicalTime('finalized_at'),
+  },
+  (table) => [
+    primaryKey({ columns: [table.runId, table.lineNumber] }),
+    check(
+      'replay_attempts_line_valid',
+      sql`${table.lineNumber} BETWEEN 1 AND 24 AND ${table.batchIndex} = 0`,
+    ),
+    check(
+      'replay_attempts_identity_valid',
+      sql`${table.eventKey} IS NULL OR nexo_identity_is_canonical(${table.eventKey})`,
+    ),
+    check(
+      'replay_attempts_http_valid',
+      sql`${table.httpStatus} IS NULL OR ${table.httpStatus} BETWEEN 100 AND 599`,
+    ),
+    check(
+      'replay_attempts_reason_valid',
+      sql`${table.reasonCode} IS NULL OR ${table.reasonCode} ~ '^[A-Z][A-Z0-9_]{0,63}$'`,
+    ),
+    check(
+      'replay_attempts_time_valid',
+      sql`${table.finalizedAt} IS NULL OR ${table.finalizedAt} >= ${table.startedAt}`,
+    ),
+    check(
+      'replay_attempts_diagnostic_valid',
+      sql`
+      ${table.diagnosticDocument} IS NULL OR (json_typeof(${table.diagnosticDocument}) = 'object'
+        AND octet_length(${table.diagnosticDocument}::text) <= 4096)
+    `,
+    ),
+    check(
+      'replay_attempts_result_valid',
+      sql`
+      (${table.state} = 'in_flight' AND ${table.outcome} IS NULL AND ${table.reasonCode} IS NULL
+        AND ${table.httpStatus} IS NULL AND ${table.diagnosticDocument} IS NULL AND ${table.finalizedAt} IS NULL)
+      OR (${table.state} = 'classified' AND ${table.outcome} IS NOT NULL AND ${table.httpStatus} = 200
+        AND ${table.httpStatus} IS NOT NULL AND ${table.finalizedAt} IS NOT NULL AND (
+          (${table.outcome} IN ('accepted','duplicate') AND ${table.reasonCode} IS NULL)
+          OR (${table.outcome} = 'rejected' AND ${table.reasonCode} IS NOT NULL)))
+      OR (${table.state} IN ('uncertain','technical_failure') AND ${table.outcome} IS NULL
+        AND ${table.reasonCode} IS NULL AND ${table.diagnosticDocument} IS NOT NULL AND ${table.finalizedAt} IS NOT NULL)
+    `,
+    ),
+    uniqueIndex('replay_attempts_one_in_flight')
+      .on(table.runId)
+      .where(sql`${table.state} = 'in_flight'`),
   ],
 );

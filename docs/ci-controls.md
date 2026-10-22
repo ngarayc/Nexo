@@ -1,5 +1,15 @@
 # Controles de integración
 
+## Preparación verificable de Chromium
+
+La [issue #48](https://github.com/ngarayc/Nexo/issues/48) separa la descarga del navegador fijado de la instalación de dependencias del sistema. Se descarga el headless shell que ya utiliza la configuración Chromium sin channel; después un proceso acotado debe abrir ese navegador, navegar y comprobar contenido real del DOM. Una validación nativa deshabilitada bloquea el probe.
+
+Si Chromium funciona, continúan todos los recorridos de sistema y persistencia. Solo un diagnóstico nativo reconocido de dependencias faltantes permite ejecutar install-deps chromium y exige otra comprobación real posterior. Salida inválida, señal, timeout o un fallo de lanzamiento genérico detienen el job. No hay bucle de reintento de pruebas o instalación. Descarga e instalación tienen cinco minutos cada una; cada probe dispone de treinta segundos. Los límites de las pruebas y del job permanecen.
+
+Los pasos y fallos usan códigos cerrados. Sus salidas completas se conservan únicamente en reports/raw, separadas por paso e intento, fuera de los cinco artefactos publicables. Que la preparación termine no acredita las pruebas: browser y persistence solo se marcan aprobados después de ejecutar sus inventarios completos. Los seis controles nuevos prueban disponibilidad, dependencias faltantes y rechazos ante fallo o evidencia inválida.
+
+[Playwright: navegadores y dependencias](https://playwright.dev/docs/browsers#install-system-dependencies) documenta ambos comandos y only-shell. Nexo añade el probe de navegador/DOM, fallback condicionado y diagnóstico cerrado para evitar que una descarga apt innecesaria impida comprobar una instalación ya funcional.
+
 ## Estado
 
 Los workflows de Actions y los módulos de `scripts/ci/` implementan el protocolo de E0-I04. [La primera ejecución remota](https://github.com/ngarayc/Nexo/actions/runs/39552267643) pasó quality, unit, integration, security-source, system y ci-required para el origen `7d65bd2518e2501687123b3c702b142ed8a98e02`; sus cinco artefactos saneados se descargaron y revalidaron contra el candidato de integración `9d373779aa138bbb27152ee34e89dfe2b03415f4`. La [PR #7](https://github.com/ngarayc/Nexo/pull/7) se integró en test tras revisión técnica. Las [demostraciones negativas y recuperación](control-demonstrations.md) también se ejecutaron en un recurso descartable con reglas equivalentes: rechazo de push directo, bloqueo por prueba omitida/fallida y recuperación por PR.
@@ -21,6 +31,10 @@ Los merges sin trailer solo se admiten si la API acredita una PR integrada por e
 La prueba local contra la API real validó el commit de plantillas y su issue #2. Su contexto de push fue construido localmente; no se presenta como una ejecución de Actions.
 
 ## Resultados y artefactos
+
+La [investigación #44](https://github.com/ngarayc/Nexo/issues/44) conserva una etapa cerrada cuando falla el caso de presión SSE. El runner reconoce la causa de aserción de Node y permite solo connections, ingest-N, fast-N o released-capacity, conNperteneciente a los16lotes previstos. No imprime message, stack, payload o actual arbitrario; las pruebas incluyen marcadores sensibles sintéticos y causas cíclicas. El fallo continúa bloqueando y no se añaden reintentos o campos a los reportes publicables.
+
+La [corrección #43](https://github.com/ngarayc/Nexo/issues/43) exige que el escaneo de imágenes termine correctamente, identifique el digest y aporte inventario Alpine —y Node en API—. Un aviso de detalles de vulnerabilidad ausentes bloquea aunque el proceso devuelva0; un hallazgo de severidad desconocida tampoco acredita aprobación. Se conserva el log del scanner únicamente en reports/raw, fuera de la lista de artefactos publicables. El aviso general de selección de severidad entre proveedores no se confunde con falta de metadatos. Los controles incluyen salida0 con detalles ausentes, inventario incompleto y severidad desconocida/alta.
 
 `scripts/ci/results.mjs` exige los cinco controles: quality, unit, integration, security-source y system. Su evaluación rechaza fallo, ausencia, cancelación, skip, reportes de otra revisión/ejecución/intento y comprobaciones obligatorias incompletas. La revisión hacia main utiliza un contexto separado y obligatorio, descrito a continuación.
 
