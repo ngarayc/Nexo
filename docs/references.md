@@ -89,3 +89,7 @@ La [corrección musl #43](security.md) consulta el registro oficial [Alpine3.24]
 ## Aprovisionamiento del navegador de CI
 
 [Playwright: instalación de navegadores y dependencias del sistema](https://playwright.dev/docs/browsers#install-system-dependencies) distingue install e install-deps y documenta only-shell para la configuración headless sin channel. La versión permanece fijada en el lockfile. #48 aplica esa separación con una comprobación real de lanzamiento/DOM, instalación del sistema condicionada a faltantes y fallo cerrado; no omite pruebas ni atribuye a Playwright esa política específica de Nexo.
+
+## Reset local acotado
+
+La [identidad de volúmenes Compose](https://docs.docker.com/reference/compose-file/volumes/), la [semántica de down](https://docs.docker.com/reference/cli/docker/compose/down/), el [borrado de un volumen](https://docs.docker.com/reference/cli/docker/volume/rm/) y la [inspección de contexto](https://docs.docker.com/reference/cli/docker/context/inspect/) sustentan el [reset](demo-reset.md). Nexo añade etiqueta sintética, rechazo de consumidores ajenos, archivos privados con checksum y reanudación por manifiesto. No usa down --volumes, force o prune; una interrupción no acredita éxito ni autoriza borrar un reemplazo.

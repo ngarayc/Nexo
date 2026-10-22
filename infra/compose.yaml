@@ -85,6 +85,8 @@ services:
     stop_grace_period: 15s
 volumes:
   postgres18-data:
+    labels:
+      io.github.ngarayc.nexo.purpose: synthetic-demo
 networks:
   application:
   database:
