@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 import { isAbsolute, basename, dirname } from 'node:path';
 
-export function systemApiScript(source) {
+export function systemStackIdentity() {
   const project = process.env.NEXO_SYSTEM_PROJECT;
   const envFile = process.env.NEXO_SYSTEM_ENV_FILE;
   if (
@@ -12,6 +12,11 @@ export function systemApiScript(source) {
     !basename(dirname(envFile)).startsWith('nexo-test-config-')
   )
     throw new Error('Falta el stack sintético propio del runner de sistema.');
+  return { project, envFile };
+}
+
+export function systemApiScript(source) {
+  const { project, envFile } = systemStackIdentity();
   try {
     return execFileSync(
       'docker',

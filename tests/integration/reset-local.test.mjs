@@ -117,6 +117,17 @@ test(
       );
       assert.equal(manifest().phase, 'removing');
       assert.equal(adapter.volume(target), null);
+      const previousPort = process.env.WEB_PORT;
+      try {
+        process.env.WEB_PORT = '8080';
+        assert.throws(
+          () => resetDemo(resume, { announce: quiet }),
+          (e) => e.code === 'RESUME_TARGET_CHANGED',
+        );
+      } finally {
+        if (previousPort === undefined) delete process.env.WEB_PORT;
+        else process.env.WEB_PORT = previousPort;
+      }
       const result = resetDemo(resume, { announce: quiet });
       assert.equal(result.complete, true);
       assert.notEqual(result.prepared.instanceId, original.instanceId);

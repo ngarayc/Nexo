@@ -4,7 +4,7 @@ Telemetría sintética de flotas con NestJS, Angular y PostgreSQL. El nombre exp
 
 **Estado:** base E0 con Docker, acceso demo por sesión y CI; E1 admite lotes HTTP, clasifica eventos y recupera fallos mediante cola durable, conservando identidad, tiempo y JSON exactos. Incluye proyección, alertas y outbox transaccionales, tres oportunidades por posición y reconciliación tras reinicio. Las consultas autenticadas exponen flota, historial, alertas y snapshot coherente. El stream SSE protegido publica cambios confirmados desde la outbox, con límites por conexión, heartbeat y recuperación de salud. Angular presenta flota, búsqueda, historial y alertas globales con hora24h de Bogotá; enlaza cada alerta con su observación y conserva conexión/totales al navegar. Reproductor y filtro CR-01 conservan sus incrementos posteriores.
 
-E3 incorpora el [diario persistente](docs/replay-journal.md) y el [verificador de datos](docs/replay-verification.md), con fuentes originales, preparación, comparación e informes históricos. El [motor HTTP compartido](docs/replay-emitter.md) conserva cuerpos originales, una sola petición, controles protegidos e incertidumbre sin reenvíos. El [panel flotante](docs/replay-panel.md) permite iniciar, pausar, reanudar, reiniciar y finalizar desde Flota/Alertas; muestra progreso, inspector e informes mediante el mismo SSE. El [reset local](docs/demo-reset.md) conserva evidencia externa y recrea exclusivamente el volumen sintético identificado. El recorrido final reproducible sigue pendiente para cerrar E3.
+E3 incorpora el [diario persistente](docs/replay-journal.md) y el [verificador de datos](docs/replay-verification.md), con fuentes originales, preparación, comparación e informes históricos. El [motor HTTP compartido](docs/replay-emitter.md) conserva cuerpos originales, una sola petición, controles protegidos e incertidumbre sin reenvíos. El [panel flotante](docs/replay-panel.md) permite iniciar, pausar, reanudar, reiniciar y finalizar desde Flota/Alertas; muestra progreso, inspector e informes mediante el mismo SSE. El [reset local](docs/demo-reset.md) conserva evidencia externa y recrea exclusivamente el volumen sintético identificado. La [guía de demostración](docs/demo-guide.md) une reset, dos clientes y ambos replays; [verificación](docs/verification.md) conserva resultados comprobados y pendientes de promoción.
 
 ## Arranque
 
@@ -73,6 +73,7 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 - [Diario durable del reproductor](docs/replay-journal.md).
 - [Preparación y verificación del par oficial](docs/replay-verification.md).
 - [Reset local con evidencia y reanudación](docs/demo-reset.md).
+- [Demostración reproducible y guion de video](docs/demo-guide.md).
 - [Emisor HTTP, temporización e intenciones](docs/replay-emitter.md).
 - [API y contrato OpenAPI versionado](docs/api.md).
 - [Comprobación desde copia limpia](docs/reproducibility.md).

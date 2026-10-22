@@ -28,12 +28,14 @@ export function resetDemo(args, { Adapter = DockerReset, announce = console.log 
     envFile = privateFile(resolve(repository, options.envFile));
   const adapter = new Adapter(options.project, envFile),
     engine = adapter.environment(),
-    target = composeResetTarget(adapter.config(), options.project);
+    config = adapter.config(),
+    target = composeResetTarget(config, options.project);
   const context = {
     engine,
     project: target.project,
     volumeName: target.volumeName,
     envFingerprint: fingerprint(readFileSync(envFile)),
+    configurationFingerprint: fingerprint(JSON.stringify(config)),
   };
   const inspect = () => {
     const volume = adapter.volume(target.volumeName);

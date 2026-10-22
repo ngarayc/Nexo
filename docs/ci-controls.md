@@ -56,6 +56,8 @@ Para el formato estándar de merge de GitHub, el verificador usa la primera lín
 
 Cuatro pruebas focalizadas comprueban la localización y los rechazos ante texto falso, otra PR/SHA, fork, flujo incorrecto, no integrada o metadata ausente. La lectura real de PR53 confirma la promoción afectada sin depender del endpoint que devolvió500. Estos resultados no convierten los intentos históricos fallidos en aprobados; cada candidato remoto conserva su CI completo.
 
+[CI39813798583](https://github.com/ngarayc/Nexo/actions/runs/39813798583), intento1 sobre c43f1ca7e8a1cc16c5ad55dc1cea45a904d37753, completó los seis jobs. Sus cinco artefactos se descargaron/revalidaron:458API,90Angular,123integración y14Chromium, sin omisiones. Incluye la comprobación real de la promoción de PR54 dentro del rango publicado. Es evidencia de esta corrección; el recorrido ampliado de aceptación #55 conserva su candidato propio.
+
 Las 31 pruebas de los controles incluyen omisiones, reportes antiguos, discrepancias de conteo, ramas incorrectas, referencias a PR, metadatos ausentes y recuperación con un conjunto válido. Acreditan el comportamiento local de los validadores. CI y escaneos pasaron remotamente; [E0-I04](https://github.com/ngarayc/Nexo/issues/4) registra además los rechazos y recuperación remotos, con [metadatos y reportes saneados](evidence/control-proofs.json). La revisión humana de main conserva su criterio propio.
 
 ## Workflows y revisión del candidato
