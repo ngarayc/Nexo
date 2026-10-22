@@ -1,6 +1,6 @@
 import { Injectable, OnDestroy, effect, inject, signal, untracked } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
-import type { DomainChange, StreamControl } from '@nexo/contracts';
+import type { DomainChange, StreamControl, ReplayStreamFrame } from '@nexo/contracts';
 import { SessionState } from '../../platform/session/session-state';
 import { SessionApi } from '../access/data-access/session-api';
 import { TelemetryApi } from '../../platform/telemetry/telemetry-api';
@@ -36,6 +36,7 @@ export class LiveMonitor implements OnDestroy {
   private readonly invalidated = new Set<(clear: boolean) => void>();
   private readonly ready = new Set<(generation: number) => void>();
   private readonly frames = new Set<(change: DomainChange) => void>();
+  private readonly replays = new Set<(view: ReplayStreamFrame, generation: number) => void>();
   private authEpoch: number | undefined;
   private generation = 0;
   private retries = 0;
@@ -76,6 +77,10 @@ export class LiveMonitor implements OnDestroy {
   onFrame(listener: (change: DomainChange) => void): () => void {
     this.frames.add(listener);
     return () => this.frames.delete(listener);
+  }
+  onReplay(listener: (view: ReplayStreamFrame, generation: number) => void): () => void {
+    this.replays.add(listener);
+    return () => this.replays.delete(listener);
   }
   capture(accepts: (change: DomainChange) => boolean): CaptureHandle {
     if (this.currentGeneration === undefined) throw new ObsoleteCapture();
@@ -182,6 +187,14 @@ export class LiveMonitor implements OnDestroy {
       this.stream = this.transport.connect({
         control: (control) => this.control(generation, control),
         frame: (frame) => this.frame(generation, frame),
+        replay: (view) => {
+          if (!this.current(generation)) return;
+          if (this.instance === undefined || view.streamInstanceId !== this.instance) {
+            this.failed(generation);
+            return;
+          }
+          for (const listener of this.replays) listener(view, generation);
+        },
         failed: () => this.failed(generation),
       });
       this.readyTimer = this.clock.after(10000, () => this.failed(generation));
@@ -341,6 +354,7 @@ export class LiveMonitor implements OnDestroy {
     this.resumeListener?.();
     this.ready.clear();
     this.frames.clear();
+    this.replays.clear();
     this.invalidated.clear();
   }
 }

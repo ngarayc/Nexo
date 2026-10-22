@@ -1,11 +1,13 @@
 import { Injectable, InjectionToken, inject } from '@angular/core';
-import type { StreamControl } from '@nexo/contracts';
+import type { StreamControl, ReplayStreamFrame } from '@nexo/contracts';
+import { readReplayFrame } from '../replay/replay-contract';
 import type { DomainFrame } from './telemetry-contract';
 import { readDomainFrame, readStreamControl } from './telemetry-contract';
 
 export interface StreamHandlers {
   control(value: StreamControl): void;
   frame(value: DomainFrame): void;
+  replay?(value: ReplayStreamFrame): void;
   failed(): void;
 }
 export interface StreamHandle {
@@ -41,13 +43,16 @@ export class BrowserStreamTransport implements StreamTransport {
       'telemetry.accepted',
       'vehicle.updated',
       'alert.created',
+      'demo.replay.updated',
     ]) {
       const listener: EventListener = (event) => {
         if (closed) return;
         const message = event as MessageEvent<string>;
         try {
           if (typeof message.data !== 'string') throw new Error('Mensaje inválido.');
-          if (type.startsWith('stream.')) handlers.control(readStreamControl(type, message.data));
+          if (type === 'demo.replay.updated') handlers.replay?.(readReplayFrame(message.data));
+          else if (type.startsWith('stream.'))
+            handlers.control(readStreamControl(type, message.data));
           else handlers.frame(readDomainFrame(type, message.lastEventId, message.data));
         } catch {
           fail();

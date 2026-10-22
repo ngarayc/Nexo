@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpErrorResponse, HttpHeaders } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { expect, it, vi } from 'vitest';
-import type { DomainSnapshot, DomainChange, EventView } from '@nexo/contracts';
+import type { DomainSnapshot, DomainChange, EventView, ReplayStreamFrame } from '@nexo/contracts';
 import { SessionState } from '../../platform/session/session-state';
 import { SessionApi } from '../access/data-access/session-api';
 import { TelemetryApi } from '../../platform/telemetry/telemetry-api';
@@ -128,6 +128,37 @@ class Transport implements StreamTransport {
 async function flush() {
   for (let i = 0; i < 8; i++) await Promise.resolve();
 }
+
+it('replay comparte generación y valida época SSE sin confundirla con la instancia del motor', async () => {
+  const { monitor, transport, requests } = setup();
+  const listener = vi.fn();
+  monitor.onReplay(listener);
+  transport.latest.ready();
+  requests[0]!.result.resolve(snapshot());
+  await flush();
+  const source = transport.latest;
+  const frame: ReplayStreamFrame = {
+    type: 'demo.replay.updated',
+    schemaVersion: 1,
+    streamInstanceId: instance,
+    instanceId: '00000000-0000-4000-8000-000000000002',
+    controlVersion: 0,
+    viewRevision: 0,
+    observedAt: new Date().toISOString(),
+    allowedActions: ['start'],
+    pendingAction: null,
+    blockedReason: null,
+    scenario: null,
+    run: null,
+  };
+  source.handlers.replay!(frame);
+  expect(listener).toHaveBeenCalledExactlyOnceWith(frame, monitor.currentGeneration);
+  source.handlers.replay!({ ...frame, streamInstanceId: '00000000-0000-4000-8000-000000000003' });
+  expect(source.closed).toBe(true);
+  expect(monitor.phase()).toBe('reconnecting');
+  source.handlers.replay!(frame);
+  expect(listener).toHaveBeenCalledTimes(1);
+});
 function setup() {
   const clock = new Clock(),
     transport = new Transport();

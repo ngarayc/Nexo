@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { setTimeout as wait } from 'node:timers/promises';
+import type { ReplayControl } from '@nexo/contracts';
 import {
   AdmitReplayCommand,
   ReplayAdmissionNotApplied,
@@ -34,33 +35,7 @@ interface DeliveryWaiting {
   readonly resolve: (interval: number | null) => void;
   readonly reject: (error: unknown) => void;
 }
-export interface ReplayControlView {
-  readonly instanceId: string;
-  readonly controlVersion: number;
-  readonly viewRevision: number;
-  readonly observedAt: string;
-  readonly blockedReason: 'RECOVERING' | 'JOURNAL_UNCERTAIN' | 'SHUTTING_DOWN' | null;
-  readonly allowedActions: readonly ReplayAction[];
-  readonly pendingAction: ReplayAction | null;
-  readonly scenario: null | {
-    readonly scenarioId: string;
-    readonly verification: ReplayRun['scenarioVerification'];
-    readonly closedAt: string | null;
-  };
-  readonly run:
-    | null
-    | (Pick<
-        ReplaySnapshot['run'],
-        | 'runId'
-        | 'scenarioId'
-        | 'stage'
-        | 'state'
-        | 'verification'
-        | 'intervalMs'
-        | 'nextLine'
-        | 'closeCode'
-      > & { readonly progress: ReplaySnapshot['progress'] });
-}
+export type ReplayControlView = ReplayControl;
 
 // La composición HTTP/SSE permanece fuera de esta clase. El ejecutor limita y
 // serializa únicamente secciones de control/diario, nunca la petición de ingesta.
