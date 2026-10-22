@@ -2,6 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, timeout } from 'rxjs';
 import type { SessionSnapshot } from '../../../platform/session/session-contract';
+import { readResponse } from '../../../platform/http/read-response';
 
 function readSnapshot(value: unknown): SessionSnapshot {
   if (typeof value !== 'object' || value === null) throw new Error('Respuesta de acceso inválida.');
@@ -31,10 +32,8 @@ function readSnapshot(value: unknown): SessionSnapshot {
 export class SessionApi {
   private readonly http = inject(HttpClient);
 
-  async current(): Promise<SessionSnapshot> {
-    return readSnapshot(
-      await firstValueFrom(this.http.get<unknown>('/api/session').pipe(timeout(15000))),
-    );
+  async current(signal?: AbortSignal): Promise<SessionSnapshot> {
+    return readSnapshot(await readResponse(this.http.get<unknown>('/api/session'), signal));
   }
 
   async login(username: string, password: string): Promise<SessionSnapshot> {

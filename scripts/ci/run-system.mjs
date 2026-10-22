@@ -9,6 +9,7 @@ await rm('reports/playwright-raw.json', { force: true });
 try {
   stack.compose('up', '-d', '--no-build', '--wait', 'db', 'api', 'web');
   execFileSync(process.execPath, ['node_modules/@playwright/test/cli.js', 'test'], {
+    env: { ...process.env, ...stack.browserEnvironment() },
     stdio: ['ignore', 'pipe', 'pipe'],
     timeout: 180000,
   });

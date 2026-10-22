@@ -1,23 +1,14 @@
 import { vehicleState } from '../../telemetry/public.js';
 import type { EventView, VehicleState } from '../../telemetry/public.js';
 
-export interface VehicleView extends EventView {
-  readonly status: VehicleState;
-}
-export interface AlertView extends Omit<EventView, 'ignitionOn'> {
-  readonly type: 'OVERSPEED';
-}
-export interface FleetView {
-  readonly items: readonly VehicleView[];
-  readonly total: number;
-  readonly overallTotal: number;
-  readonly summary: Readonly<Record<VehicleState, number>>;
-}
-export interface AlertCollection {
-  readonly items: readonly AlertView[];
-  readonly total: number;
-  readonly overallTotal: number;
-}
+import type { AlertView, AlertCollection, FleetCollection as FleetView } from '@nexo/contracts';
+export type {
+  VehicleView,
+  AlertView,
+  AlertCollection,
+  FleetCollection as FleetView,
+} from '@nexo/contracts';
+
 export interface ReadModel {
   fleet(): Promise<readonly EventView[]>;
   history(vehicleId: string): Promise<readonly EventView[]>;

@@ -91,6 +91,7 @@ async function open(session, headers = {}) {
     closed: false,
     error: undefined,
     ready: undefined,
+    pause: () => response?.pause(),
     stop: () => {
       call.destroy();
       response?.destroy();
@@ -202,6 +203,63 @@ async function allPublished() {
   );
 }
 const cases = {
+  async pressure() {
+    let stage = 'connections';
+    try {
+      const a = await login(),
+        b = await login();
+      const slow = [];
+      for (let n = 0; n < 4; n++) {
+        const channel = await open(a);
+        channel.pause();
+        slow.push(channel);
+      }
+      const fast = await open(b);
+      assert.equal(
+        (await request('/api/stream', { session: a })).body.code,
+        'STREAM_CAPACITY_EXCEEDED',
+      );
+      const vehicleId = randomUUID();
+      for (let start = 0; start < 128; start += 8) {
+        stage = `ingest-${start}`;
+        const events = Array.from({ length: 8 }, (_, offset) => ({
+          ...event(),
+          vehicleId,
+          eventId: `pressure-${start + offset}-${randomUUID()}-` + 'x'.repeat(60000),
+          observedAt: new Date(Date.UTC(2026, 0, 1, 0, 0, start + offset)).toISOString(),
+        }));
+        const result = await ingest(events);
+        assert.deepEqual([result.accepted, result.duplicates, result.rejected], [8, 0, 0]);
+        stage = `fast-${start}`;
+        await waitMessages(fast, (start + 8) * 3);
+        await allPublished();
+      }
+      stage = 'released-capacity';
+      // El cliente pausado puede no observar EOF hasta volver a leer. Abrir
+      // las cuatro plazas demuestra liberación en el servidor, sin depender
+      // del buffer TCP del lector lento ni de un hook de diagnóstico.
+      const replacements = [];
+      for (let n = 0; n < 4; n++) replacements.push(await open(a));
+      assert.equal(fast.closed, false);
+      assert.equal(domain(fast).size, 384);
+      assert.equal((await request('/api/health')).status, 200);
+      assert.equal(
+        (await owner.query('SELECT count(*)::int AS n FROM telemetry_events')).rows[0].n,
+        128,
+      );
+      assert.equal(
+        (
+          await owner.query(
+            'SELECT count(*)::int AS n FROM outbox_messages WHERE published_at IS NOT NULL',
+          )
+        ).rows[0].n,
+        384,
+      );
+      for (const channel of [...slow, ...replacements]) channel.stop();
+    } catch {
+      return `realtime-pressure-failed:${stage}`;
+    }
+  },
   async heartbeat() {
     const session = await login();
     const channel = await open(session, { 'Accept-Encoding': 'gzip' });
@@ -389,8 +447,8 @@ const cases = {
 try {
   const scenario = process.env.NEXO_REALTIME_CASE;
   assert.ok(Object.hasOwn(cases, scenario));
-  await cases[scenario]();
-  console.log('realtime-case-ok');
+  const result = await cases[scenario]();
+  console.log(result ?? 'realtime-case-ok');
 } finally {
   for (const channel of channels) channel.stop();
   await owner.end();

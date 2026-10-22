@@ -2,7 +2,7 @@
 
 ## Estado implementado
 
-Nexo contiene dos aplicaciones de un workspace npm: API NestJS/TypeScript ESM y frontend Angular standalone. La API compone controladores, servicios y acceso PostgreSQL mediante inyección; Angular presenta acceso y pantalla inicial protegida mediante el router. Docker Compose integra web, API y PostgreSQL bajo un mismo origen.
+Nexo contiene dos aplicaciones y un núcleo compartido en un workspace npm: API NestJS/TypeScript ESM, Angular standalone y packages/contracts con DTO/reglas puras. La API compone controladores, servicios y acceso PostgreSQL mediante inyección; Angular presenta acceso, conexión en vivo y totales confirmados bajo el router protegido. Docker Compose integra web, API y PostgreSQL bajo un mismo origen.
 
 Se verificaron instalación limpia, calidad, compilación, pruebas unitarias, migración y seed sobre PostgreSQL real, salud y conservación del usuario/hash tras recrear contenedores. Las credenciales de migración y ejecución se distinguen; la API HTTP no hereda la contraseña del propietario. Ingesta, recuperación y transporte SSE se describen abajo; el reproductor conserva su incremento propio.
 
@@ -16,7 +16,7 @@ La tercera migración permite los cierres técnicos tempranos especificados, sin
 
 El backend es un monolito modular con Recepción, Telemetría, Consultas, Tiempo real, Acceso y Demo. Las reglas y casos de uso se separan de HTTP, persistencia y cola; los módulos y abstracciones nacen cuando incorporan comportamiento útil.
 
-Angular agrupa páginas, fachadas y componentes por funcionalidad. Los adaptadores HTTP/SSE encapsulan transporte; las fachadas poseen el estado y los componentes presentan datos e intenciones. Se compartirá una conexión SSE y una coordinación de recuperación por sesión.
+Angular agrupa páginas, fachadas y componentes por funcionalidad. Los adaptadores HTTP/SSE encapsulan transporte; las fachadas poseen el estado y los componentes presentan datos e intenciones. Comparte una conexión SSE y una coordinación de recuperación por sesión. [Sincronización](frontend-sync.md) relaciona generaciones, captura global, detalle cancelable, reglas comunes y límites.
 
 Tres contenedores permanentes: `web` sirve Angular y hace proxy bajo el mismo origen hacia `api`; `db` conserva datos en un volumen PostgreSQL. Solo `web` publica el puerto de loopback. Esta composición y el acceso por localhost desde Windows/WSL se comprobaron en E0-I03. Los tres servicios comienzan con usuarios sin root. API/web tienen filesystem de solo lectura y temporal writable; no requieren volúmenes persistentes propios. PostgreSQL escribe únicamente sus datos de servicio y el volumen.
 
