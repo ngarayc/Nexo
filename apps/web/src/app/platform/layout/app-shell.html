@@ -3,6 +3,16 @@
   <p class="eyebrow">TELEMETRÍA DE FLOTAS</p>
   <h1 id="page-title">Nexo</h1>
   <p class="description">Vehículos, información y supervisión conectados.</p>
+  @if (access.session(); as session) {
+  <div class="session">
+    <p>Sesión iniciada como {{ session.user.username }}.</p>
+    <button type="button" (click)="access.logout()" [disabled]="access.pending()">
+      Cerrar sesión
+    </button>
+  </div>
+  @if (access.error()) {
+  <p role="alert">{{ access.error() }}</p>
+  } }
   <section
     class="connection"
     aria-labelledby="connection-title"
@@ -38,12 +48,5 @@
     <p>Los totales estarán disponibles cuando confirmemos la primera carga.</p>
     }
   </section>
-  @if (access.session(); as session) {
-  <p>Sesión iniciada como {{ session.user.username }}.</p>
-  <button type="button" (click)="access.logout()" [disabled]="access.pending()">
-    Cerrar sesión
-  </button>
-  @if (access.error()) {
-  <p role="alert">{{ access.error() }}</p>
-  } }
+  <router-outlet />
 </main>

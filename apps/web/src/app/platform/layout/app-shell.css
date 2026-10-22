@@ -1,13 +1,13 @@
 :host {
-  display: grid;
+  display: block;
   min-height: 100svh;
-  place-items: center;
-  padding: 2rem;
+  padding: clamp(1rem, 3vw, 2rem);
 }
 
 main {
-  width: min(100%, 42rem);
-  padding: clamp(2rem, 7vw, 5rem);
+  width: min(100%, 90rem);
+  margin-inline: auto;
+  padding: clamp(1rem, 3vw, 2.5rem);
   background: #ffffff;
   border: 1px solid #dbe6e5;
   border-radius: 1.5rem;
@@ -17,7 +17,7 @@ main {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  margin-bottom: 3rem;
+  margin-bottom: 1rem;
 }
 
 .identity span {
@@ -42,7 +42,7 @@ main {
 
 h1 {
   margin: 0.5rem 0 1rem;
-  font-size: clamp(3rem, 10vw, 5rem);
+  font-size: clamp(2rem, 6vw, 3rem);
   line-height: 1;
   letter-spacing: -0.05em;
 }
@@ -87,4 +87,11 @@ h1 {
 button {
   padding: 0.7rem 1rem;
   cursor: pointer;
+}
+
+.session {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
 }

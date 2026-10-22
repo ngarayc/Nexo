@@ -1,11 +1,12 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { expect, it, vi } from 'vitest';
-import { WelcomePage } from './welcome-page';
-import { AccessFacade } from '../access/access-facade';
-import { LiveMonitor } from '../live-monitoring/live-monitor';
-import type { LivePhase } from '../live-monitoring/live-monitor';
-import { FleetFacade } from '../fleet/fleet-facade';
+import { AppShell } from './app-shell';
+import { AccessFacade } from '../../features/access/access-facade';
+import { LiveMonitor } from '../../features/live-monitoring/live-monitor';
+import type { LivePhase } from '../../features/live-monitoring/live-monitor';
+import { FleetFacade } from '../../features/fleet/fleet-facade';
 
 it('carga y error inicial no presentan cero confirmado; recuperación conserva datos señalados y acción accesible', async () => {
   const monitor = {
@@ -15,8 +16,9 @@ it('carga y error inicial no presentan cero confirmado; recuperación conserva d
     reconnect: vi.fn(),
   };
   TestBed.configureTestingModule({
-    imports: [WelcomePage],
+    imports: [AppShell],
     providers: [
+      provideRouter([]),
       {
         provide: AccessFacade,
         useValue: { session: signal(null), pending: signal(false), error: signal('') },
@@ -24,7 +26,7 @@ it('carga y error inicial no presentan cero confirmado; recuperación conserva d
       { provide: LiveMonitor, useValue: monitor },
     ],
   });
-  const fixture = TestBed.createComponent(WelcomePage);
+  const fixture = TestBed.createComponent(AppShell);
   await fixture.whenStable();
   const root: HTMLElement = fixture.nativeElement;
   expect(root.querySelector('[data-testid="vehicle-total"]')).toBeNull();
