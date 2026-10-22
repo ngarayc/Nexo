@@ -72,9 +72,9 @@ npm run test:ci-controls
 npm run test:e2e
 ```
 
-El recorrido de navegador crea un stack sintético en `127.0.0.1:8081`, con origen canónico `http://localhost:8081`, manteniendo `8080` para la aplicación local. Comprueba Angular compilado, acceso desde dos contextos, logout independiente, proxy, cabeceras y CSP en Chromium; no guarda trace, HAR, vídeo, capturas o storageState. El reporte crudo queda local y solo se generan métricas para publicación.
+El recorrido de navegador crea un stack sintético nuevo por archivo en `127.0.0.1:8081`, con origen canónico `http://localhost:8081`, manteniendo `8080` para la aplicación local. Comprueba Angular compilado, dos contextos independientes, flota/historial/alertas, oráculos, carreras, cortes, recuperación, logout, proxy, cabeceras y CSP en Chromium. No guarda trace, HAR, vídeo, capturas o storageState. Los reportes crudos de cada invocación permanecen en reports/raw/system y solo se generan métricas para publicación, según [CI](ci-controls.md).
 
-La pantalla inicial muestra conexión y totales confirmados mediante [sincronización Angular](frontend-sync.md). Mientras recupera conserva la base previa señalada como posiblemente desactualizada; tras agotar cinco reintentos ofrece Reconectar. Esa acción respeta Retry-After y no reinicia la API o PostgreSQL. El productor auxiliar del recorrido de sistema usa HTTP por NGINX y mantiene la clave dentro del contenedor API, sin entregarla a la página. Tabla, lista de alertas y reproductor conservan sus incrementos propios.
+La pantalla inicial muestra conexión, totales y [flota/historial/alertas](dashboard.md) mediante [sincronización Angular](frontend-sync.md). Mientras recupera conserva la base previa señalada como posiblemente desactualizada; tras agotar cinco reintentos ofrece Reconectar. Esa acción respeta Retry-After y no reinicia la API o PostgreSQL. El productor auxiliar del recorrido de sistema usa HTTP por NGINX y mantiene la clave dentro del contenedor API, sin entregarla a la página. El reproductor controlable permanece pendiente de E3.
 
 Los jobs de Actions preparan Node/npm y construyen sus propias imágenes. Usan tokens de lectura y una lista explícita de artefactos; los controles y su estado se describen en [CI](ci-controls.md).
 

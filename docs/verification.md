@@ -1,5 +1,11 @@
 # Verificación
 
+## Consolidación documental del dashboard — E2-I06
+
+La [issue #36](https://github.com/ngarayc/Nexo/issues/36) actualiza README, arquitectura, operación, reproducibilidad y API para describir flota/historial/alertas ya disponibles. [Trazabilidad](traceability.md) relaciona obligaciones, implementación, pruebas y pendientes; mantiene reproductor, CR-01, complementos y cierre final separados. La revisión del AST de controladores contrastó las catorce operaciones reales con OpenAPI, incluyendo su prefijo de servidor; no hubo diferencias ni cambios de endpoints.
+
+Pasaron calidad completa, enlaces y hashes de fixtures. Este incremento modifica documentación; los resultados funcionales siguientes conservan sus fuentes y candidatos propios. El CI de su promoción ejecuta las regresiones del nuevo candidato y la PR registra sus cinco artefactos exactos. EP-03 conserva base identificable sin filtro y revisión humana pendiente hasta la intervención efectiva sobre la PR a main. No se declara E2 cerrado antes de comprobar esa promoción ni se atribuye la comparación CR-01 a este trabajo.
+
 ## Dos clientes, carreras y recuperación — E2-I05
 
 La [issue #35](https://github.com/ngarayc/Nexo/issues/35) pasó calidad y **13 pruebas Chromium**, ninguna omitida, junto con los 31 controles de CI. API/web productivos, dependencias y esquema conservan el incremento anterior; CI del nuevo candidato reconstruye y comprueba también sus regresiones. Los cuatro fixtures conservan sus hashes.
