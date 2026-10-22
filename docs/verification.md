@@ -1,5 +1,17 @@
 # Verificación de Nexo
 
+## Mapa de últimas posiciones — E5-I02 / #67
+
+Pasaron seis pruebas de configuración/generador y doce pruebas Angular focalizadas en tres archivos (proveedor, mapa y página), además de tipos, lint afectado y fronteras de273 módulos/1002 dependencias. El primer intento Angular no inició casos porque el asset estaba fuera del workspace; se corrigió generándolo en el directorio público del proyecto desde la misma fuente revisada. No se omitieron pruebas ni se duplicó una configuración manual.
+
+El primer intento de construcción Docker no comenzó porque el servicio estaba detenido. Tras iniciarlo el autor, la construcción web terminó. Los dos primeros recorridos Chromium llegaron hasta la selección por teclado y fallaron porque Enter no abría el detalle del marcador; el adaptador incorpora activación explícita por Enter/espacio. La repetición del caso oficial pasó con dos clientes, ejes/hemisferio correctos, filtros compartidos, foco y ambos replays20/2/2 y0/22/2:20 eventos/8 vehículos/4 alertas/43 mensajes, sin pendientes. El caso adversarial posterior tuvo una expectativa incorrecta de ID completo en un tooltip resumido; se corrigió usando una identidad HTML compacta, conservando la comprobación íntegra e inerte del payload.
+
+El recorrido adversarial corregido pasó: mismo elemento de marcador y foco ante SSE, encuadre estable, tardío sin desplazar latest, Enter/espacio, fallo de tiles con historial y actualizaciones disponibles, reintento manual, CSP que bloquea otro origen, texto HTML inerte, ancho360px, latitud90 sin modificación y destrucción al cerrar sesión. Los tiles usaron referente de origen, sin cookie de Nexo, clave de ingesta o CSRF. Los escenarios usaron tanto la página estándar como contextos explícitos del fixture de red controlada, sin solicitudes al proveedor público. La revisión del paquete incorporó los avisos de licencias generados por Angular; el caso oficial se repitió con ese nuevo control y pasó.
+
+La auditoría de dependencias informó cero vulnerabilidades al fijar Leaflet y sus tipos. La imagen web final `sha256:207da4310f7dc1149a83dc4dbab7d6367c368d457663db6bbe02d01a40b8b083` y su Dockerfile completaron inventario y escaneo sin HIGH/CRITICAL ni detalles inconclusos. Formato/lint afectados y348 enlaces internos pasaron. No se reconstruyeron o escanearon otra vez las imágenes API/DB durante este incremento de UI.
+
+Los recorridos generales locales se reservan al cierre E5. Estos resultados no acreditan todavía trayectoria, gráfico, proveedor real o entrega final. [Cartografía](cartography.md) explica configuración, procedencia y límites.
+
 ## Resumen interactivo — E5-I01 / #66
 
 Pasaron tipos web y15 pruebas focalizadas de fachada/página en dos archivos. Verifican filtros AND, independencia por cliente, resumen global, transición de último estado, tardío que no lo revierte, snapshot con filtros conservados, limpieza de sesión y detalle oculto sin perder selección. El foco permanece en el botón de estado ante una actualización y vuelve a búsqueda al limpiar los filtros del detalle.

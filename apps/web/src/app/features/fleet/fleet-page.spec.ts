@@ -7,6 +7,8 @@ import { FleetFacade } from './fleet-facade';
 import { VehicleDetailFacade } from './vehicle-detail-facade';
 import type { DetailPhase } from './vehicle-detail-facade';
 import { LiveMonitor } from '../live-monitoring/live-monitor';
+import { MapProviderStore } from '../../platform/maps/map-provider-store';
+import { FLEET_MAP_FACTORY } from './adapters/fleet-map-factory';
 
 function setup() {
   const selected = signal<string | null>(null),
@@ -34,16 +36,38 @@ function setup() {
     retry: vi.fn(),
   };
   const monitor = { hasBase: signal(false) };
+  const map = {
+    sync: vi.fn(),
+    fit: vi.fn(),
+    focusVehicle: vi.fn(),
+    retryTiles: vi.fn(),
+    destroy: vi.fn(),
+  };
   TestBed.configureTestingModule({
     imports: [FleetPage],
     providers: [
       { provide: VehicleDetailFacade, useValue: detail },
       { provide: LiveMonitor, useValue: monitor },
+      {
+        provide: MapProviderStore,
+        useValue: {
+          load: vi.fn(),
+          phase: signal('ready'),
+          provider: signal({
+            tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            allowedOrigin: 'https://tile.openstreetmap.org',
+            attribution: '© OpenStreetMap contributors',
+            attributionUrl: 'https://www.openstreetmap.org/copyright',
+            maxZoom: 18,
+          }),
+        },
+      },
+      { provide: FLEET_MAP_FACTORY, useValue: () => map },
     ],
   });
   const fixture = TestBed.createComponent(FleetPage);
   const root: HTMLElement = fixture.nativeElement;
-  return { fixture, root, detail, monitor, fleet: TestBed.inject(FleetFacade) };
+  return { fixture, root, detail, monitor, map, fleet: TestBed.inject(FleetFacade) };
 }
 const vehicle = {
   eventId: 'event',

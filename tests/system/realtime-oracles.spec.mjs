@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../support/browser-test.mjs';
 import { readFileSync } from 'node:fs';
 import { observeRealtime, received } from '../support/observe-realtime.mjs';
 import { produceSystemEvents } from '../support/system-producer.mjs';

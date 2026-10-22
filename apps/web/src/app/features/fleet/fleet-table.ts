@@ -6,15 +6,11 @@ import {
   output,
   viewChildren,
 } from '@angular/core';
-import type { VehicleView, VehicleState } from '@nexo/contracts';
+import type { VehicleView } from '@nexo/contracts';
 import { IdentityText, identityPreview } from '../../platform/presentation/identity-text';
 import { formatTime } from '../../platform/presentation/format-time';
 
-export const stateLabels: Readonly<Record<VehicleState, string>> = {
-  OFF: 'Apagado',
-  MOVING: 'En movimiento',
-  STOPPED: 'Detenido',
-};
+import { stateLabels } from '../../platform/presentation/vehicle-state-label';
 @Component({
   selector: 'nexo-fleet-table',
   imports: [IdentityText],

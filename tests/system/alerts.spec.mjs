@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../support/browser-test.mjs';
 import { randomUUID } from 'node:crypto';
 import { produceSystemEvents } from '../support/system-producer.mjs';
 

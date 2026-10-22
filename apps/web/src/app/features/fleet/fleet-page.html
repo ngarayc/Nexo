@@ -47,7 +47,13 @@
     [selected]="detail.selected()"
     (selectVehicle)="open($event)"
   />
-  } }
+  }
+  <nexo-fleet-map
+    [items]="fleet.visibleItems()"
+    [selected]="detail.selected()"
+    (selectVehicle)="open($event)"
+  />
+  }
 </section>
 @if (detail.selected(); as vehicleId) {
 <section

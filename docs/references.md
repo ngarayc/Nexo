@@ -2,6 +2,8 @@
 
 [Flota e historial](dashboard.md) relaciona tablas semánticas W3C WAI e interpolación Angular con los componentes, foco, representación de IDs y pruebas reales aplicadas.
 
+[Cartografía](cartography.md) relaciona Leaflet1.9.4, la política de tiles de OpenStreetMap y el soporte TypeScript de Node24 con el adaptador, la configuración común de proveedor/CSP y las pruebas que interceptan imágenes externas. No se copió código de una plataforma de seguimiento ni se atribuye al proveedor la coordinación de estado de Nexo.
+
 La [coordinación de Angular](frontend-sync.md) relaciona las fuentes de Signals y EventSource con las fachadas, captura y recuperación propias de Nexo, sus pruebas y límites.
 
 Los requisitos suministrados se conservan en [requirements](requirements/common-spec.md) y [el backlog](requirements/backlog.md). Se distinguen de las elecciones propias de Nexo. No se copia una plataforma de seguimiento ni se atribuye código que no se haya tomado de una fuente.

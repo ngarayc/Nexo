@@ -16,10 +16,11 @@ import { LiveMonitor } from '../live-monitoring/live-monitor';
 import { IdentityText } from '../../platform/presentation/identity-text';
 import { FleetTable } from './fleet-table';
 import { VehicleHistory } from './vehicle-history';
+import { FleetMap } from './fleet-map';
 
 @Component({
   selector: 'nexo-fleet-page',
-  imports: [FleetTable, VehicleHistory, IdentityText],
+  imports: [FleetTable, VehicleHistory, IdentityText, FleetMap],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './fleet-page.html',
   styleUrl: './fleet-page.css',
@@ -47,6 +48,7 @@ export class FleetPage {
   private readonly search = viewChild<ElementRef<HTMLInputElement>>('search');
   private readonly table = viewChild(FleetTable);
   private readonly historyTable = viewChild(VehicleHistory);
+  private readonly map = viewChild(FleetMap);
   private lastFocusedEvent: string | null = null;
   constructor() {
     afterRenderEffect(() => {
@@ -62,6 +64,7 @@ export class FleetPage {
 
   open(vehicleId: string): void {
     this.detail.select(vehicleId);
+    this.map()?.focusVehicle(vehicleId);
     afterNextRender(() => this.history()?.nativeElement.focus(), { injector: this.injector });
   }
   clearFilters(): void {
