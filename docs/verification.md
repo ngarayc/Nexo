@@ -1,5 +1,15 @@
 # Verificación de Nexo
 
+## Aceptación local integral E4 — #64
+
+La base funcional `f1f9331508a6a613e9c09abe42e463312bdbcdc8` completó el cierre local de CR-01: compilación,463 pruebas API,95 Angular,127 integraciones PostgreSQL/HTTP y16 Chromium, sin fallos u omisiones en sus resultados finales. Los casos oficiales conservan20/2/2 y0/22/2,20 eventos/8 vehículos/4 alertas e identidades originales; los adversariales usaron datos propios.
+
+Se ejecutaron formato, lint, tipos, enlaces, fixtures y coherencia del esquema. El primer quality se detuvo en fronteras, como se documenta en #65; la corrección final pasó sobre263 módulos/962 dependencias. La ejecución general de controles CI pasó54 casos; después del ajuste final de fronteras se repitieron únicamente sus siete casos afectados, incluido uno nuevo. El inventario remoto actualizado será55, sin atribuir ese número a la ejecución local anterior. Workflows y Compose también pasaron.
+
+La auditoría de dependencias informó0 vulnerabilidades. El historial disponible y los cuatro commits incrementales posteriores pasaron el escaneo de secretos; los cambios documentales finales se revisaron por separado. Las tres imágenes y tres Dockerfiles completaron sus inventarios y escaneos sin HIGH/CRITICAL. Se conservaron las mismas imágenes durante las pruebas: API `sha256:cd341b122f28c4f1ce7841f16bd8a137a169319cfab2c82976de8e95445e0126`, web `sha256:085b9c80a33c3553288e1cf0a5dd4886988ffac7b8489075cfa65eaf5321c28d` y PostgreSQL `sha256:63bdd19b7e400b9f71e2c9d91219cbdf33d8787e3faaf0d87ca15337e3f8bcfc`. Los resultados no acreditan capacidad de producción ni reemplazan los escaneos del candidato remoto.
+
+La batería local completa se ejecutó al cierre de la épica; las correcciones posteriores repitieron solo las comprobaciones afectadas. [PR61](https://github.com/ngarayc/Nexo/pull/61) conserva QA, CI propio y promoción del nuevo origen. El CI de c97890e pasó antes463API/90Angular/125PostgreSQL/14Chromium con cinco artefactos revalidados; ese candidato anterior no acredita la interfaz ni las correcciones siguientes. La revisión humana y promoción de E4 a main siguen pendientes y no se reutiliza la aprobación de E3.
+
 ## Control de fronteras después de construir — #65
 
 El primer cierre local E4 pasó formato, lint y tipos, pero se detuvo en fronteras por10 ciclos entre bundles generados de un build anterior. Se conservó el fallo. La primera corrección excluía salidas conocidas y pasó seis regresiones, pero otra negativa demostró que ocultaba una importación desde fuente web a servidor compilado. Antes de publicar se sustituyó por entradas explícitas de los tres directorios de fuentes, manteniendo las cinco reglas e inspección de sus dependencias. Los siete casos del analizador real comprueban ambas garantías.
