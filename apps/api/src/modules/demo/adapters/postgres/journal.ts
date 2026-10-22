@@ -27,6 +27,7 @@ import type {
   NewReplayRun,
   ReplayAttempt,
   ReplayIntention,
+  IntentionConfirmation,
   ReplayJournal,
   ReplayRun,
   ReplaySnapshot,
@@ -279,10 +280,22 @@ export class PostgresReplayJournal implements ReplayJournal {
     if (change.intervalMs !== undefined) replayInterval(change.intervalMs);
     if (change.closeCode !== undefined && !replayFailureCodes.includes(change.closeCode))
       throw new ReplayInputError();
-    const verification =
+    let verification =
       ['stopped', 'error', 'interrupted'].includes(change.state) && run.verification === 'pending'
         ? 'inconclusive'
         : run.verification;
+    if (change.finalVerification !== undefined) {
+      const final = change.finalVerification;
+      if (!final || !['inconclusive', 'non_conformant'].includes(final.result))
+        throw new ReplayInputError();
+      documentObject(final.document);
+      if (
+        run.verification !== 'pending' ||
+        !['stopped', 'error', 'interrupted'].includes(change.state)
+      )
+        throw new ReplayConflict();
+      verification = final.result;
+    }
     await tx
       .update(replayRuns)
       .set({
@@ -291,6 +304,7 @@ export class PostgresReplayJournal implements ReplayJournal {
         intervalMs: change.intervalMs ?? run.intervalMs,
         closeCode: change.closeCode ?? run.closeCode,
         verification,
+        verificationDocument: change.finalVerification?.document ?? run.verificationDocument,
         revision: sql`${replayRuns.revision}+1`,
         updatedAt: sql`clock_timestamp()`,
         ...intentionFields(change.intention),
@@ -334,6 +348,39 @@ export class PostgresReplayJournal implements ReplayJournal {
   async find(runId: string) {
     identity(runId);
     return this.read((tx) => this.snapshot(tx, runId));
+  }
+  async confirmIntention(
+    runId: string,
+    previousRevision: number | null,
+    intention: ReplayIntention,
+  ): Promise<IntentionConfirmation> {
+    identity(runId);
+    if (!intention) throw new ReplayInputError();
+    intentionFields(intention);
+    if (
+      previousRevision !== null &&
+      (!Number.isSafeInteger(previousRevision) || previousRevision < 0)
+    )
+      throw new ReplayInputError();
+    // write toma primero el mismo advisory lock del escritor incierto. En READ
+    // COMMITTED, la lectura posterior ya ve su commit/rollback. Un find404 sin
+    // esa barrera no acredita que la transacción anterior haya terminado.
+    return this.write(async (tx) => {
+      const snapshot = await this.snapshot(tx, runId),
+        marker = snapshot?.run.intention;
+      if (!snapshot)
+        return { state: previousRevision === null ? 'not_applied' : 'unknown', snapshot: null };
+      if (
+        marker?.commandId === intention.commandId &&
+        marker.instanceId === intention.instanceId &&
+        marker.expectedControlVersion === intention.expectedControlVersion &&
+        marker.document === intention.document
+      )
+        return { state: 'applied', snapshot };
+      if (previousRevision !== null && snapshot.run.revision === previousRevision)
+        return { state: 'not_applied', snapshot };
+      return { state: 'unknown', snapshot };
+    });
   }
   async current() {
     return this.read(async (tx) => {

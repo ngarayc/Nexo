@@ -47,6 +47,8 @@ Los intentos finalizados y sus resultados no se reescriben. Consultar después e
 
 recover conserva recorridos terminales y marca cualquier ejecución no terminada —incluida pausada— como interrumpida/inconclusa; un intento en curso queda incierto. No programa trabajos o envíos. El futuro módulo del motor compondrá esta operación en el arranque antes de admitir controles; este incremento la verifica como operación del adaptador, sin anunciar todavía esa integración.
 
+El [emisor #42](replay-emitter.md) amplía el puerto con cierre e informe en una misma transacción y confirmación de intención tras la barrera advisory existente. Las pruebas SQL pierden la respuesta antes/después de COMMIT y comprueban la espera real del bloqueo; una ausencia anterior no se interpreta como rollback.
+
 ## Lecturas y coste
 
 Detalle y progreso usan REPEATABLE READ READ ONLY. El historial ordena por creación/UUID descendentes y pagina por clave: 20 por defecto, máximo 100. El cursor opaco está acotado/validado; conserva los seis decimales técnicos de PostgreSQL en lugar de redondearlos a milisegundos. Consultar una ejecución histórica no la reactiva.
