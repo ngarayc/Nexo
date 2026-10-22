@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../support/browser-test.mjs';
 import { randomUUID } from 'node:crypto';
 import { signIn, deferred } from '../support/browser-session.mjs';
 import { observeRealtime, received } from '../support/observe-realtime.mjs';

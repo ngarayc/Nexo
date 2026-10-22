@@ -1,6 +1,13 @@
-import { ChangeDetectionStrategy, Component, ElementRef, input, viewChildren } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  input,
+  output,
+  viewChildren,
+} from '@angular/core';
 import type { EventView } from '@nexo/contracts';
-import { IdentityText } from '../../platform/presentation/identity-text';
+import { IdentityText, identityPreview } from '../../platform/presentation/identity-text';
 import { formatTime } from '../../platform/presentation/format-time';
 
 @Component({
@@ -26,6 +33,7 @@ import { formatTime } from '../../platform/presentation/format-time';
             <th scope="col">Encendido</th>
             <th scope="col">Latitud</th>
             <th scope="col">Longitud</th>
+            <th scope="col">Selección</th>
           </tr>
         </thead>
         <tbody>
@@ -48,6 +56,16 @@ import { formatTime } from '../../platform/presentation/format-time';
               <td>{{ event.ignitionOn ? 'Sí' : 'No' }}</td>
               <td>{{ event.latitude }}</td>
               <td>{{ event.longitude }}</td>
+              <td>
+                <button
+                  type="button"
+                  (click)="selectEvent.emit(event.eventId)"
+                  [attr.aria-pressed]="event.eventId === highlighted()"
+                  [attr.aria-label]="'Seleccionar observación ' + identityPreview(event.eventId)"
+                >
+                  Seleccionar
+                </button>
+              </td>
             </tr>
           }
         </tbody>
@@ -59,6 +77,8 @@ import { formatTime } from '../../platform/presentation/format-time';
 export class VehicleHistory {
   readonly items = input.required<readonly EventView[]>();
   readonly highlighted = input<string | null>(null);
+  readonly selectEvent = output<string>();
+  readonly identityPreview = identityPreview;
   readonly formatTime = formatTime;
   private readonly rows = viewChildren<ElementRef<HTMLTableRowElement>>('eventRow');
   focusEvent(eventId: string): boolean {

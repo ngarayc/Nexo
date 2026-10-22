@@ -1,5 +1,19 @@
 <section aria-labelledby="fleet-title">
   <h2 id="fleet-title">Flota</h2>
+  <fieldset class="state-filters">
+    <legend>Filtrar por estado (totales generales)</legend>
+    @for (filter of stateFilters; track filter.value) {
+    <button
+      type="button"
+      [attr.aria-pressed]="fleet.statusFilter() === filter.value"
+      [disabled]="!monitor.hasBase()"
+      (click)="fleet.setStatus(filter.value)"
+    >
+      {{ filter.label }} @if (monitor.hasBase()) { ({{ filter.value ? fleet.summary()[filter.value]
+      : fleet.total() }}) }
+    </button>
+    }
+  </fieldset>
   <div class="search">
     <label for="vehicle-search">Buscar vehículo</label>
     <input
@@ -23,14 +37,23 @@
   @if (fleet.total() === 0) {
   <p>No hay vehículos registrados.</p>
   } @else if (fleet.visibleItems().length === 0) {
-  <p role="status">No hay vehículos que coincidan con la búsqueda.</p>
+  <p role="status">
+    {{ fleet.statusFilter() === null ? 'No hay vehículos que coincidan con la búsqueda.' : 'No hay
+    vehículos que coincidan con los filtros.' }}
+  </p>
   } @else {
   <nexo-fleet-table
     [items]="fleet.visibleItems()"
     [selected]="detail.selected()"
     (selectVehicle)="open($event)"
   />
-  } }
+  }
+  <nexo-fleet-map
+    [items]="fleet.visibleItems()"
+    [selected]="detail.selected()"
+    (selectVehicle)="open($event)"
+  />
+  }
 </section>
 @if (detail.selected(); as vehicleId) {
 <section
@@ -46,7 +69,10 @@
     <button type="button" (click)="close()">Cerrar historial</button>
   </div>
   <nexo-identity [value]="vehicleId" />
-  @switch (detail.phase()) { @case ('loading') {
+  @if (hiddenSelection()) {
+  <p>El vehículo seleccionado está oculto por los filtros de la flota.</p>
+  <button type="button" (click)="clearFilters()">Limpiar filtros de flota</button>
+  } @switch (detail.phase()) { @case ('loading') {
   <p role="status">Cargando historial…</p>
   } @case ('waiting') {
   <p role="status">Esperando para actualizar el historial.</p>
@@ -62,6 +88,18 @@
   } @else if (detail.total() === 0) {
   <p>No hay observaciones registradas para este vehículo.</p>
   } @else {
-  <nexo-vehicle-history [items]="detail.items()" [highlighted]="detail.focusedEvent()" /> } }
+  <nexo-vehicle-history
+    [items]="detail.items()"
+    [highlighted]="detail.focusedEvent()"
+    (selectEvent)="selectObservation($event)"
+  />
+  }
+  <nexo-vehicle-trajectory
+    [vehicleId]="vehicleId"
+    [items]="detail.items()"
+    [selected]="detail.focusedEvent()"
+    (selectEvent)="selectObservation($event)"
+  />
+  }
 </section>
 }

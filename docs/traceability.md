@@ -26,6 +26,6 @@ La autorización de trabajo, QA del agente y un estado verde no se cuentan como 
 
 ## Complementos y cierre
 
-La recuperación visible, acceso demo, estados de carga/error/vacío y presentación accesible básica forman parte del dashboard comprobado. El panel flotante, inspector y validación oficial se incorporan con E3. Mapas de últimas posiciones, trayectoria de observaciones, gráfico de velocidad y filtros interactivos de resumen siguen en E5; esos complementos no reemplazan requisitos obligatorios. El formulario de reparación fue retirado y no se presenta como pendiente.
+La recuperación visible, acceso demo, estados de carga/error/vacío y presentación accesible básica forman parte del dashboard comprobado. El panel flotante, inspector y validación oficial se incorporan con E3. E5 incorpora filtros interactivos de resumen, mapa de últimas posiciones y trayectoria con selección compartida, con sus pruebas focalizadas en [verificación](verification.md). El gráfico de velocidad, aceptación integral y promoción final de estos complementos continúan pendientes; no reemplazan requisitos obligatorios. El formulario de reparación fue retirado y no se presenta como pendiente.
 
 La entrega final exige cerrar los requisitos y complementos aceptados con evidencia del SHA final. Esta matriz se actualiza por incremento; no declara completa la prueba técnica ni crea todavía el tag de entrega.

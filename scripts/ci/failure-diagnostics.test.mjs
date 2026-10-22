@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { pressureFailureStage } from './failure-diagnostics.mjs';
+import { pressureFailureStage, browserFailureStage } from './failure-diagnostics.mjs';
 
 function failure(actual, expected = 'realtime-case-ok') {
   try {
@@ -45,4 +45,47 @@ test('una causa cíclica o ausente termina sin diagnóstico inventado', () => {
   error.cause = error;
   assert.equal(pressureFailureStage(error), undefined);
   assert.equal(pressureFailureStage(null), undefined);
+});
+
+test('clasifica ambigüedad del reporte de navegador sin propagar datos del error', () => {
+  const report = {
+    suites: [
+      {
+        suites: [
+          {
+            specs: [
+              {
+                tests: [
+                  {
+                    results: [
+                      {
+                        errors: [
+                          { message: 'Error: strict mode violation: synthetic-private-marker' },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  };
+  assert.equal(browserFailureStage(report), 'locator-ambiguity');
+  assert.equal(
+    browserFailureStage({ errors: [{ message: 'synthetic-private-marker' }] }),
+    undefined,
+  );
+  assert.equal(
+    browserFailureStage({ errors: [{ message: 'locator-ambiguity: synthetic-private-marker' }] }),
+    undefined,
+  );
+});
+test('diagnóstico de navegador admite reporte ausente o cíclico sin inventar fallo específico', () => {
+  const report = { suites: [] };
+  report.suites.push(report);
+  assert.equal(browserFailureStage(report), undefined);
+  assert.equal(browserFailureStage(null), undefined);
 });

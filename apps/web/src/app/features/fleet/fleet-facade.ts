@@ -8,7 +8,9 @@ export class FleetFacade {
   private vehicles = new Map<string, VehicleView>();
   private readonly revision = signal(0);
   private readonly query = signal('');
+  private readonly statusValue = signal<VehicleState | null>(null);
   readonly search = this.query.asReadonly();
+  readonly statusFilter = this.statusValue.asReadonly();
   readonly items = computed(() => {
     this.revision();
     return Object.freeze(
@@ -17,8 +19,15 @@ export class FleetFacade {
   });
   readonly visibleItems = computed(() => {
     const search = this.query().toLowerCase();
-    return search
-      ? Object.freeze(this.items().filter((view) => view.vehicleId.toLowerCase().includes(search)))
+    const status = this.statusValue();
+    return search || status !== null
+      ? Object.freeze(
+          this.items().filter(
+            (view) =>
+              (status === null || view.status === status) &&
+              view.vehicleId.toLowerCase().includes(search),
+          ),
+        )
       : this.items();
   });
   readonly total = computed(() => {
@@ -34,6 +43,13 @@ export class FleetFacade {
 
   setSearch(value: string): void {
     this.query.set(value);
+  }
+  setStatus(value: VehicleState | null): void {
+    this.statusValue.set(value);
+  }
+  clearFilters(): void {
+    this.query.set('');
+    this.statusValue.set(null);
   }
   get(vehicleId: string): VehicleView | undefined {
     this.revision();
@@ -54,6 +70,6 @@ export class FleetFacade {
   }
   clear(): void {
     this.install([]);
-    this.query.set('');
+    this.clearFilters();
   }
 }
