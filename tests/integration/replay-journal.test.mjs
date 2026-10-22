@@ -25,6 +25,9 @@ for (const [scenario, title] of Object.entries({
   recovery: 'recuperar conserva completados y marca pausados/en curso interrumpidos sin enviar',
   diagnostics: 'diagnóstico solo admite campos permitidos y una incertidumbre no se reclasifica',
   history: 'historial pagina por microsegundo/UUID exactos y rechaza cursores/parámetros inválidos',
+  terminal_report: 'cierre incierto e informe confirman juntos y permanecen inmutables',
+  confirmation: 'respuesta COMMIT perdida se distingue de rollback mediante intención durable',
+  confirmation_barrier: 'ausencia previa al COMMIT no acredita rollback antes de la barrera SQL',
   capacity: 'cupo1000 reserva24posiciones por ejecución y conserva lectura/cierre al llenarse',
 })) {
   test(title, () => {

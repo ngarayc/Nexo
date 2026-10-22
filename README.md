@@ -4,7 +4,7 @@ Telemetría sintética de flotas con NestJS, Angular y PostgreSQL. El nombre exp
 
 **Estado:** base E0 con Docker, acceso demo por sesión y CI; E1 admite lotes HTTP, clasifica eventos y recupera fallos mediante cola durable, conservando identidad, tiempo y JSON exactos. Incluye proyección, alertas y outbox transaccionales, tres oportunidades por posición y reconciliación tras reinicio. Las consultas autenticadas exponen flota, historial, alertas y snapshot coherente. El stream SSE protegido publica cambios confirmados desde la outbox, con límites por conexión, heartbeat y recuperación de salud. Angular presenta flota, búsqueda, historial y alertas globales con hora24h de Bogotá; enlaza cada alerta con su observación y conserva conexión/totales al navegar. Reproductor y filtro CR-01 conservan sus incrementos posteriores.
 
-E3 incorpora el [diario persistente](docs/replay-journal.md) y el [verificador de datos](docs/replay-verification.md), con fuentes originales, preparación, comparación e informes históricos. El motor HTTP, sus controles y el panel siguen pendientes; estas bases por sí solas no satisfacen el simulador obligatorio.
+E3 incorpora el [diario persistente](docs/replay-journal.md) y el [verificador de datos](docs/replay-verification.md), con fuentes originales, preparación, comparación e informes históricos. Los [componentes del emisor HTTP](docs/replay-emitter.md) conservan los cuerpos originales, una sola petición y resultados inciertos sin reenvíos. Su composición como motor compartido, los controles y el panel siguen pendientes; estas bases por sí solas no satisfacen el simulador obligatorio.
 
 ## Arranque
 
@@ -72,6 +72,7 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 - [Ciclo funcional EP-03 — Alertas base](docs/agent-cycles/EP-03.md).
 - [Diario durable del reproductor](docs/replay-journal.md).
 - [Preparación y verificación del par oficial](docs/replay-verification.md).
+- [Emisor HTTP, temporización e intenciones](docs/replay-emitter.md).
 - [API y contrato OpenAPI versionado](docs/api.md).
 - [Comprobación desde copia limpia](docs/reproducibility.md).
 - [Reglas de dominio y GPS](docs/domain.md).

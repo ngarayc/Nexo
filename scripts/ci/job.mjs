@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { requiredJobs } from './policy.mjs';
 import { validateReport, validateVitestReport, validateImageScan } from './results.mjs';
 import { verifyTraceability } from './traceability.mjs';
+import { prepareChromium, browserSetupSteps } from './browser-setup.mjs';
 
 const job = process.argv[2];
 if (!requiredJobs.includes(job)) throw new Error('Job de CI desconocido.');
@@ -131,7 +132,25 @@ if (job === 'quality') {
     console.log(`Imagen ${name}: escaneo completo sin HIGH/CRITICAL.`);
   }
   passed('images');
-  command('npx', ['--no-install', 'playwright', 'install', '--with-deps', 'chromium']);
+  const browserSetupAttempts = new Map();
+  await prepareChromium(async (name) => {
+    const step = browserSetupSteps[name];
+    const attempt = (browserSetupAttempts.get(name) ?? 0) + 1;
+    browserSetupAttempts.set(name, attempt);
+    console.log(`Preparación de Chromium: ${name}.`);
+    const setup = spawnSync(step.program, step.args, {
+      encoding: 'utf8',
+      timeout: step.timeout,
+      maxBuffer: 16 * 1024 * 1024,
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    await writeFile(
+      `reports/raw/browser-${name}-${attempt}.log`,
+      `${setup.stdout ?? ''}\n${setup.stderr ?? ''}`,
+    );
+    return setup;
+  });
+  console.log('Chromium: lanzamiento y DOM verificados.');
   command('npm', ['run', 'test:e2e']);
   passed('browser', await json('reports/system-summary.json'));
   // La persistencia se verifica de nuevo sobre las mismas imágenes del recorrido.

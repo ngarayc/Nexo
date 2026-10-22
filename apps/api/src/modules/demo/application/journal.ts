@@ -69,6 +69,14 @@ export interface ReplayTransition {
   readonly intervalMs?: number;
   readonly closeCode?: ReplayFailureCode;
   readonly intention?: ReplayIntention;
+  readonly finalVerification?: {
+    readonly result: 'inconclusive' | 'non_conformant';
+    readonly document: string;
+  };
+}
+export interface IntentionConfirmation {
+  readonly state: 'applied' | 'not_applied' | 'unknown';
+  readonly snapshot: ReplaySnapshot | null;
 }
 export type AttemptResolution =
   | {
@@ -92,6 +100,11 @@ export interface ReplayJournal {
   create(input: NewReplayRun): Promise<ReplaySnapshot>;
   find(runId: string): Promise<ReplaySnapshot | undefined>;
   current(): Promise<ReplaySnapshot | undefined>;
+  confirmIntention(
+    runId: string,
+    previousRevision: number | null,
+    intention: ReplayIntention,
+  ): Promise<IntentionConfirmation>;
   history(limit?: number, cursor?: string): Promise<HistoryPage>;
   transition(runId: string, revision: number, change: ReplayTransition): Promise<ReplaySnapshot>;
   beginAttempt(

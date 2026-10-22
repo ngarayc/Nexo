@@ -1,6 +1,7 @@
 // PostgreSQL y estados sintéticos del diario; no sustituye los24envíosHTTP.
 import assert from 'node:assert/strict';
 import { randomUUID, createHash } from 'node:crypto';
+import { setTimeout as pause } from 'node:timers/promises';
 import { Pool } from 'pg';
 import { mkdtemp, mkdir, copyFile, readFile, writeFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -91,6 +92,21 @@ const syntheticReport = JSON.stringify({
   source: 'synthetic-journal-policy',
   notHttpReplayEvidence: true,
 });
+function intention(runId = null, action = 'start') {
+  const command = {
+    commandId: randomUUID(),
+    instanceId,
+    expectedControlVersion: runId === null ? 0 : 1,
+    runId,
+    action,
+  };
+  return {
+    commandId: command.commandId,
+    instanceId,
+    expectedControlVersion: command.expectedControlVersion,
+    document: JSON.stringify(command),
+  };
+}
 async function verify(view) {
   return journal.verify(view.run.runId, view.run.revision, 'conformant', syntheticReport);
 }
@@ -507,6 +523,161 @@ const cases = {
       ).toString('base64url'),
     ])
       await assert.rejects(journal.history(20, cursor), ReplayInputError);
+  },
+  async terminal_report() {
+    let view = await begin(await start());
+    const original = await journal.find(view.run.runId);
+    await assert.rejects(
+      transition(view, 'pausing', {
+        finalVerification: { result: 'inconclusive', document: syntheticReport },
+      }),
+      ReplayConflict,
+    );
+    await assert.rejects(
+      transition(view, 'error', {
+        finalVerification: { result: 'inconclusive', document: '[]' },
+      }),
+      ReplayInputError,
+    );
+    assert.deepEqual(await journal.find(view.run.runId), original);
+    view = await journal.resolveAttempt(
+      view.run.runId,
+      view.run.revision,
+      {
+        state: 'uncertain',
+        httpStatus: null,
+        diagnosticDocument: replayDiagnostic('RESPONSE_PENDING'),
+      },
+      {
+        state: 'error',
+        closeCode: 'RESPONSE_PENDING',
+        finalVerification: { result: 'inconclusive', document: syntheticReport },
+      },
+    );
+    assert.equal(view.run.state, 'error');
+    assert.equal(view.run.verification, 'inconclusive');
+    assert.equal(view.run.verificationDocument, syntheticReport);
+    assert.equal(view.run.nextLine, 1);
+    assert.equal(view.attempts[0].state, 'uncertain');
+    assert.equal(view.progress.classified, 0);
+    await assert.rejects(verify(view), ReplayConflict);
+    await sqlRejected(
+      owner.query(
+        "UPDATE replay_runs SET verification_document='{}'::json,revision=revision+1 WHERE run_id=$1",
+        [view.run.runId],
+      ),
+      '23514',
+    );
+    view = await transition(await start(), 'error', {
+      closeCode: 'RESPONSE_INVALID',
+      finalVerification: { result: 'non_conformant', document: syntheticReport },
+    });
+    assert.equal(view.run.verification, 'non_conformant');
+    assert.equal((await journal.find(view.run.runId)).run.verificationDocument, syntheticReport);
+    await zeroDomain();
+  },
+  async confirmation() {
+    for (const operation of ['create', 'transition']) {
+      for (const committed of [false, true]) {
+        const lossyPool = {
+          async connect() {
+            const client = await write.connect();
+            return new Proxy(client, {
+              get(target, property) {
+                if (property === 'query')
+                  return async (...args) => {
+                    if (args[0] === 'COMMIT') {
+                      if (committed) await target.query('COMMIT');
+                      throw new Error('synthetic-lost-commit-response');
+                    }
+                    return target.query(...args);
+                  };
+                const value = Reflect.get(target, property);
+                return typeof value === 'function' ? value.bind(target) : value;
+              },
+            });
+          },
+        };
+        const lossy = new PostgresReplayJournal(
+          lossyPool,
+          read,
+          new DatabaseSlots(1, 15),
+          new DatabaseSlots(16, 0),
+        );
+        let runId, previousRevision, marker;
+        if (operation === 'create') {
+          const proposal = input();
+          runId = proposal.runId;
+          previousRevision = null;
+          marker = intention();
+          await assert.rejects(lossy.create({ ...proposal, intention: marker }));
+        } else {
+          const view = await start();
+          runId = view.run.runId;
+          previousRevision = view.run.revision;
+          marker = intention(runId, 'pause');
+          await assert.rejects(
+            lossy.transition(runId, previousRevision, { state: 'pausing', intention: marker }),
+          );
+        }
+        const result = await journal.confirmIntention(runId, previousRevision, marker);
+        assert.equal(result.state, committed ? 'applied' : 'not_applied');
+        if (committed) assert.deepEqual(result.snapshot.run.intention, marker);
+        else if (operation === 'create') assert.equal(result.snapshot, null);
+        else assert.equal(result.snapshot.run.revision, previousRevision);
+        await journal.recover();
+      }
+    }
+    const marker = intention();
+    assert.equal((await journal.confirmIntention(randomUUID(), 1, marker)).state, 'unknown');
+    const view = await start();
+    assert.equal((await journal.confirmIntention(view.run.runId, null, marker)).state, 'unknown');
+    await zeroDomain();
+  },
+  async confirmation_barrier() {
+    for (const committed of [true, false]) {
+      const proposal = input(),
+        marker = intention(),
+        client = await owner.connect();
+      let pending;
+      try {
+        await client.query('BEGIN');
+        await client.query('SELECT pg_advisory_xact_lock(72416003)');
+        await client.query(
+          `INSERT INTO replay_runs(run_id,scenario_id,instance_id,fixture_sha256,stage,
+            last_command_id,last_command_instance,last_command_expected_version,last_command_document)
+            VALUES($1,$1,$2,$3,'first',$4,$2,0,$5::json)`,
+          [proposal.runId, instanceId, fixtureSha256, marker.commandId, marker.document],
+        );
+        assert.equal(await journal.find(proposal.runId), undefined);
+        pending = journal.confirmIntention(proposal.runId, null, marker);
+        // Retener el rechazo mientras se observa el bloqueo evita una promesa
+        // no manejada si falla la comprobación; no convierte el fallo en éxito.
+        pending.catch(() => {});
+        const deadline = Date.now() + 500;
+        let blocked = false;
+        do {
+          blocked = (
+            await read.query(
+              "SELECT EXISTS(SELECT 1 FROM pg_locks WHERE locktype='advisory' AND objid=72416003 AND NOT granted) AS blocked",
+            )
+          ).rows[0].blocked;
+          if (!blocked) await pause(10);
+        } while (!blocked && Date.now() < deadline);
+        assert.equal(blocked, true, 'La confirmación debe esperar la transacción anterior.');
+        await client.query(committed ? 'COMMIT' : 'ROLLBACK');
+        const result = await pending;
+        assert.equal(result.state, committed ? 'applied' : 'not_applied');
+        if (committed) assert.deepEqual(result.snapshot.run.intention, marker);
+        else assert.equal(result.snapshot, null);
+      } finally {
+        await client.query('ROLLBACK');
+        client.release();
+        await pending?.catch(() => {});
+      }
+      await journal.recover();
+    }
+    await zeroDomain();
   },
   async capacity() {
     // Filas interrumpidas sintéticas reservan24posiciones sin fingir envíos.
