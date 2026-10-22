@@ -1,5 +1,13 @@
 # Verificación de Nexo
 
+## Cierre local ordinario E5 — #74
+
+La fuente `608152bac0137d2aa085314667189c32fd03b29d` completó una única batería local general al cierre de E5:463 pruebas API en46 archivos,122 Angular en27,127 PostgreSQL/HTTP y25 Chromium en19 archivos, sin fallos u omisiones. Los63 controles CI también pasaron. Quality, compilación, políticas de workflows/Compose,357 enlaces internos, fixtures y esquema quedaron comprobados. Se conservaron los oráculos20/2/2→0/22/2, identidades,20 eventos/8 vehículos/4 alertas y43 mensajes en sus escenarios propios.
+
+La auditoría de dependencias informó cero vulnerabilidades y el historial pasó el escaneo de secretos. Las tres imágenes y tres Dockerfiles completaron inventarios/escaneos sin HIGH/CRITICAL ni resultados inconclusos. Las imágenes construidas, escaneadas y usadas en integración/navegador fueron API `sha256:d35bfd9dab22d5af1a9a9e939edff5719996815fc26f77f87fcbaabab3cabbd2`, web `sha256:15ae1052f483c28dc92e3afa229bd591ccb24834c76651123f8149c728b95789` y DB `sha256:e4d4a3d9054879118858ec07768314ed605f6145af728d854a87aadb45777000`.
+
+Esta evidencia corresponde al recorrido ordinario de esa fuente. Firefox/WebKit, carga ampliada, CI del siguiente candidato, revisión humana y entrega final conservan sus comprobaciones propias. Una corrección posterior repite el alcance afectado; no se atribuye anticipadamente el cierre ampliado a Chromium ni se reinicia toda la batería local por documentación.
+
 ## Coherencia visual y recuperación — E5-I05 / #74
 
 El recorrido focalizado de dos clientes pasó con ingesta, SQL, proxy y SSE reales. Conserva filtros AND y selección propia de historial/trayectoria/gráfico; un cambio de estado oculta la fila sin cerrar su detalle. Tras cortar un SSE mediante el intermediario TCP y dejar offline solo ese cliente, el segundo sigue recibiendo datos. Al recuperar el primero, snapshot e historial conservan selección y foco, ordenan el tardío y dejan una sola conexión activa por aplicación.
