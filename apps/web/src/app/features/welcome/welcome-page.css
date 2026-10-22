@@ -53,3 +53,38 @@ h1 {
   font-size: 1.125rem;
   line-height: 1.6;
 }
+
+.connection {
+  margin-block: 2rem;
+  padding-block: 1.5rem;
+  border-block: 1px solid #dbe6e5;
+}
+
+.connection h2 {
+  font-size: 1.25rem;
+}
+.connection-status {
+  font-weight: 600;
+}
+.totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+.totals dt {
+  color: #526970;
+}
+.totals dd {
+  margin: 0.25rem 0 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+.synchronized {
+  color: #526970;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+button {
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+}

@@ -20,7 +20,7 @@ La notificación procede del commit de negocio; duplicados y rechazos no añaden
 
 SSE es una notificación en vivo, sin ACK del navegador ni historial garantizado. Una marca published_at confirma la distribución local, no recepción o renderizado de todos los clientes. Sin suscriptores también se marca: quien llegue después obtiene snapshot. `Last-Event-ID` no solicita retransmisión histórica y los mensajes publicados no se vuelven a distribuir al reiniciar.
 
-Para sincronizar, registrar el stream, esperar ready, almacenar temporalmente cambios y pedir snapshot. Solo combinar si versiones/instancias coinciden; después aplicar el buffer y continuar en vivo. Una desconexión, cambio de generación o `stream.resync-required` exige volver a sincronizar. Un snapshot iniciado antes de una transición puede responder con la generación anterior, que permite detectar esa carrera. El frontend implementará su coordinación acotada y recuperación en su incremento, sin deducir una vista completa del último UUID recibido.
+Para sincronizar, registrar el stream, esperar ready, almacenar temporalmente cambios y pedir snapshot. Solo combinar si versiones/instancias coinciden; después aplicar el buffer y continuar en vivo. Una desconexión, cambio de generación o `stream.resync-required` exige volver a sincronizar. Un snapshot iniciado antes de una transición puede responder con la generación anterior, que permite detectar esa carrera. La [coordinación Angular](frontend-sync.md) implementa captura acotada y recuperación, sin deducir una vista completa del último UUID recibido.
 
 ## Despacho y durabilidad
 
@@ -68,6 +68,8 @@ npm run test:e2e
 ```
 
 Las pruebas de estado intermedio invocan el dispatcher real sin otro servidor que publique esas filas concurrentemente. Los casos HTTP usan el servidor activo. Los datos adversariales y fallos SQL se limitan a recursos sintéticos propios; no hay hooks públicos o flags que simulen éxito.
+
+La comprobación complementaria de presión por NGINX pausa cuatro lectores y mantiene otro activo durante 128 eventos y 384 mensajes. Verifica progreso del lector activo, ingesta, salud, persistencia y apertura de cuatro reemplazos de la sesión lenta: esos nuevos cupos prueban la liberación en el servidor sin depender de que el lector pausado observe EOF. No se deriva una capacidad productiva de ese escenario sintético.
 
 ## Fuentes y adaptación
 

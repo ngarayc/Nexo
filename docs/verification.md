@@ -1,5 +1,23 @@
 # Verificación
 
+## Coordinación Angular — E2-I02
+
+La [issue #28](https://github.com/ngarayc/Nexo/issues/28) pasó localmente calidad, **265 pruebas API, 59 Angular, 83 de integración y 7 Chromium**, sin omisiones. Se conservan los 31 controles de CI y los hashes de los cuatro fixtures. Auditoría de dependencias sin vulnerabilidades, historial/índice sin secretos y Trivy de las tres imágenes y tres Dockerfiles sin hallazgos altos/críticos. API/web revisadas se reconstruyeron y escanearon antes del último recorrido de navegador; CI reconstruye las imágenes propias del candidato publicado.
+
+Las pruebas Angular controlan buffer antes de snapshot/historial, respuesta tardía de otra generación/selección, cancelación GET/POST JSON, repetición, instante subnanosegundo, empate Unicode, cinco reintentos, 30 segundos sanos, Retry-After, suspensión incluso antes de ready y revocación/cambio de sesión. La UI distingue carga/error inicial de totales confirmados; los datos previos se señalan como posiblemente desactualizados durante recuperación. El núcleo de identidad e instante se extrajo íntegro y conserva la regresión API.
+
+Chromium accede a servicios reales: confirma la base, recibe por SSE un evento enviado por HTTP a través de NGINX y observa ambos contadores sin recarga. Logout y nuevo login recuperan la base con una apertura de stream por sesión; no se usa almacenamiento local/de sesión. El primer intento falló en el productor auxiliar: fetch no conservó el Host solicitado y el proxy respondió 421. La comparación con HTTP nativo produjo el 400 esperado para el mismo cuerpo inválido. Se cambió el cliente del test, manteniendo la validación de Host; el recorrido posterior pasó.
+
+La nueva prueba de presión usa cuatro lectores pausados detrás de NGINX y otro lector activo. Este recibe 384 identidades de 128 eventos, mientras ingesta/salud progresan. Abrir cuatro reemplazos de la misma sesión demuestra que el servidor liberó los cupos lentos aun cuando esos lectores no hayan consumido EOF; PostgreSQL conserva los 128 eventos y 384 mensajes publicados. Este caso amplía la evidencia de [#26](https://github.com/ngarayc/Nexo/issues/26) sin atribuirlo al CI anterior de main.
+
+[Sincronización](frontend-sync.md) describe código, fuentes, coste y límites. El recorrido verifica conexión y totales; tabla/historial visibles, lista de alertas y recuperación integral en dos navegadores mantienen sus incrementos propios. No acredita reproductor, CR-01, mapas o entrega final. La promoción requiere los checks y cinco artefactos del candidato exacto; la revisión técnica del agente no sustituye revisión humana de main.
+
+## Promoción revisada de E1 y transporte SSE
+
+La [PR #29](https://github.com/ngarayc/Nexo/pull/29) se integró después de la aprobación humana de main-review y [CI propio 39722541233](https://github.com/ngarayc/Nexo/actions/runs/39722541233), ambos sobre `0e24fb8288aa609a52e52452b00e026df30b073c`. Sus cinco artefactos se descargaron y revalidaron: 265 pruebas API, 4 Angular, 82 integración y 6 Chromium. El merge `79f5a8936731aa9da51ffd0aed31edc18d449a08` conserva el mismo árbol de Git que ese candidato.
+
+[CI posterior 39724725974](https://github.com/ngarayc/Nexo/actions/runs/39724725974) pasó sobre ese merge y sus cinco artefactos se descargaron/revalidaron con los mismos conteos y escaneos aprobados. E1 cerró sus criterios e issues; esta evidencia acredita el backend SSE y las consultas. La prueba de presión por NGINX y la coordinación Angular incorporadas después requieren su propia evidencia.
+
 ## Bootstrap — E0-I01
 
 Los resultados siguientes corresponden a la base inicial y no acreditan todavía la aceptación funcional completa de Nexo.

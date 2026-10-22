@@ -20,7 +20,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['apps/**/*.ts'],
+    files: ['apps/**/*.ts', 'packages/**/*.ts'],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     languageOptions: { parserOptions: { projectService: true } },
   },

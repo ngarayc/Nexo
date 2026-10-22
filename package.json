@@ -11,17 +11,18 @@
   },
   "workspaces": [
     "apps/api",
-    "apps/web"
+    "apps/web",
+    "packages/contracts"
   ],
   "scripts": {
     "build": "npm run build --workspace @nexo/api && npm run build --workspace @nexo/web",
     "start:api": "npm run start --workspace @nexo/api",
     "start:web": "npm run start --workspace @nexo/web",
     "typecheck": "npm run typecheck --workspace @nexo/api && npm run typecheck --workspace @nexo/web",
-    "lint": "eslint apps scripts tests",
+    "lint": "eslint apps packages scripts tests",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
-    "boundaries": "depcruise apps --config .dependency-cruiser.cjs",
+    "boundaries": "depcruise apps packages --config .dependency-cruiser.cjs",
     "docs:check": "node scripts/check-docs.mjs",
     "fixtures:check": "node scripts/check-fixtures.mjs",
     "quality": "npm run format:check && npm run lint && npm run typecheck && npm run boundaries && npm run docs:check && npm run fixtures:check && npm run schema:check",

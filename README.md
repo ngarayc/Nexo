@@ -2,7 +2,7 @@
 
 Telemetría sintética de flotas con NestJS, Angular y PostgreSQL. El nombre expresa el vínculo entre vehículos, información y supervisión.
 
-**Estado:** base E0 con Docker, acceso demo por sesión y CI; E1 admite lotes HTTP, clasifica eventos y recupera fallos mediante cola durable, conservando identidad, tiempo y JSON exactos. Incluye proyección, alertas y outbox transaccionales, tres oportunidades por posición y reconciliación tras reinicio. Las consultas autenticadas exponen flota, historial, alertas y snapshot coherente. El stream SSE protegido publica cambios confirmados desde la outbox, con límites por conexión, heartbeat y recuperación de salud. Dashboard, reproductor y CR-01 se incorporan después. La pantalla conserva el acceso inicial.
+**Estado:** base E0 con Docker, acceso demo por sesión y CI; E1 admite lotes HTTP, clasifica eventos y recupera fallos mediante cola durable, conservando identidad, tiempo y JSON exactos. Incluye proyección, alertas y outbox transaccionales, tres oportunidades por posición y reconciliación tras reinicio. Las consultas autenticadas exponen flota, historial, alertas y snapshot coherente. El stream SSE protegido publica cambios confirmados desde la outbox, con límites por conexión, heartbeat y recuperación de salud. Angular sincroniza snapshot/cambios y presenta conexión y totales confirmados. Tabla, detalle visible, lista de alertas, reproductor y CR-01 conservan sus incrementos posteriores.
 
 ## Arranque
 
@@ -40,6 +40,7 @@ La integración necesita Docker e imágenes construidas mediante el arranque ant
 
 - `apps/api`: monolito modular NestJS/TypeScript, acceso, ingesta, consultas, tiempo real y persistencia.
 - `apps/web`: Angular por funcionalidades, fachadas, acceso y navegación protegida.
+- `packages/contracts`: tipos públicos y reglas puras compartidas por API y Angular.
 - `infra`: Compose, imágenes fijadas por digest y proxy NGINX.
 - `skills/`: especificación, implementación y revisión; aliases en `.agents/skills/`.
 - `docs/requirements/` y `fixtures/`: contratos y datos suministrados, preservados.
@@ -60,6 +61,7 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 - [Recuperación, backoff y agotamiento](docs/recovery.md).
 - [Consultas, historial JSON y snapshot](docs/queries.md).
 - [SSE, outbox y recuperación en vivo](docs/realtime.md).
+- [Coordinación Angular, capturas y reconexión](docs/frontend-sync.md).
 - [API y contrato OpenAPI versionado](docs/api.md).
 - [Comprobación desde copia limpia](docs/reproducibility.md).
 - [Reglas de dominio y GPS](docs/domain.md).
