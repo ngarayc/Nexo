@@ -1,15 +1,25 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, writeFileSync, rmSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import config from '../../.dependency-cruiser.cjs';
 
+const command = JSON.parse(
+  readFileSync(new URL('../../package.json', import.meta.url), 'utf8'),
+).scripts.boundaries.split(/\s+/u);
+assert.equal(command[0], 'depcruise');
+
 function inspect(files) {
   const directory = mkdtempSync(join(tmpdir(), 'nexo-boundaries-'));
   try {
-    writeFileSync(join(directory, 'rules.json'), JSON.stringify(config));
+    writeFileSync(
+      join(directory, '.dependency-cruiser.cjs'),
+      'module.exports = ' + JSON.stringify(config),
+    );
+    for (const root of ['apps/api/src', 'apps/web/src', 'packages/contracts/src'])
+      mkdirSync(join(directory, root), { recursive: true });
     for (const [file, source] of Object.entries(files)) {
       mkdirSync(dirname(join(directory, file)), { recursive: true });
       writeFileSync(join(directory, file), source);
@@ -18,10 +28,7 @@ function inspect(files) {
       process.execPath,
       [
         resolve('node_modules/dependency-cruiser/bin/dependency-cruiser.mjs'),
-        'apps',
-        'packages',
-        '--config',
-        'rules.json',
+        ...command.slice(1),
         '--output-type',
         'json',
       ],
@@ -80,6 +87,12 @@ for (const [name, file, source, target] of [
     'apps/web/src/main.mjs',
   ],
   [
+    'web-cannot-import-server',
+    'apps/web/src/cross.mjs',
+    "import '../../api/dist/server.mjs';",
+    'apps/api/dist/server.mjs',
+  ],
+  [
     'contracts-cannot-import-applications',
     'packages/contracts/src/cross.mjs',
     "import '../../../apps/web/src/main.mjs';",
@@ -92,11 +105,14 @@ for (const [name, file, source, target] of [
     undefined,
   ],
 ]) {
-  test('fronteras conserva ' + name, () => {
-    const files = { ...minimal, [file]: source };
-    if (target && !files[target]) files[target] = 'export const target = 1;';
-    const result = inspect(files);
-    assert.ok(result.report.summary.violations.some((item) => item.rule.severity === 'error'));
-    assert.ok(result.report.summary.violations.some((item) => item.rule.name === name));
-  });
+  test(
+    'fronteras conserva ' + name + (target?.includes('/dist/') ? ' hacia salida compilada' : ''),
+    () => {
+      const files = { ...minimal, [file]: source };
+      if (target && !files[target]) files[target] = 'export const target = 1;';
+      const result = inspect(files);
+      assert.ok(result.report.summary.violations.some((item) => item.rule.severity === 'error'));
+      assert.ok(result.report.summary.violations.some((item) => item.rule.name === name));
+    },
+  );
 }

@@ -2,9 +2,9 @@
 
 ## Fronteras sobre fuentes
 
-`npm run boundaries` inspecciona aplicaciones y contratos con las mismas cinco reglas de ciclos y dependencias prohibidas. Excluye únicamente los directorios `dist` de los tres workspaces y la caché `apps/web/.angular`. [#65](https://github.com/ngarayc/Nexo/issues/65) corrige el falso positivo del cierre E4: un build previo dejaba bundles cíclicos dentro del inventario. No se eliminan builds para obtener verde ni se excluyen carpetas homónimas dentro de `src`.
+`npm run boundaries` comienza en los tres directorios de fuentes `apps/api/src`, `apps/web/src` y `packages/contracts/src`, con las mismas cinco reglas de ciclos y dependencias prohibidas. [#65](https://github.com/ngarayc/Nexo/issues/65) corrige el falso positivo del cierre E4: un build previo dejaba bundles cíclicos entre las entradas del inventario. Las importaciones encontradas desde fuentes siguen analizándose, incluso si apuntan a una salida generada. No se eliminan builds para obtener verde ni se excluyen carpetas homónimas dentro de `src`.
 
-Seis controles ejecutan el analizador real sobre fixtures temporales: mantienen fuentes no vacías, ignoran salidas conocidas y rechazan ciclos de fuentes, web→servidor, servidor→web, contratos→aplicaciones y contratos→Node. Revisan las violaciones estructuradas del reporte JSON; la ejecución ordinaria sigue usando la salida de errores y su código de fallo.
+Siete controles ejecutan el comando y configuración reales sobre fixtures temporales: mantienen fuentes no vacías, dejan fuera salidas ajenas al grafo de fuentes y rechazan ciclos de fuentes, web→servidor, servidor→web, contratos→aplicaciones y contratos→Node. El caso adicional rechaza también web→servidor compilado: detectó que una exclusión global de `dist` ocultaba esa dependencia y motivó reemplazarla por entradas explícitas de fuentes antes de publicar. Revisan las violaciones estructuradas del reporte JSON; la ejecución ordinaria sigue usando la salida de errores y su código de fallo.
 
 ## Preparación verificable de Chromium
 

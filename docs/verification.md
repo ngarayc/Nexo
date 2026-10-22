@@ -2,7 +2,9 @@
 
 ## Control de fronteras después de construir — #65
 
-El primer cierre local E4 pasó formato, lint y tipos, pero se detuvo en fronteras por10 ciclos entre bundles generados de un build anterior. Se conservó el fallo. La exclusión de salidas conocidas conserva las cinco reglas y pasó con268 módulos/965 dependencias de fuentes, junto con seis regresiones del analizador real. Los primeros cinco casos negativos del comprobador propio suponían que la salida JSON retornaba un código distinto de cero; se corrigieron para comprobar las violaciones estructuradas que efectivamente produce. No se modificaron reglas para aprobarlos. Los controles locales restantes del cierre continúan sin repetir las suites ya aprobadas.
+El primer cierre local E4 pasó formato, lint y tipos, pero se detuvo en fronteras por10 ciclos entre bundles generados de un build anterior. Se conservó el fallo. La primera corrección excluía salidas conocidas y pasó seis regresiones, pero otra negativa demostró que ocultaba una importación desde fuente web a servidor compilado. Antes de publicar se sustituyó por entradas explícitas de los tres directorios de fuentes, manteniendo las cinco reglas e inspección de sus dependencias. Los siete casos del analizador real comprueban ambas garantías.
+
+Los primeros cinco casos negativos del comprobador propio suponían que la salida JSON retornaba un código distinto de cero; se corrigieron para comprobar sus violaciones estructuradas. Los fallos se conservaron y ninguna regla se modificó para aprobarlos. Los controles locales restantes del cierre continúan sin repetir las suites ya aprobadas.
 
 ## Interfaz de CR-01 — E4-I03 / #60
 
