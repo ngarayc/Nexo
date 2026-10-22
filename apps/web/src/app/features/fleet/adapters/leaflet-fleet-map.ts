@@ -1,6 +1,7 @@
 import * as L from 'leaflet';
 import type { VehicleView } from '@nexo/contracts';
 import type { MapProvider } from '../../../platform/maps/map-provider-config';
+import { LeafletMapSurface } from '../../../platform/maps/leaflet-map-surface';
 import { formatIdentity, identityPreview } from '../../../platform/presentation/identity-text';
 import { formatTime } from '../../../platform/presentation/format-time';
 import { stateLabels } from '../../../platform/presentation/vehicle-state-label';
@@ -24,8 +25,7 @@ function tooltip(vehicle: VehicleView): HTMLElement {
 
 class LeafletFleetMap implements FleetMapRenderer {
   private readonly map: L.Map;
-  private readonly layer: L.TileLayer;
-  private readonly observer?: ResizeObserver;
+  private readonly surface: LeafletMapSurface;
   private readonly markers = new Map<
     string,
     { marker: L.Marker; symbol: HTMLElement; view: VehicleView }
@@ -40,37 +40,8 @@ class LeafletFleetMap implements FleetMapRenderer {
     private readonly select: (id: string) => void,
     tiles: (phase: TilePhase) => void,
   ) {
-    this.map = L.map(host, {
-      zoomControl: false,
-      attributionControl: false,
-      zoomAnimation: false,
-      fadeAnimation: false,
-      markerZoomAnimation: false,
-    });
-    L.control.zoom({ zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' }).addTo(this.map);
-    this.layer = L.tileLayer(provider.tileUrl, {
-      maxZoom: provider.maxZoom,
-      minZoom: 0,
-      referrerPolicy: 'strict-origin-when-cross-origin',
-      updateWhenIdle: true,
-      updateWhenZooming: false,
-      keepBuffer: 0,
-    });
-    let failed = false;
-    this.layer.on('loading', () => {
-      failed = false;
-      tiles('loading');
-    });
-    this.layer.on('tileerror', () => {
-      failed = true;
-      tiles('error');
-    });
-    this.layer.on('load', () => tiles(failed ? 'error' : 'ready'));
-    this.layer.addTo(this.map);
-    if (typeof ResizeObserver === 'function') {
-      this.observer = new ResizeObserver(() => this.map.invalidateSize({ pan: false }));
-      this.observer.observe(host);
-    }
+    this.surface = new LeafletMapSurface(host, provider, tiles);
+    this.map = this.surface.map;
   }
 
   sync(vehicles: readonly VehicleView[], selected: string | null): void {
@@ -142,11 +113,10 @@ class LeafletFleetMap implements FleetMapRenderer {
     if (entry) this.map.panTo(entry.marker.getLatLng(), { animate: false });
   }
   retryTiles(): void {
-    this.layer.redraw();
+    this.surface.retryTiles();
   }
   destroy(): void {
-    this.observer?.disconnect();
-    this.map.remove();
+    this.surface.destroy();
     this.markers.clear();
   }
 }

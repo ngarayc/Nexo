@@ -70,6 +70,9 @@ export class VehicleDetailFacade implements OnDestroy {
     this.cancel();
     this.load();
   }
+  selectObservation(eventId: string): void {
+    if (this.observations.has(eventId)) this.focusedValue.set(eventId);
+  }
   close(): void {
     this.cancel();
     this.selectedValue.set(null);

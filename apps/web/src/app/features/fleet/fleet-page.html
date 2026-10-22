@@ -88,6 +88,18 @@
   } @else if (detail.total() === 0) {
   <p>No hay observaciones registradas para este vehículo.</p>
   } @else {
-  <nexo-vehicle-history [items]="detail.items()" [highlighted]="detail.focusedEvent()" /> } }
+  <nexo-vehicle-history
+    [items]="detail.items()"
+    [highlighted]="detail.focusedEvent()"
+    (selectEvent)="selectObservation($event)"
+  />
+  }
+  <nexo-vehicle-trajectory
+    [vehicleId]="vehicleId"
+    [items]="detail.items()"
+    [selected]="detail.focusedEvent()"
+    (selectEvent)="selectObservation($event)"
+  />
+  }
 </section>
 }

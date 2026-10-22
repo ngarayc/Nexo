@@ -13,6 +13,7 @@ import {
 } from '@angular/core';
 import type { VehicleView } from '@nexo/contracts';
 import { MapProviderStore } from '../../platform/maps/map-provider-store';
+import { hasProjectionLimit } from '../../platform/maps/projection';
 import { FLEET_MAP_FACTORY } from './adapters/fleet-map-factory';
 import type { FleetMapRenderer, TilePhase } from './adapters/fleet-map-renderer';
 
@@ -110,11 +111,7 @@ export class FleetMap {
   readonly provider = inject(MapProviderStore);
   readonly rendered = signal(false);
   readonly tiles = signal<TilePhase>('loading');
-  readonly projectionLimited = computed(() =>
-    this.items().some(
-      (v) => Math.abs(v.latitude) > (Math.atan(Math.sinh(Math.PI)) * 180) / Math.PI,
-    ),
-  );
+  readonly projectionLimited = computed(() => hasProjectionLimit(this.items()));
   private readonly host = viewChild<ElementRef<HTMLElement>>('mapHost');
   private readonly factory = inject(FLEET_MAP_FACTORY);
   private renderer?: FleetMapRenderer;

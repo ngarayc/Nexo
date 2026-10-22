@@ -1,7 +1,8 @@
 import type { VehicleView } from '@nexo/contracts';
 import type { MapProvider } from '../../../platform/maps/map-provider-config';
+import type { TilePhase } from '../../../platform/maps/leaflet-map-surface';
 
-export type TilePhase = 'loading' | 'ready' | 'error';
+export type { TilePhase } from '../../../platform/maps/leaflet-map-surface';
 export interface FleetMapRenderer {
   sync(vehicles: readonly VehicleView[], selected: string | null): void;
   fit(): void;

@@ -18,7 +18,7 @@ Cerrar historial devuelve foco a la fila si sigue visible; si no, a la búsqueda
 
 ## Mapa de últimas posiciones
 
-El [mapa Leaflet](cartography.md) recibe la misma colección visible que la tabla y comparte selección con el historial. Actualiza marcadores por identidad sin recentrar ante cada evento; Ver flota visible ajusta el encuadre expresamente. Los fallos de cartografía tienen aviso y reintento locales. La atribución y dependencia del proveedor permanecen visibles; no se deducen nuevos datos GPS.
+El [mapa Leaflet](cartography.md) recibe la misma colección visible que la tabla y comparte selección con el historial. Actualiza marcadores por identidad sin recentrar ante cada evento; Ver flota visible ajusta el encuadre expresamente. El detalle muestra además la trayectoria de sus observaciones aceptadas, con selección compartida por eventId desde historial, punto o alerta. Las uniones rectas describen muestras, no rutas sobre calles; los puntos coincidentes se pueden elegir en la tabla. Los fallos de cartografía tienen aviso y reintento locales. La atribución y dependencia del proveedor permanecen visibles; no se deducen nuevos datos GPS.
 
 ## Alertas por vehículo
 

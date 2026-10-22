@@ -17,10 +17,11 @@ import { IdentityText } from '../../platform/presentation/identity-text';
 import { FleetTable } from './fleet-table';
 import { VehicleHistory } from './vehicle-history';
 import { FleetMap } from './fleet-map';
+import { VehicleTrajectory } from './vehicle-trajectory';
 
 @Component({
   selector: 'nexo-fleet-page',
-  imports: [FleetTable, VehicleHistory, IdentityText, FleetMap],
+  imports: [FleetTable, VehicleHistory, IdentityText, FleetMap, VehicleTrajectory],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './fleet-page.html',
   styleUrl: './fleet-page.css',
@@ -49,6 +50,7 @@ export class FleetPage {
   private readonly table = viewChild(FleetTable);
   private readonly historyTable = viewChild(VehicleHistory);
   private readonly map = viewChild(FleetMap);
+  private readonly trajectory = viewChild(VehicleTrajectory);
   private lastFocusedEvent: string | null = null;
   constructor() {
     afterRenderEffect(() => {
@@ -66,6 +68,11 @@ export class FleetPage {
     this.detail.select(vehicleId);
     this.map()?.focusVehicle(vehicleId);
     afterNextRender(() => this.history()?.nativeElement.focus(), { injector: this.injector });
+  }
+  selectObservation(eventId: string): void {
+    this.detail.selectObservation(eventId);
+    this.trajectory()?.focusEvent(eventId);
+    afterNextRender(() => this.historyTable()?.focusEvent(eventId), { injector: this.injector });
   }
   clearFilters(): void {
     this.fleet.clearFilters();

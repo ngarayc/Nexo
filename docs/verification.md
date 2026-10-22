@@ -1,5 +1,13 @@
 # Verificación de Nexo
 
+## Trayectoria y selección de observaciones — E5-I03 / #70
+
+Pasaron tipos web y22 pruebas focalizadas en cinco archivos: fachada de detalle, historial, trayectoria, mapa y página. El primer intento de tipos y compilación de pruebas falló al asignar undefined a una propiedad opcional bajo exactOptionalPropertyTypes; se declaró explícitamente la unión y se repitió ese alcance, sin relajar TypeScript.
+
+Tres recorridos Chromium focalizados pasaron con API/PostgreSQL/NGINX reales y tiles sintéticos. El oficial comprueba dos clientes, orden histórico, selección historial/punto/alerta y ambos replays20/2/2→0/22/2 con20 eventos/8 vehículos/4 alertas/43 mensajes. El adversarial comprueba cero segmentos con una muestra, puntos coincidentes conservados, muestras separadas por fracciones inferiores a un nanosegundo y orden geométrico real del SVG tras un tardío. Mantiene el mismo marcador seleccionado, encuadre y foco de búsqueda; un duplicado no agrega puntos. Una respuesta HTTP real retenida se cancela al cambiar de vehículo y no reemplaza su punto/historial. También pasó el caso de mapa previo afectado por la extracción de superficie compartida.
+
+La construcción web pasó. Esta validación sigue siendo focalizada; no se ejecutó otra batería local completa ni se atribuye al nuevo incremento el escaneo de otra imagen anterior. El gráfico y la aceptación integral E5 continúan pendientes.
+
 ## Mapa de últimas posiciones — E5-I02 / #67
 
 Pasaron seis pruebas de configuración/generador y doce pruebas Angular focalizadas en tres archivos (proveedor, mapa y página), además de tipos, lint afectado y fronteras de273 módulos/1002 dependencias. El primer intento Angular no inició casos porque el asset estaba fuera del workspace; se corrigió generándolo en el directorio público del proyecto desde la misma fuente revisada. No se omitieron pruebas ni se duplicó una configuración manual.
@@ -26,7 +34,7 @@ Se ejecutaron formato, lint, tipos, enlaces, fixtures y coherencia del esquema. 
 
 La auditoría de dependencias informó0 vulnerabilidades. El historial disponible y los cuatro commits incrementales posteriores pasaron el escaneo de secretos; los cambios documentales finales se revisaron por separado. Las tres imágenes y tres Dockerfiles completaron sus inventarios y escaneos sin HIGH/CRITICAL. Se conservaron las mismas imágenes durante las pruebas: API `sha256:cd341b122f28c4f1ce7841f16bd8a137a169319cfab2c82976de8e95445e0126`, web `sha256:085b9c80a33c3553288e1cf0a5dd4886988ffac7b8489075cfa65eaf5321c28d` y PostgreSQL `sha256:63bdd19b7e400b9f71e2c9d91219cbdf33d8787e3faaf0d87ca15337e3f8bcfc`. Los resultados no acreditan capacidad de producción ni reemplazan los escaneos del candidato remoto.
 
-La batería local completa se ejecutó al cierre de la épica; las correcciones posteriores repitieron solo las comprobaciones afectadas. [PR61](https://github.com/ngarayc/Nexo/pull/61) conserva QA, CI propio y promoción del nuevo origen. El CI de c97890e pasó antes463API/90Angular/125PostgreSQL/14Chromium con cinco artefactos revalidados; ese candidato anterior no acredita la interfaz ni las correcciones siguientes. La revisión humana y promoción de E4 a main siguen pendientes y no se reutiliza la aprobación de E3.
+La batería local completa se ejecutó al cierre de la épica; las correcciones posteriores repitieron solo las comprobaciones afectadas. [PR61](https://github.com/ngarayc/Nexo/pull/61) conserva QA, CI propio y promoción del nuevo origen. El CI de c97890e pasó antes463API/90Angular/125PostgreSQL/14Chromium con cinco artefactos revalidados; ese candidato anterior no acredita la interfaz ni las correcciones siguientes. La aprobación efectiva de ngarayc en main-review39844605142 cubrió el candidato0edba3b de [PR68](https://github.com/ngarayc/Nexo/pull/68). Su CI propio39844604982 pasó seis jobs y cinco artefactos revalidados (463API/95Angular/127PostgreSQL/16Chromium), checkout4acb9516b0f37588968efb1431bd4b0e72431906. Se integró en maincb494a285fe31b1bfad94cf6278e0f49462786eb; la comprobación posterior a esa integración continúa antes de cerrar sus issues. No se reutiliza la aprobación de E3 ni se atribuye a E5.
 
 ## Control de fronteras después de construir — #65
 

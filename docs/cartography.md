@@ -10,7 +10,17 @@ La primera colección no vacía ajusta el encuadre a sus posiciones, con zoom in
 
 Seleccionar una fila o marcador abre el mismo detalle y centra su marcador si está visible. Enter y espacio activan los marcadores y la tabla sigue ofreciendo todas las acciones por teclado. Filtrar puede ocultar el marcador sin cerrar el detalle; su aviso permite limpiar los filtros. Al desaparecer un marcador enfocado, el foco vuelve a la región del mapa. El componente destruye mapa, listeners y observador de tamaño al salir, también al cerrar sesión.
 
-La proyección Web Mercator tiene un alcance visual menor que el rango de latitud admitido por el contrato. Si una posición lo supera, aparece un aviso y se conservan sus valores originales; no se rechaza o modifica la telemetría. No se calculan rutas, distancias, velocidades, geocodificación o movimiento interpolado. La trayectoria histórica se incorpora en un incremento posterior.
+La proyección Web Mercator tiene un alcance visual menor que el rango de latitud admitido por el contrato. Si una posición lo supera, aparece un aviso y se conservan sus valores originales; no se rechaza o modifica la telemetría. No se calculan rutas, distancias, velocidades, geocodificación o movimiento interpolado.
+
+## Trayectoria y observación seleccionada
+
+La [issue #70](https://github.com/ngarayc/Nexo/issues/70) representa el historial aceptado de `VehicleDetailFacade` en un segundo adaptador Leaflet. Usa su orden exacto de instante y desempate por eventId; no deriva orden o igualdad de la hora visible. Cada observación conserva un marcador, aunque comparta coordenadas o instante visual con otra. Las líneas rectas unen muestras consecutivas y la interfaz explica que no son una ruta calculada por calles. Cero muestras muestra vacío; una muestra dibuja un punto sin segmento.
+
+`focusedEvent` es la selección compartida por historial, trayectoria y acceso desde alertas. Seleccionar una muestra válida actualiza ese ID sin consultar de nuevo. La tabla ofrece botones nativos y permite desambiguar puntos coincidentes; Enter/espacio también activan los marcadores. El detalle muestra identidad, hora Bogotá 24h, velocidad, encendido y coordenadas originales. Si el ID seleccionado no aparece en la base disponible, lo informa sin inventar valores.
+
+Una muestra tardía se inserta en su posición exacta y amplía la trayectoria sin desplazar el último estado de flota. Se conservan selección, elementos de marcador, encuadre y foco del usuario durante SSE. Cambiar de vehículo limpia selección anterior y utiliza las cancelaciones/generaciones existentes; una respuesta HTTP antigua no sustituye el historial nuevo. La primera colección del vehículo ajusta el encuadre y Ver trayectoria completa permite repetirlo; una selección explícita puede centrar su punto.
+
+`LeafletMapSurface` comparte capa de tiles, política de referente, controles, observador de tamaño y destrucción entre los dos adaptadores reales. Cada uno mantiene solamente sus objetos gráficos y consume vistas de su fachada. No agrega captura, SSE, endpoint o consulta de telemetría. La configuración pública del proveedor se carga una vez por aplicación y su fallo/reintento sigue siendo local a la cartografía. El aviso general de historial desactualizado cubre también su trayectoria.
 
 ## Configuración y seguridad
 

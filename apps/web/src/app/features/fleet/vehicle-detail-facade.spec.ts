@@ -200,3 +200,30 @@ it('enlazar una alerta conserva su evento y seleccionarlo en el mismo vehículo 
   expect(detail.focusedEvent()).toBeNull();
   expect(detail.focusedObservation()).toBeUndefined();
 });
+
+it('seleccionar una muestra conserva identidad y valores ante tardíos y reconexión sin otra consulta', async () => {
+  const { detail, requests, monitor } = setup();
+  const later = observation('later', 'A', '2026-01-01T00:00:01.000000000002Z');
+  const earlier = observation('earlier', 'A', '2026-01-01T00:00:01.000000000001Z');
+  detail.select('A');
+  requests[0]!.resolve({ vehicleId: 'A', items: [later], total: 1 });
+  await flush();
+  detail.selectObservation(later.eventId);
+  detail.selectObservation('unknown');
+  expect(detail.focusedEvent()).toBe(later.eventId);
+  expect(detail.focusedObservation()).toBe(later);
+  expect(requests).toHaveLength(1);
+  monitor.emit(earlier);
+  expect(detail.items().map((event) => event.eventId)).toEqual(['earlier', 'later']);
+  expect(detail.focusedObservation()).toBe(later);
+  monitor.invalidate();
+  monitor.recover();
+  requests[1]!.resolve({ vehicleId: 'A', items: [earlier, later], total: 2 });
+  await flush();
+  expect(detail.focusedEvent()).toBe(later.eventId);
+  expect(detail.focusedObservation()).toBe(later);
+  detail.select('B');
+  expect(detail.focusedEvent()).toBeNull();
+  detail.selectObservation(later.eventId);
+  expect(detail.focusedEvent()).toBeNull();
+});

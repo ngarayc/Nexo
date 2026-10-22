@@ -20,7 +20,8 @@ body {
   outline-offset: 4px;
 }
 
-.nexo-fleet-marker {
+.nexo-fleet-marker,
+.nexo-trajectory-marker {
   display: grid;
   place-items: center;
   color: #153c47;
@@ -29,11 +30,13 @@ body {
   border-radius: 50%;
   font-size: 1rem;
 }
-.nexo-fleet-marker.is-selected {
+.nexo-fleet-marker.is-selected,
+.nexo-trajectory-marker.is-selected {
   outline: 3px solid #9c5410;
   outline-offset: 2px;
 }
-.leaflet-tooltip.nexo-fleet-tooltip {
+.leaflet-tooltip.nexo-fleet-tooltip,
+.leaflet-tooltip.nexo-trajectory-tooltip {
   max-width: min(24rem, calc(100vw - 3rem));
   white-space: normal;
   overflow-wrap: anywhere;
