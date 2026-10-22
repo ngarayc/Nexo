@@ -1,5 +1,21 @@
 # Verificación de Nexo
 
+## API de CR-01 y comparación — E4-I01/I02
+
+[#57](https://github.com/ngarayc/Nexo/issues/57) fijó base y condiciones; [#59](https://github.com/ngarayc/Nexo/issues/59) incorpora GET filtrado y POST JSON. [El ciclo](agent-cycles/CR-01.md) y [la comparación](../AGENT-EFFICIENCY.md) conservan parches e integridad, criterios y límites. Las dos propuestas se aplicaron/verificaron secuencialmente sobre el mismo árbol: ambas pasaron tipos, sus dos casos PostgreSQL/API/proxy y los cinco recorridos comunes. La general pasó16 pruebas de aplicación/HTTP y la focalizada19; esos inventarios diferentes no son una métrica de superioridad. Ninguna propuesta necesitó correcciones de código o pruebas. El primer recorrido adversarial focalizado terminó en EPIPE y la repetición puntual pasó; su causa quedó indeterminada y se conserva el fallo.
+
+La consolidación usa la consulta general de una sentencia y el lector JSON compartido focalizado. Pasaron tipos y16 pruebas de los dos archivos afectados. La imagen API `sha256:7ac8eb60f564b224ba11eaa31e70c78dcaf7dfddf722807f3b9cf234856da067` se construyó para ese refinamiento. El primer caso de integración terminó con error del ejecutor interno sin detalle capturado; una repetición con diagnóstico pasó sin cambiar aplicación. Un ensayo acotado de80 rechazos de cuerpos2MiB+1, por API/proxy en historial y alertas, obtuvo413 en todos sin reproducir el fallo. No se atribuye causa al intento original ni se lo presenta como aprobado. Formato posterior es mecánico; el CI propio construye y comprueba el candidato publicado completo.
+
+Lint de archivos afectados, enlaces y validación estructural OpenAPI oficial pasaron; el inventario AST coincide con las17 operaciones y33 esquemas descritos. No cambian fixtures, esquema, dependencias, Angular, SSE o políticas de acceso. El verificador de enlaces incluye ahora el nuevo informe raíz. Las pruebas locales fueron focalizadas; la batería local completa se reserva al cierre E4. UI #60, aceptación integral y revisión humana de CR-01 mantienen su estado pendiente; ninguna aprobación anterior los acredita.
+
+## Promoción integral de E3 a main
+
+[PR58](https://github.com/ngarayc/Nexo/pull/58#issuecomment-6346716237) promovió la fuente `de7fdb03b398ca5c35ae14bc5378b85a2c430ff8` a test `99912bf0ab4520767edb3150bbdb3ea0cf2bddbe`, árbol `5d86c1abdabd4d0e76d3432c509050662b6da9b4`, tras [CI propio39817992331](https://github.com/ngarayc/Nexo/actions/runs/39817992331), intento1, y cinco artefactos descargados/revalidados para checkout `bbb186657614f5d5ee1717977ad2a5fe524d84aa`:458API/90Angular/123PostgreSQL/14Chromium.
+
+[PR51](https://github.com/ngarayc/Nexo/pull/51#issuecomment-6347135921) integró ese árbol en main `e0f298f8960f8f8baf35dd783ac227f882d32c85`, después de aprobación efectiva de ngarayc en [main-review39820865479](https://github.com/ngarayc/Nexo/actions/runs/39820865479). [CI propio39820865413](https://github.com/ngarayc/Nexo/actions/runs/39820865413), intento1, pasó con cinco artefactos revalidados para checkout `9839e93507c67140b921135bb3432049e74cef06`, fuente99912bf y los mismos inventarios.
+
+[Post-main39823965751](https://github.com/ngarayc/Nexo/actions/runs/39823965751), intento1, también pasó sobre el merge e0f298f; sus cinco artefactos se descargaron/revalidaron con458API/90Angular/123PostgreSQL/14Chromium, sin fallos u omisiones y con los seis jobs aprobados. Acredita motor, panel, reset, aceptación integral y corrección de metadatos de #56. Se cerraron #42/#49/#52/#55/#56 y el milestone E3, con sus nueve issues completadas. E4/E5/E6 conservan trabajo propio; no existe todavía video final ni tag entrega-final.
+
 ## Aceptación integral del núcleo — E3-I06 / #55
 
 La [guía reproducible](demo-guide.md) conecta el comando de reset, controles del motor, dos clientes Angular e informes. La validación local completa de cierre E3 pasó una vez: calidad, compilación, **458 API, 90 Angular, 123 integraciones, 47 controles de CI y 14 Chromium**, sin omisiones. Auditoría de dependencias: 0 vulnerabilidades; escaneo del historial: 0 secretos. Los cambios documentales posteriores a esos comandos se comprobaron con formato/enlaces afectados, sin repetir las suites generales.
@@ -18,7 +34,7 @@ El [recorrido ampliado](../tests/system/replay-panel.spec.mjs) crea una observac
 
 La revisión agregó una protección de configuración: el manifiesto vincula también el Compose expandido, por lo que cambiar WEB_PORT heredado del proceso impide reanudar antes de tocar el destino. La integración completa probó ese rechazo y la posterior recuperación con la configuración original. Los servicios habituales permanecieron intactos; los ensayos usaron y limpiaron exclusivamente recursos sintéticos propios.
 
-Este es cierre técnico local del núcleo, no revisión humana o promoción final acreditadas. Cada PR conserva CI remoto completo propio y cinco artefactos revalidados antes de test; main requiere aprobación humana del candidato vigente. E4 CR-01/comparación, E5 visualizaciones, E6 video/copia limpia/tag y el total estimado del autor siguen pendientes. No existe todavía el video accesible ni tag entrega-final.
+La promoción y revisión humana de este cierre E3 están acreditadas arriba. Cada candidato posterior conserva sus propios checks y revisión. E4 mantiene selección visual/aceptación/revisión del filtro, E5 visualizaciones y E6 video/copia limpia/tag y el total estimado del autor pendientes. No existe todavía el video accesible ni tag entrega-final.
 
 ## Panel compartido — E3-I04 / #49
 
@@ -40,7 +56,7 @@ Los primeros intentos detectaron una referencia de archivo equivocada, una esper
 
 [PR45](https://github.com/ngarayc/Nexo/pull/45#issuecomment-6343260777) se integró en main5bb7612e778e3b41b258e77b1cd9615e8d449417 tras aprobación real de ngarayc en main-review39791521046 y CI propio39791521071 intento2, mismo checkout1a576c865cc80851224f64c11e91f5570d374bf6. Cinco artefactos propios descargados/revalidados:397API/70Angular/107SQL/13Chromium. El intento1 fallido al consultar metadatos se conserva; su causa HTTP exacta no quedó demostrada. La repetición completa mantuvo fuente y controles.
 
-[Post-main39796147682](https://github.com/ngarayc/Nexo/actions/runs/39796147682), intento1, también pasó con cinco artefactos revalidados para ese merge, los mismos inventarios y árbol idéntico al candidato. Se cerraron las seis issues y milestone E2; la base EP-03 cuenta con revisión humana real. #38/#40 y las correcciones #43/#46/#48 también alcanzaron main. #44 conserva pendiente la causa histórica no demostrada.
+[Post-main39796147682](https://github.com/ngarayc/Nexo/actions/runs/39796147682), intento1, también pasó con cinco artefactos revalidados para ese merge, los mismos inventarios y árbol idéntico al candidato. Se cerraron las seis issues y milestone E2; la base EP-03 cuenta con revisión humana real. #38/#40 y las correcciones #43/#46/#48 también alcanzaron main. #44 cerró la investigación y observabilidad con causa histórica indeterminada; no se presenta como un fallo de transporte reparado.
 
 [PR50](https://github.com/ngarayc/Nexo/pull/50#issuecomment-6344180050) promovió el motor posterior09f6747 a test a9e87ff5abe3b901c428d0a80e39a673ef2fa83f después de CI propio39798378152 intento1 y cinco artefactos revalidados:458API/70Angular/116SQL/13Chromium. Es un candidato distinto de E2/main5bb; el panel de #49 conserva su verificación y promoción propias.
 

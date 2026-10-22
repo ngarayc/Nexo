@@ -2,9 +2,9 @@
 
 Telemetría sintética de flotas con NestJS, Angular y PostgreSQL. El nombre expresa el vínculo entre vehículos, información y supervisión.
 
-**Estado:** base E0 con Docker, acceso demo por sesión y CI; E1 admite lotes HTTP, clasifica eventos y recupera fallos mediante cola durable, conservando identidad, tiempo y JSON exactos. Incluye proyección, alertas y outbox transaccionales, tres oportunidades por posición y reconciliación tras reinicio. Las consultas autenticadas exponen flota, historial, alertas y snapshot coherente. El stream SSE protegido publica cambios confirmados desde la outbox, con límites por conexión, heartbeat y recuperación de salud. Angular presenta flota, búsqueda, historial y alertas globales con hora24h de Bogotá; enlaza cada alerta con su observación y conserva conexión/totales al navegar. Reproductor y filtro CR-01 conservan sus incrementos posteriores.
+**Estado:** base E0 con Docker, acceso demo por sesión y CI; E1 admite lotes HTTP, clasifica eventos y recupera fallos mediante cola durable, conservando identidad, tiempo y JSON exactos. Incluye proyección, alertas y outbox transaccionales, tres oportunidades por posición y reconciliación tras reinicio. Las consultas autenticadas exponen flota, historial, alertas y snapshot coherente. El stream SSE protegido publica cambios confirmados desde la outbox, con límites por conexión, heartbeat y recuperación de salud. Angular presenta flota, búsqueda, historial y alertas globales con hora24h de Bogotá; enlaza cada alerta con su observación y conserva conexión/totales al navegar. El reproductor compartido está incorporado en E3. CR-01 añade el filtro exacto de alertas por API; su selección visual mantiene el incremento #60.
 
-E3 incorpora el [diario persistente](docs/replay-journal.md) y el [verificador de datos](docs/replay-verification.md), con fuentes originales, preparación, comparación e informes históricos. El [motor HTTP compartido](docs/replay-emitter.md) conserva cuerpos originales, una sola petición, controles protegidos e incertidumbre sin reenvíos. El [panel flotante](docs/replay-panel.md) permite iniciar, pausar, reanudar, reiniciar y finalizar desde Flota/Alertas; muestra progreso, inspector e informes mediante el mismo SSE. El [reset local](docs/demo-reset.md) conserva evidencia externa y recrea exclusivamente el volumen sintético identificado. La [guía de demostración](docs/demo-guide.md) une reset, dos clientes y ambos replays; [verificación](docs/verification.md) conserva resultados comprobados y pendientes de promoción.
+E3 incorpora el [diario persistente](docs/replay-journal.md) y el [verificador de datos](docs/replay-verification.md), con fuentes originales, preparación, comparación e informes históricos. El [motor HTTP compartido](docs/replay-emitter.md) conserva cuerpos originales, una sola petición, controles protegidos e incertidumbre sin reenvíos. El [panel flotante](docs/replay-panel.md) permite iniciar, pausar, reanudar, reiniciar y finalizar desde Flota/Alertas; muestra progreso, inspector e informes mediante el mismo SSE. El [reset local](docs/demo-reset.md) conserva evidencia externa y recrea exclusivamente el volumen sintético identificado. La [guía de demostración](docs/demo-guide.md) une reset, dos clientes y ambos replays; [verificación](docs/verification.md) conserva resultados y promociones de cada candidato.
 
 ## Arranque
 
@@ -41,6 +41,8 @@ npx --no-install playwright install chromium
 npm run test:e2e
 ```
 
+Durante el desarrollo local se ejecutan solo las comprobaciones pertinentes al cambio; la batería completa se reserva para cerrar una épica. Los workflows de GitHub mantienen todos sus controles.
+
 Integración y navegador necesitan Docker e imágenes construidas mediante el arranque anterior. Usan recursos sintéticos propios y no modifican el volumen de la aplicación; navegador requiere libre el puerto8081. [Verificación](docs/verification.md) describe resultados y candidatos, y [trazabilidad](docs/traceability.md) relaciona requisitos, implementación y pendientes.
 
 - `apps/api`: monolito modular NestJS/TypeScript, acceso, ingesta, consultas, tiempo real y persistencia.
@@ -55,7 +57,7 @@ Integración y navegador necesitan Docker e imágenes construidas mediante el ar
 
 Cada cambio requiere issue y commits con referencia real. Después del bootstrap revisado, las ramas permanentes son `development`, `test` y `main`. El agente publica y promueve por PR a test tras revisión QA y CI; las PR hacia main quedan abiertas para revisión del autor mientras continúa el desarrollo. Consultar [AGENTS.md](AGENTS.md), [gobierno](AGENT-GOVERNANCE.md) y [flujo de IA](docs/AI-WORKFLOW.md).
 
-Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de CI](https://github.com/ngarayc/Nexo/actions/runs/39552267643), promovido por [PR #7](https://github.com/ngarayc/Nexo/pull/7). Cada candidato nuevo repite los controles. Las [demostraciones negativas y recuperación](docs/control-demonstrations.md) están comprobadas; la revisión humana de main conserva su estado propio. Backend y dos aplicaciones Angular verifican20/2/2 y0/22/2 sin reset entre pasadas,20eventos/8vehículos/4alertas e identidades originales. Esta evidencia automatizada todavía no acredita el reproductor controlable y video pendientes.
+Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de CI](https://github.com/ngarayc/Nexo/actions/runs/39552267643), promovido por [PR #7](https://github.com/ngarayc/Nexo/pull/7). Cada candidato nuevo repite los controles. Las [demostraciones negativas y recuperación](docs/control-demonstrations.md) están comprobadas; la revisión humana de main conserva su estado propio. Backend y dos aplicaciones Angular verifican20/2/2 y0/22/2 sin reset entre pasadas,20eventos/8vehículos/4alertas e identidades originales. El recorrido integral desde reset acredita los controles del reproductor y ambos replays mediante dos interfaces reales; el video de entrega sigue pendiente.
 
 ## Documentación
 
@@ -70,6 +72,8 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 - [Coordinación Angular, capturas y reconexión](docs/frontend-sync.md).
 - [Flota, búsqueda, historial y alertas](docs/dashboard.md).
 - [Ciclo funcional EP-03 — Alertas base](docs/agent-cycles/EP-03.md).
+- [Cambio CR-01 — Filtro de alertas](docs/agent-cycles/CR-01.md).
+- [Comparación agéntica y sus límites](AGENT-EFFICIENCY.md).
 - [Diario durable del reproductor](docs/replay-journal.md).
 - [Preparación y verificación del par oficial](docs/replay-verification.md).
 - [Reset local con evidencia y reanudación](docs/demo-reset.md).

@@ -22,7 +22,7 @@ La documentación y el código públicos se incorporan por la issue #1; las nota
 
 El trabajo continúa en `development`. Las ramas `test` y `main` reciben PR; se conservan las tres ramas y merge commits. Las plantillas de issue y PR identifican origen, alcance, aceptación, comprobaciones y estado de resolución. Una referencia a una issue no acredita su cierre.
 
-La protección de ambas ramas exige PR, `ci-required`, conversaciones resueltas y rama actualizada; incluye administradores y prohíbe force push y borrado. El check pasó efectivamente antes de integrar la PR #7. Main requiere además `main-review`, emitido exclusivamente por su workflow de PR y protegido por revisión de entorno. La PR #8 tiene CI aprobado y revisión de entorno pendiente del autor; los rechazos demostrados no equivalen a una aprobación humana de esta PR.
+La protección de ambas ramas exige PR, `ci-required`, conversaciones resueltas y rama actualizada; incluye administradores y prohíbe force push y borrado. El check pasó efectivamente antes de integrar la PR #7. Main requiere además `main-review`, emitido exclusivamente por su workflow de PR y protegido por revisión de entorno. Cada promoción conserva la revisión de su candidato exacto. [PR #51](https://github.com/ngarayc/Nexo/pull/51#issuecomment-6347135921) acredita aprobación real de ngarayc en main-review y cinco reportes propios revalidados para E3; esa intervención no aprueba CR-01. Los rechazos demostrados y la QA del agente no sustituyen una aprobación humana.
 
 ## Evidencia de controles
 
