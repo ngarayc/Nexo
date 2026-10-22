@@ -1,0 +1,114 @@
+:host {
+  display: block;
+  min-height: 100svh;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+main {
+  width: min(100%, 90rem);
+  margin-inline: auto;
+  padding: clamp(1rem, 3vw, 2.5rem);
+  background: #ffffff;
+  border: 1px solid #dbe6e5;
+  border-radius: 1.5rem;
+}
+
+.identity {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.identity span {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+  background: #13766d;
+}
+
+.identity span:nth-child(2) {
+  width: 2.5rem;
+  height: 0.2rem;
+  border-radius: 0;
+}
+
+.eyebrow {
+  color: #37665f;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+h1 {
+  margin: 0.5rem 0 1rem;
+  font-size: clamp(2rem, 6vw, 3rem);
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.description {
+  max-width: 26rem;
+  color: #526970;
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+.connection {
+  margin-block: 2rem;
+  padding-block: 1.5rem;
+  border-block: 1px solid #dbe6e5;
+}
+
+.connection h2 {
+  font-size: 1.25rem;
+}
+.connection-status {
+  font-weight: 600;
+}
+.totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+}
+.totals dt {
+  color: #526970;
+}
+.totals dd {
+  margin: 0.25rem 0 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+.synchronized {
+  color: #526970;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+button {
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+}
+
+.session {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-block: 1.5rem;
+}
+nav a {
+  color: #16543d;
+  padding: 0.5rem;
+  text-decoration: none;
+  border-block-end: 3px solid transparent;
+}
+nav a.active {
+  border-color: #13766d;
+  font-weight: 700;
+}

@@ -8,7 +8,9 @@ export default defineConfig({
   forbidOnly: true,
   retries: 0,
   timeout: 30000,
-  reporter: [['json', { outputFile: 'reports/playwright-raw.json' }]],
+  reporter: [
+    ['json', { outputFile: process.env.NEXO_SYSTEM_REPORT ?? 'reports/playwright-raw.json' }],
+  ],
   use: {
     baseURL: 'http://localhost:8081',
     trace: 'off',

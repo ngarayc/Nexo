@@ -17,6 +17,16 @@ export class SessionState implements OnDestroy {
 
   accept(snapshot: SessionSnapshot, epoch: number): boolean {
     if (epoch !== this.revision || Date.parse(snapshot.expiresAt) <= Date.now()) return false;
+    const previous = this.value();
+    if (
+      previous &&
+      (previous.csrfToken !== snapshot.csrfToken || previous.user.id !== snapshot.user.id)
+    ) {
+      // Otro login puede regenerar la cookie HttpOnly desde una pestaña del
+      // mismo navegador. El token sincronizado identifica un ámbito nuevo sin
+      // leer el SID y evita conservar datos/callbacks de la sesión anterior.
+      this.revision += 1;
+    }
     clearTimeout(this.timer);
     this.value.set(snapshot);
     this.notice.set('');

@@ -2,7 +2,7 @@
 
 Telemetría sintética de flotas con NestJS, Angular y PostgreSQL. El nombre expresa el vínculo entre vehículos, información y supervisión.
 
-**Estado:** base E0 con Docker, acceso demo por sesión y CI; E1 admite lotes HTTP, clasifica eventos y recupera fallos mediante cola durable, conservando identidad, tiempo y JSON exactos. Incluye proyección, alertas y outbox transaccionales, tres oportunidades por posición y reconciliación tras reinicio. Las consultas autenticadas exponen flota, historial, alertas y snapshot coherente. El stream SSE protegido publica cambios confirmados desde la outbox, con límites por conexión, heartbeat y recuperación de salud. Dashboard, reproductor y CR-01 se incorporan después. La pantalla conserva el acceso inicial.
+**Estado:** base E0 con Docker, acceso demo por sesión y CI; E1 admite lotes HTTP, clasifica eventos y recupera fallos mediante cola durable, conservando identidad, tiempo y JSON exactos. Incluye proyección, alertas y outbox transaccionales, tres oportunidades por posición y reconciliación tras reinicio. Las consultas autenticadas exponen flota, historial, alertas y snapshot coherente. El stream SSE protegido publica cambios confirmados desde la outbox, con límites por conexión, heartbeat y recuperación de salud. Angular presenta flota, búsqueda, historial y alertas globales con hora24h de Bogotá; enlaza cada alerta con su observación y conserva conexión/totales al navegar. Reproductor y filtro CR-01 conservan sus incrementos posteriores.
 
 ## Arranque
 
@@ -34,12 +34,16 @@ npm run quality
 npm run build
 npm run test:unit
 npm run test:integration
+npm run test:ci-controls
+npx --no-install playwright install chromium
+npm run test:e2e
 ```
 
-La integración necesita Docker e imágenes construidas mediante el arranque anterior; usa su stack db/api con datos sintéticos y no modifica el volumen de la aplicación. [Verificación](docs/verification.md) describe los resultados de cada incremento y sus pendientes.
+Integración y navegador necesitan Docker e imágenes construidas mediante el arranque anterior. Usan recursos sintéticos propios y no modifican el volumen de la aplicación; navegador requiere libre el puerto8081. [Verificación](docs/verification.md) describe resultados y candidatos, y [trazabilidad](docs/traceability.md) relaciona requisitos, implementación y pendientes.
 
 - `apps/api`: monolito modular NestJS/TypeScript, acceso, ingesta, consultas, tiempo real y persistencia.
 - `apps/web`: Angular por funcionalidades, fachadas, acceso y navegación protegida.
+- `packages/contracts`: tipos públicos y reglas puras compartidas por API y Angular.
 - `infra`: Compose, imágenes fijadas por digest y proxy NGINX.
 - `skills/`: especificación, implementación y revisión; aliases en `.agents/skills/`.
 - `docs/requirements/` y `fixtures/`: contratos y datos suministrados, preservados.
@@ -49,17 +53,21 @@ La integración necesita Docker e imágenes construidas mediante el arranque ant
 
 Cada cambio requiere issue y commits con referencia real. Después del bootstrap revisado, las ramas permanentes son `development`, `test` y `main`. El agente publica y promueve por PR a test tras revisión QA y CI; las PR hacia main quedan abiertas para revisión del autor mientras continúa el desarrollo. Consultar [AGENTS.md](AGENTS.md), [gobierno](AGENT-GOVERNANCE.md) y [flujo de IA](docs/AI-WORKFLOW.md).
 
-Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de CI](https://github.com/ngarayc/Nexo/actions/runs/39552267643), promovido por [PR #7](https://github.com/ngarayc/Nexo/pull/7). Cada candidato nuevo repite los controles. Las [demostraciones negativas y recuperación](docs/control-demonstrations.md) están comprobadas; la revisión humana de main conserva su estado propio. La aceptación final mantiene 20/2/2 y 0/22/2, 20 eventos, 8 vehículos y 4 alertas con las identidades de los oráculos; todavía no se acredita con E0.
+Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de CI](https://github.com/ngarayc/Nexo/actions/runs/39552267643), promovido por [PR #7](https://github.com/ngarayc/Nexo/pull/7). Cada candidato nuevo repite los controles. Las [demostraciones negativas y recuperación](docs/control-demonstrations.md) están comprobadas; la revisión humana de main conserva su estado propio. Backend y dos aplicaciones Angular verifican20/2/2 y0/22/2 sin reset entre pasadas,20eventos/8vehículos/4alertas e identidades originales. Esta evidencia automatizada todavía no acredita el reproductor controlable y video pendientes.
 
 ## Documentación
 
 - [Arquitectura](docs/architecture.md).
+- [Trazabilidad y alcance comprobado](docs/traceability.md).
 - [Persistencia exacta y migraciones](docs/persistence.md).
 - [Admisión durable y contratos HTTP](docs/ingestion.md).
 - [Clasificación y efectos transaccionales](docs/classification.md).
 - [Recuperación, backoff y agotamiento](docs/recovery.md).
 - [Consultas, historial JSON y snapshot](docs/queries.md).
 - [SSE, outbox y recuperación en vivo](docs/realtime.md).
+- [Coordinación Angular, capturas y reconexión](docs/frontend-sync.md).
+- [Flota, búsqueda, historial y alertas](docs/dashboard.md).
+- [Ciclo funcional EP-03 — Alertas base](docs/agent-cycles/EP-03.md).
 - [API y contrato OpenAPI versionado](docs/api.md).
 - [Comprobación desde copia limpia](docs/reproducibility.md).
 - [Reglas de dominio y GPS](docs/domain.md).

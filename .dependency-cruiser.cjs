@@ -13,6 +13,18 @@ module.exports = {
       from: { path: '^apps/api/' },
       to: { path: '^apps/web/|node_modules/@angular/' },
     },
+    {
+      name: 'contracts-cannot-import-applications',
+      severity: 'error',
+      from: { path: '^packages/contracts/' },
+      to: { path: '^apps/|node_modules/(?:@nestjs|@angular)/' },
+    },
+    {
+      name: 'contracts-cannot-import-node',
+      severity: 'error',
+      from: { path: '^packages/contracts/' },
+      to: { dependencyTypes: ['core'] },
+    },
   ],
   options: {
     doNotFollow: { path: 'node_modules' },

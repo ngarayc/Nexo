@@ -1,5 +1,75 @@
 # Verificación
 
+## Consolidación documental del dashboard — E2-I06
+
+La [issue #36](https://github.com/ngarayc/Nexo/issues/36) actualiza README, arquitectura, operación, reproducibilidad y API para describir flota/historial/alertas ya disponibles. [Trazabilidad](traceability.md) relaciona obligaciones, implementación, pruebas y pendientes; mantiene reproductor, CR-01, complementos y cierre final separados. La revisión del AST de controladores contrastó las catorce operaciones reales con OpenAPI, incluyendo su prefijo de servidor; no hubo diferencias ni cambios de endpoints.
+
+Pasaron calidad completa, enlaces y hashes de fixtures. Este incremento modifica documentación; los resultados funcionales siguientes conservan sus fuentes y candidatos propios. El CI de su promoción ejecuta las regresiones del nuevo candidato y la PR registra sus cinco artefactos exactos. EP-03 conserva base identificable sin filtro y revisión humana pendiente hasta la intervención efectiva sobre la PR a main. No se declara E2 cerrado antes de comprobar esa promoción ni se atribuye la comparación CR-01 a este trabajo.
+
+## Dos clientes, carreras y recuperación — E2-I05
+
+La [issue #35](https://github.com/ngarayc/Nexo/issues/35) pasó calidad y **13 pruebas Chromium**, ninguna omitida, junto con los 31 controles de CI. API/web productivos, dependencias y esquema conservan el incremento anterior; CI del nuevo candidato reconstruye y comprueba también sus regresiones. Los cuatro fixtures conservan sus hashes.
+
+Dos contextos con SIDs independientes reciben exactamente los mismos 43 UUID de dominio. El fixture se envía en su orden original: 20/2/2 y después 0/22/2 sin reset entre pasadas. Ambas vistas conservan ocho vehículos, cuatro alertas, siete MOVING y uno STOPPED. Se comparan las ocho proyecciones, los historiales de los veinte eventos y las identidades de alertas; SQL confirma 20/8/4 y 43 mensajes publicados. Cada aplicación mantiene una conexión y su búsqueda propia; navegar no abre otra.
+
+Las carreras conservan respuestas obtenidas de HTTP real: un commit posterior al snapshot retenido llega por SSE antes de instalarlo y permanece en la vista; lo mismo ocurre con un tardío durante historial. Cambiar de A a B aborta la solicitud anterior y no cruza su contenido. Las pruebas unitarias anteriores verifican además que una respuesta que ignore abort tampoco supere la generación de selección.
+
+Un intermediario de prueba corta sockets del SSE de A, conserva sus datos marcados como desactualizados y permite que B siga progresando. Restablecerlo recupera el evento perdido con una sola conexión activa. Un trigger propio impide marcar la outbox: salud pasa a503 y ambas aplicaciones retiran En vivo, pero se admite otra ingesta. Retirar el fallo recupera salud, cuatro vehículos y tres alertas. Logout limpia A y revoca su SID; B conserva acceso y recibe el quinto evento. Volver a ingresar A recupera la base sin conexiones antiguas activas.
+
+Se conservaron fallos reales del desarrollo de las pruebas: esperar solo la cantidad de filas podía observar todavía el historial anterior de igual tamaño; se espera ahora su contenido exacto. Activar offline no cortó un SSE existente dentro de cinco segundos, por lo que el escenario usa un corte explícito y observable de sockets. La primera variante del intermediario cambiaba el host y recibió403; conservar localhost permitió mantener el acceso sin modificar políticas productivas. Los recorridos corregidos pasaron; no se alteraron oráculos ni cuotas.
+
+Cada archivo parte de recursos sintéticos nuevos y limpia solo su stack. Los diagnósticos crudos se conservan localmente por invocación y no se publican. Reproductor controlable, CR-01 y entrega ampliada permanecen pendientes; estas pruebas no los acreditan.
+
+## Promoción de alertas base a test
+
+La [PR #34](https://github.com/ngarayc/Nexo/pull/34) se integró en `499f2604b136a4fb44927e9d9117ee85d2b29162` tras [CI propio 39741133553](https://github.com/ngarayc/Nexo/actions/runs/39741133553), intento1, y [QA](https://github.com/ngarayc/Nexo/pull/34#issuecomment-6335780884). Sus cinco artefactos descargados/revalidados pertenecen al checkout `465212b82b67613cda584ad7d3942d63d3df8b44` y origen `0f780a576530896b35a7142052cec4bfb3da660d`: 265 API, 70 Angular, 83 integración y 10 Chromium, con escaneos y ci-required aprobados. La revisión humana de EP-03 permanece pendiente de la promoción a main del candidato concreto.
+
+## Alertas base — E2-I04 / EP-03
+
+La [issue #33](https://github.com/ngarayc/Nexo/issues/33) pasó calidad, **70 pruebas Angular y 10 Chromium**, sin omisiones. La imagen web del incremento se reconstruyó y pasó Trivy sin altos/críticos. API, núcleo, esquema y dependencias conservan la base verificada; CI del candidato ejecuta sus regresiones completas. Los cuatro fixtures mantienen sus hashes.
+
+La prueba real de alertas crea 80, 81, tardío95 y 81 apagado: aparecen tres alertas en orden descendente y latest conserva el81 más reciente. Repetir los cuatro produce cuatro duplicados; conflicto e inválido producen dos rechazos y no añaden alertas. El contador y lista permanecen globales aunque flota tenga una búsqueda activa. Ver evento destaca y enfoca el tardío original y luego el evento apagado de otro vehículo; la navegación conserva una sola apertura SSE y un snapshot. Una nueva observación por SSE inserta historial sin robar el foco de búsqueda.
+
+Las pruebas de presentación distinguen carga/error de vacío y datos desactualizados. La selección de otro evento del mismo vehículo no repite HTTP; logout/revocación limpia el foco conservado. El chequeo estricto inicial detectó una referencia privada de efecto sin uso y se corrigió registrando el efecto DOM en el constructor, sin relajar tipos. [EP-03](agent-cycles/EP-03.md) conserva propuesta, workflows, cambios y evidencia; revisión humana y comparación de CR-01 mantienen su estado propio.
+
+## Promoción de flota/historial a test
+
+La [PR #32](https://github.com/ngarayc/Nexo/pull/32) se integró en `53e05a56cf53c9a85e2df489376793304877ac28` tras [CI propio 39736244549](https://github.com/ngarayc/Nexo/actions/runs/39736244549), intento 1, y [revisión técnica](https://github.com/ngarayc/Nexo/pull/32#issuecomment-6334948551). Los cinco artefactos descargados/revalidados pertenecen al checkout `442f8ac159f5f7db6041a610ac902b9115424f11` y origen `b2de2b66d3f8dd8cdbcb92e724f7d2a0a6ca6ed4`: 265 API, 66 Angular, 83 integración y 9 Chromium; jobs, ci-required y escaneos aprobados. Esta promoción a test no acredita una revisión humana nueva de main.
+
+## Flota e historial visibles — E2-I03
+
+La [issue #30](https://github.com/ngarayc/Nexo/issues/30) pasó calidad y **66 pruebas Angular y 9 Chromium**, sin omisiones, con la imagen web revisada reconstruida y sin vulnerabilidades altas/críticas en Trivy. El incremento cambia presentación/routing y pruebas de frontend; API, núcleo compartido, esquema y dependencias conservan el código verificado de E2-I02. El CI propio del nuevo candidato vuelve a ejecutar también sus regresiones.
+
+Las pruebas comprueban contenido de tabla, estado, encendido, identidad original al seleccionar, Unicode/HTML como texto, distinción entre carga/error/vacío/desconocido y foco al cerrar una fila ya oculta por la búsqueda. Chromium verifica mayúsculas, `%` y `_` literales por identidades exactas, totales globales independientes, historial ascendente, tardío por SSE que no cambia latest, fecha/hora 24h de Bogotá, pantalla de 360 px y navegación por teclado. Otro recorrido usa IDs de 70.000 caracteres, un sustituto aislado, NUL y `.`/`..` mediante POST JSON real, con CSRF y sin API key; consulta la identidad exacta y desplaza su representación completa por teclado.
+
+Se conservaron dos fallos de pruebas y sus correcciones. El primer supuesto de búsqueda por `_` omitía que el ID sintético de HTML también lo contenía; se contrasta ahora el conjunto exacto derivado de esos datos, manteniendo intactos los fixtures/oráculos oficiales. Un selector parcial de la fila B coincidía además con prefijos UUID aleatorios: se sustituyó por su encabezado de fila e identidad exacta. Las comprobaciones posteriores pasaron sin modificar el algoritmo de búsqueda.
+
+La revisión detectó además un defecto real del adaptador: intentaba GET con NUL, que NGINX rechazó con 400. Se conservó la prueba roja que observaba ese GET y se cambió a JSON, conservando el valor. La comprobación del parser URL evita también que `.`/`..` cambien la ruta. Las pruebas posteriores pasan por el proxy y verifican historial/identidad; no se relaja NGINX ni la validación de dominio.
+
+[Dashboard](dashboard.md) relaciona recorrido, código, fuentes y límites. Estos resultados no acreditan todavía lista de alertas base, dos vistas completas bajo fallos, reproductor o CR-01. La promoción mantiene checks/artefactos del SHA exacto y revisión humana propia de main.
+
+## Promoción de la coordinación a test
+
+La [PR #31](https://github.com/ngarayc/Nexo/pull/31) promovió `d44f429df8cb90fe31b403f18753340aa305f2d1` tras revisión técnica y [CI propio 39731905638](https://github.com/ngarayc/Nexo/actions/runs/39731905638), intento 1. Cinco artefactos descargados/revalidados del checkout `e60f6f0bfb9ba433f84350fa8c8c04a8d1e5d964`: 265 API, 59 Angular, 83 integración y 7 Chromium; cinco jobs, ci-required y escaneos aprobados. El merge en test es `932f8ed6ef03c6c963aff9b651d937ca751cc9d6`. La integración no sustituye la revisión humana de una futura promoción a main.
+
+## Coordinación Angular — E2-I02
+
+La [issue #28](https://github.com/ngarayc/Nexo/issues/28) pasó localmente calidad, **265 pruebas API, 59 Angular, 83 de integración y 7 Chromium**, sin omisiones. Se conservan los 31 controles de CI y los hashes de los cuatro fixtures. Auditoría de dependencias sin vulnerabilidades, historial/índice sin secretos y Trivy de las tres imágenes y tres Dockerfiles sin hallazgos altos/críticos. API/web revisadas se reconstruyeron y escanearon antes del último recorrido de navegador; CI reconstruye las imágenes propias del candidato publicado.
+
+Las pruebas Angular controlan buffer antes de snapshot/historial, respuesta tardía de otra generación/selección, cancelación GET/POST JSON, repetición, instante subnanosegundo, empate Unicode, cinco reintentos, 30 segundos sanos, Retry-After, suspensión incluso antes de ready y revocación/cambio de sesión. La UI distingue carga/error inicial de totales confirmados; los datos previos se señalan como posiblemente desactualizados durante recuperación. El núcleo de identidad e instante se extrajo íntegro y conserva la regresión API.
+
+Chromium accede a servicios reales: confirma la base, recibe por SSE un evento enviado por HTTP a través de NGINX y observa ambos contadores sin recarga. Logout y nuevo login recuperan la base con una apertura de stream por sesión; no se usa almacenamiento local/de sesión. El primer intento falló en el productor auxiliar: fetch no conservó el Host solicitado y el proxy respondió 421. La comparación con HTTP nativo produjo el 400 esperado para el mismo cuerpo inválido. Se cambió el cliente del test, manteniendo la validación de Host; el recorrido posterior pasó.
+
+La nueva prueba de presión usa cuatro lectores pausados detrás de NGINX y otro lector activo. Este recibe 384 identidades de 128 eventos, mientras ingesta/salud progresan. Abrir cuatro reemplazos de la misma sesión demuestra que el servidor liberó los cupos lentos aun cuando esos lectores no hayan consumido EOF; PostgreSQL conserva los 128 eventos y 384 mensajes publicados. Este caso amplía la evidencia de [#26](https://github.com/ngarayc/Nexo/issues/26) sin atribuirlo al CI anterior de main.
+
+[Sincronización](frontend-sync.md) describe código, fuentes, coste y límites. El recorrido verifica conexión y totales; tabla/historial visibles, lista de alertas y recuperación integral en dos navegadores mantienen sus incrementos propios. No acredita reproductor, CR-01, mapas o entrega final. La promoción requiere los checks y cinco artefactos del candidato exacto; la revisión técnica del agente no sustituye revisión humana de main.
+
+## Promoción revisada de E1 y transporte SSE
+
+La [PR #29](https://github.com/ngarayc/Nexo/pull/29) se integró después de la aprobación humana de main-review y [CI propio 39722541233](https://github.com/ngarayc/Nexo/actions/runs/39722541233), ambos sobre `0e24fb8288aa609a52e52452b00e026df30b073c`. Sus cinco artefactos se descargaron y revalidaron: 265 pruebas API, 4 Angular, 82 integración y 6 Chromium. El merge `79f5a8936731aa9da51ffd0aed31edc18d449a08` conserva el mismo árbol de Git que ese candidato.
+
+[CI posterior 39724725974](https://github.com/ngarayc/Nexo/actions/runs/39724725974) pasó sobre ese merge y sus cinco artefactos se descargaron/revalidaron con los mismos conteos y escaneos aprobados. E1 cerró sus criterios e issues; esta evidencia acredita el backend SSE y las consultas. La prueba de presión por NGINX y la coordinación Angular incorporadas después requieren su propia evidencia.
+
 ## Bootstrap — E0-I01
 
 Los resultados siguientes corresponden a la base inicial y no acreditan todavía la aceptación funcional completa de Nexo.

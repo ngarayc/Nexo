@@ -4,9 +4,11 @@ RUN npm install --global npm@12.2.0
 COPY package.json package-lock.json .npmrc ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
-RUN npm ci
+COPY packages/contracts/package.json packages/contracts/package.json
+RUN npm ci --no-audit
 COPY tsconfig.base.json ./
 COPY apps/web apps/web
+COPY packages/contracts packages/contracts
 RUN npm run build --workspace @nexo/web
 
 FROM nginx:1.30.6-alpine@sha256:970364228b1e4f932abc22d321932816782cca8a20b85a77552a7cfe9acfb3b5 AS runtime

@@ -8,10 +8,21 @@ export const routes: Routes = [
   },
   {
     path: '',
-    pathMatch: 'full',
     canActivate: [sessionGuard],
-    loadComponent: () =>
-      import('./features/welcome/welcome-page').then((module) => module.WelcomePage),
+    loadComponent: () => import('./platform/layout/app-shell').then((module) => module.AppShell),
+    children: [
+      {
+        path: 'alerts',
+        loadComponent: () =>
+          import('./features/alerts/alerts-page').then((module) => module.AlertsPage),
+      },
+      {
+        path: '',
+        pathMatch: 'full',
+        loadComponent: () =>
+          import('./features/fleet/fleet-page').then((module) => module.FleetPage),
+      },
+    ],
   },
   { path: '**', redirectTo: '' },
 ];

@@ -1,0 +1,71 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.scroll {
+  overflow: auto;
+  border: 1px solid #dbe6e5;
+  border-radius: 0.5rem;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+caption {
+  padding: 0.75rem;
+  text-align: left;
+  color: #526970;
+}
+th,
+td {
+  padding: 0.8rem;
+  text-align: left;
+  vertical-align: top;
+  border-block-start: 1px solid #dbe6e5;
+  min-width: 7rem;
+}
+thead th {
+  background: #f0f6f5;
+}
+tbody th {
+  max-width: 18rem;
+}
+tr.selected {
+  background: #e9f5f2;
+}
+button {
+  padding: 0.6rem 0.75rem;
+  cursor: pointer;
+}
+.state {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.35rem;
+  background: #edf1f3;
+  white-space: nowrap;
+}
+.MOVING {
+  background: #d5efe2;
+  color: #16543d;
+}
+.STOPPED {
+  background: #fff0c2;
+  color: #604a0a;
+}
+.OFF {
+  background: #e6e9ed;
+  color: #354653;
+}
+
+tr.highlighted {
+  background: #dff4e8;
+  outline: 2px solid #13766d;
+  outline-offset: -2px;
+}
+.selected-label {
+  display: block;
+  color: #16543d;
+  font-weight: 700;
+  font-size: 0.75rem;
+}

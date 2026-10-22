@@ -114,6 +114,11 @@ export function testStack({ webPort = 8080, publishWeb = true } = {}) {
     }
   };
   return {
+    browserEnvironment() {
+      // Solo el proceso Node del runner recibe esta referencia efímera. El
+      // productor se ejecuta dentro de API: ninguna clave cruza hacia Angular.
+      return { NEXO_SYSTEM_PROJECT: project, NEXO_SYSTEM_ENV_FILE: envFile };
+    },
     compose,
     sql,
     health,
