@@ -1,5 +1,11 @@
 # Verificación de Nexo
 
+## Coherencia visual y recuperación — E5-I05 / #74
+
+El recorrido focalizado de dos clientes pasó con ingesta, SQL, proxy y SSE reales. Conserva filtros AND y selección propia de historial/trayectoria/gráfico; un cambio de estado oculta la fila sin cerrar su detalle. Tras cortar un SSE mediante el intermediario TCP y dejar offline solo ese cliente, el segundo sigue recibiendo datos. Al recuperar el primero, snapshot e historial conservan selección y foco, ordenan el tardío y dejan una sola conexión activa por aplicación.
+
+La caída controlada de tiles afecta a ambos mapas, con reintentos manuales y gráfico, sesión e historial disponibles. Cada cliente conserva sus filtros; cerrar una sesión destruye sus visualizaciones y mantiene la otra. El caso usa datos propios:6 eventos/2 vehículos/2 alertas/13 mensajes, sin pendientes; los oráculos oficiales se comprueban en sus escenarios separados. Este resultado no sustituye todavía la batería local integral de cierre ni la revisión del autor.
+
 ## Gráfico de velocidad — E5-I04 / #72
 
 Pasaron tipos web y14 pruebas focalizadas en tres archivos: modelo temporal del gráfico, componente y página. Conservan entradas/identidades, velocidades80/81, puntos visualmente coincidentes con instantes exactos distintos, vacío, muestra única y máximo finito, alternativa accesible, selección y destrucción. La auditoría de la dependencia fijada informó cero vulnerabilidades.
