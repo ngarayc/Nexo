@@ -1,5 +1,13 @@
 # Verificación
 
+## Diagnóstico de presión SSE — #44
+
+El [push39770957324](https://github.com/ngarayc/Nexo/actions/runs/39770957324) falló en realtime-pressure.test.mjs sobre05e12c8, mientras la [PR39770961770](https://github.com/ngarayc/Nexo/actions/runs/39770961770) del mismo código terminó satisfactoriamente. El runner anterior no conservó la etapa del fallo. Ese resultado fallido permanece visible; el verde paralelo no demuestra su resolución.
+
+La investigación repitió el caso tres veces en stacks nuevos con las imágenes parcheadas de #43:3/3pasaron, además de la regresión completa102/13ya descrita. No se reprodujo la causa original y no se atribuye su ausencia al parche de libc. Se añadió diagnóstico seguro de etapas, comprobado con la causa real de una aserción de Node y pruebas de rechazo de textos no permitidos. Los controles del CI pasan de34a37. No cambia la carga de128eventos/384mensajes, presupuestos del servidor, tiempos o aserciones, ni se introducen reintentos automáticos.
+
+La causa del fallo original sigue sin determinarse. Una nueva ejecución que falle conservará la etapa admitida cuando esté disponible y seguirá bloqueando la promoción; un candidato debe pasar su propio inventario y cinco reportes, sin sustituirlo por otra ejecución verde. [CI](ci-controls.md) describe el límite del diagnóstico y la publicación.
+
 ## Corrección del feed incompleto y musl — #43
 
 El aviso registrado durante #40 se investigó en las fuentes del proveedor: musl/musl-utils1.2.6-r2 estaban presentes en API/web/DB y Alpine3.24 publicaba1.2.6-r3 como corrección. Se actualizaron paquetes fijados sin cambiar versiones/digests base o controles de ejecución. La nueva barrera de CI rechazó el reporte real anterior, que devolvía0 pero carecía de detalles de vulnerabilidad. Los34controles del pipeline pasaron, sin omisiones.
