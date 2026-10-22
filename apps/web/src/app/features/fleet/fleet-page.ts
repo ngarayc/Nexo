@@ -4,6 +4,7 @@ import {
   ElementRef,
   Injector,
   afterNextRender,
+  afterRenderEffect,
   inject,
   viewChild,
 } from '@angular/core';
@@ -29,6 +30,19 @@ export class FleetPage {
   private readonly history = viewChild<ElementRef<HTMLElement>>('historyPanel');
   private readonly search = viewChild<ElementRef<HTMLInputElement>>('search');
   private readonly table = viewChild(FleetTable);
+  private readonly historyTable = viewChild(VehicleHistory);
+  private lastFocusedEvent: string | null = null;
+  constructor() {
+    afterRenderEffect(() => {
+      const id = this.detail.focusedEvent();
+      const event = this.detail.focusedObservation();
+      const phase = this.detail.phase();
+      if (id === null) this.lastFocusedEvent = null;
+      if (!event || phase !== 'ready' || this.lastFocusedEvent === id) return;
+      this.lastFocusedEvent = id;
+      this.historyTable()?.focusEvent(event.eventId);
+    });
+  }
 
   open(vehicleId: string): void {
     this.detail.select(vehicleId);

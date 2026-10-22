@@ -1,5 +1,17 @@
 # Verificación
 
+## Alertas base — E2-I04 / EP-03
+
+La [issue #33](https://github.com/ngarayc/Nexo/issues/33) pasó calidad, **70 pruebas Angular y 10 Chromium**, sin omisiones. La imagen web del incremento se reconstruyó y pasó Trivy sin altos/críticos. API, núcleo, esquema y dependencias conservan la base verificada; CI del candidato ejecuta sus regresiones completas. Los cuatro fixtures mantienen sus hashes.
+
+La prueba real de alertas crea 80, 81, tardío95 y 81 apagado: aparecen tres alertas en orden descendente y latest conserva el81 más reciente. Repetir los cuatro produce cuatro duplicados; conflicto e inválido producen dos rechazos y no añaden alertas. El contador y lista permanecen globales aunque flota tenga una búsqueda activa. Ver evento destaca y enfoca el tardío original y luego el evento apagado de otro vehículo; la navegación conserva una sola apertura SSE y un snapshot. Una nueva observación por SSE inserta historial sin robar el foco de búsqueda.
+
+Las pruebas de presentación distinguen carga/error de vacío y datos desactualizados. La selección de otro evento del mismo vehículo no repite HTTP; logout/revocación limpia el foco conservado. El chequeo estricto inicial detectó una referencia privada de efecto sin uso y se corrigió registrando el efecto DOM en el constructor, sin relajar tipos. [EP-03](agent-cycles/EP-03.md) conserva propuesta, workflows, cambios y evidencia; revisión humana y comparación de CR-01 mantienen su estado propio.
+
+## Promoción de flota/historial a test
+
+La [PR #32](https://github.com/ngarayc/Nexo/pull/32) se integró en `53e05a56cf53c9a85e2df489376793304877ac28` tras [CI propio 39736244549](https://github.com/ngarayc/Nexo/actions/runs/39736244549), intento 1, y [revisión técnica](https://github.com/ngarayc/Nexo/pull/32#issuecomment-6334948551). Los cinco artefactos descargados/revalidados pertenecen al checkout `442f8ac159f5f7db6041a610ac902b9115424f11` y origen `b2de2b66d3f8dd8cdbcb92e724f7d2a0a6ca6ed4`: 265 API, 66 Angular, 83 integración y 9 Chromium; jobs, ci-required y escaneos aprobados. Esta promoción a test no acredita una revisión humana nueva de main.
+
 ## Flota e historial visibles — E2-I03
 
 La [issue #30](https://github.com/ngarayc/Nexo/issues/30) pasó calidad y **66 pruebas Angular y 9 Chromium**, sin omisiones, con la imagen web revisada reconstruida y sin vulnerabilidades altas/críticas en Trivy. El incremento cambia presentación/routing y pruebas de frontend; API, núcleo compartido, esquema y dependencias conservan el código verificado de E2-I02. El CI propio del nuevo candidato vuelve a ejecutar también sus regresiones.
