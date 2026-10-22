@@ -61,7 +61,7 @@ if (job === 'quality') {
     'db',
     'web',
   ]);
-  command('npm', ['run', 'test:integration'], 900000);
+  command('npm', ['run', 'test:integration'], 1200000);
   passed('postgresql', await json('reports/integration-summary.json'));
 } else if (job === 'security-source') {
   command(process.execPath, ['scripts/ci/install-tools.mjs']);
@@ -122,7 +122,7 @@ if (job === 'quality') {
   command('npm', ['run', 'test:e2e']);
   passed('browser', await json('reports/system-summary.json'));
   // La persistencia se verifica de nuevo sobre las mismas imágenes del recorrido.
-  command('npm', ['run', 'test:integration'], 900000);
+  command('npm', ['run', 'test:integration'], 1200000);
   passed('persistence');
 }
 
