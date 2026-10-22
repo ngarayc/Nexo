@@ -1,5 +1,6 @@
 import { isDeepStrictEqual } from 'node:util';
 import { createHash } from 'node:crypto';
+import { terminalReplay } from '../domain/replay.js';
 import type { OfficialFixture } from './official-fixture.js';
 import { replayEnvironmentValid } from './verification.js';
 import type {
@@ -108,10 +109,10 @@ export class VerifyOfficialReplay {
     }
   }
 
-  async prepareSecond(firstRunId: string): Promise<ReplayReport> {
+  async prepareSecond(firstRunId: string, preparingRunId?: string): Promise<ReplayReport> {
     try {
-      const facts = await this.evidence.read(firstRunId),
-        checks = this.compare(facts, firstRunId);
+      const facts = await this.evidence.read(preparingRunId ?? firstRunId),
+        checks = this.compare(facts, firstRunId, preparingRunId);
       const first = facts.runs.find((run) => run.runId === firstRunId),
         saved = first ? this.stored(first) : undefined;
       checks.add(
@@ -143,6 +144,47 @@ export class VerifyOfficialReplay {
         material(facts.environment),
         saved?.environment ? undefined : 'unavailable',
       );
+      if (preparingRunId !== undefined) {
+        const preparing = facts.runs.find((item) => item.runId === preparingRunId);
+        checks.add(
+          'preparing-second',
+          'Segunda ejecución preparada sin envíos',
+          'replay_runs',
+          {
+            stage: 'second',
+            state: 'preparing',
+            nextLine: 1,
+            previousRunId: firstRunId,
+            scenarioId: firstRunId,
+            fixtureSha256: this.fixture.fixtureSha256,
+            instanceId: facts.environment.instanceId,
+            verification: 'pending',
+          },
+          preparing
+            ? {
+                stage: preparing.stage,
+                state: preparing.state,
+                nextLine: preparing.nextLine,
+                previousRunId: preparing.previousRunId,
+                scenarioId: preparing.scenarioId,
+                fixtureSha256: preparing.fixtureSha256,
+                instanceId: preparing.instanceId,
+                verification: preparing.verification,
+              }
+            : null,
+          preparing ? undefined : 'unavailable',
+        );
+        checks.add(
+          'preparing-second-attempts',
+          'Sin intentos adicionales antes de iniciar',
+          'replay_attempts',
+          { total: 24, preparing: 0 },
+          {
+            total: facts.counts.attempts,
+            preparing: facts.attempts.filter((item) => item.runId === preparingRunId).length,
+          },
+        );
+      }
       return this.report('preparation', facts, firstRunId, checks);
     } catch {
       return this.unavailable('preparation', firstRunId);
@@ -154,6 +196,90 @@ export class VerifyOfficialReplay {
       return this.observedReport(await this.evidence.read(runId), runId);
     } catch {
       return this.unavailable('first', runId);
+    }
+  }
+
+  // El cierre del escenario reobserva el receptor sin reescribir ninguno de
+  // los dos informes individuales. Un resultado original inconcluso no mejora.
+  async evaluateScenario(runId: string): Promise<ReplayReport> {
+    try {
+      const facts = await this.evidence.read(runId),
+        checks = this.compare(facts, runId);
+      const run = facts.runs.find((item) => item.runId === runId);
+      const root = run && facts.runs.find((item) => item.runId === run.scenarioId);
+      const original = {
+        first: root ? (this.stored(root)?.result ?? null) : null,
+        second: run?.stage === 'second' ? (this.stored(run)?.result ?? null) : null,
+      };
+      const unavailable = Object.values(original).some(
+        (value) => value === null || value === 'inconclusive',
+      );
+      checks.add(
+        'original-pair',
+        'Resultados originales del par conservados',
+        'informes individuales inmutables',
+        { first: 'conformant', second: 'conformant' },
+        original,
+        Object.values(original).includes('non_conformant')
+          ? undefined
+          : unavailable
+            ? 'unavailable'
+            : undefined,
+      );
+      return this.report(run?.stage === 'second' ? 'second' : 'first', facts, runId, checks);
+    } catch {
+      return this.unavailable('second', runId);
+    }
+  }
+
+  // Solo habilita otro recorrido exploratorio tras un cierre conocido. No
+  // compara el dominio como un primer/segundo replay ni acredita el par oficial.
+  async prepareContinuation(runId: string): Promise<ReplayReport> {
+    try {
+      const facts = await this.evidence.read(runId),
+        checks = new Checks();
+      this.ready(facts, checks);
+      const run = facts.runs.find((item) => item.runId === runId);
+      const root = run && facts.runs.find((item) => item.runId === run.scenarioId);
+      checks.add(
+        'prior-terminal',
+        'Recorrido anterior cerrado',
+        'replay_runs',
+        true,
+        run ? terminalReplay(run.state) : null,
+        run ? undefined : 'unavailable',
+      );
+      checks.add(
+        'scenario-open',
+        'Escenario disponible para recorrido exploratorio',
+        'replay_runs',
+        {
+          stage: 'first',
+          verification: 'pending',
+          closedAt: null,
+          fixtureSha256: this.fixture.fixtureSha256,
+        },
+        root
+          ? {
+              stage: root.stage,
+              verification: root.scenarioVerification,
+              closedAt: root.scenarioClosedAt,
+              fixtureSha256: root.fixtureSha256,
+            }
+          : null,
+        root ? undefined : 'unavailable',
+      );
+      checks.add(
+        'receipts-idle',
+        'Sin recepciones anteriores pendientes',
+        'ingestion_batches',
+        0,
+        facts.counts.activeReceipts,
+        facts.counts.activeReceipts > 0 ? 'pending' : undefined,
+      );
+      return this.report('preparation', facts, runId, checks);
+    } catch {
+      return this.unavailable('preparation', runId);
     }
   }
 
@@ -248,7 +374,7 @@ export class VerifyOfficialReplay {
     );
   }
 
-  private compare(facts: ReplayEvidence, runId: string): Checks {
+  private compare(facts: ReplayEvidence, runId: string, preparingSecondId?: string): Checks {
     const checks = new Checks(),
       current = facts.runs.find((run) => run.runId === runId);
     this.ready(facts, checks);
@@ -290,7 +416,7 @@ export class VerifyOfficialReplay {
       'scenario-runs',
       'Solo las ejecuciones previstas del escenario',
       'replay_runs',
-      second ? 2 : 1,
+      second || preparingSecondId !== undefined ? 2 : 1,
       facts.counts.runs,
     );
     checks.add(

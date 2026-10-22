@@ -1,4 +1,60 @@
-# Verificación
+# Verificación de Nexo
+
+## Aceptación integral del núcleo — E3-I06 / #55
+
+La [guía reproducible](demo-guide.md) conecta el comando de reset, controles del motor, dos clientes Angular e informes. La validación local completa de cierre E3 pasó una vez: calidad, compilación, **458 API, 90 Angular, 123 integraciones, 47 controles de CI y 14 Chromium**, sin omisiones. Auditoría de dependencias: 0 vulnerabilidades; escaneo del historial: 0 secretos. Los cambios documentales posteriores a esos comandos se comprobaron con formato/enlaces afectados, sin repetir las suites generales.
+
+Se usaron las tres imágenes reconstruidas: API `sha256:b42f8e5ef64cc86dcef36978140389c4c9bc0a6b6ff7b121ccad21a4875e6400`, web `sha256:c669959753b4152cc4ff84cc0b4d1a361e65f9589a363e0ad1a737bd2dfa7993` y PostgreSQL `sha256:63bdd19b7e400b9f71e2c9d91219cbdf33d8787e3faaf0d87ca15337e3f8bcfc`. Los tres escaneos y tres Dockerfiles completaron el inventario estricto sin HIGH/CRITICAL o detalles ausentes y con identidad contrastada. Esta web incluye la protección de respuesta POST tardía.
+
+El [recorrido ampliado](../tests/system/replay-panel.spec.mjs) crea una observación previa por HTTP, ejecuta el mismo reset local documentado y comprueba vacío antes de abrir dos sesiones distintas. El par lo envía el motor desde controles Angular: pausa conserva recibos/intentos sin nuevos envíos y ambos dashboards siguen En vivo; reanudación termina 20/2/2 y reinicio sin reset 0/22/2. Contrasta ambos oráculos,20 eventos/8 vehículos/4 alertas, historial y estados de los ocho, identidades de aceptados/alertas,48 recibos completos correlacionados y43 UUID iguales en ambos clientes con 20 telemetry.accepted/19 vehicle.updated/4 alert.created. El segundo conserva la huella de las cuatro tablas de dominio/outbox y el primer informe; el cierre de escenario se muestra separado. El caso anterior de panel se amplió, sin duplicar otra reproducción de sistema.
+
+| Garantía separada del par             | Evidencia existente incluida en el inventario                                                                                                                                   |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reinicio parcial y API interrumpida   | [Control HTTP](../tests/integration/replay-control.test.mjs): conserva resultados, marca inconcluso y no reanuda solo                                                           |
+| Respuesta HTTP/COMMIT perdidos        | [Fallos del actor](../tests/integration/replay-control-faults.test.mjs) y [diario](../tests/integration/replay-journal.test.mjs): barrera real, resultado incierto sin reenvío  |
+| Interferencia y lectura no disponible | [Verificador](../tests/integration/replay-verification.test.mjs): estados SQL controlados, recibo ajeno incluso sin cambios de dominio; no se presenta como otro renderizado    |
+| Historial/capacidad y retención       | [Diario](../tests/integration/replay-journal.test.mjs): paginación exacta y límite 1000 con 24 posiciones reservadas                                                            |
+| Reset/archivo/reanudación             | [Ensayo Docker](../tests/integration/reset-local.test.mjs), [política](../tests/integration/reset-policy.test.mjs) e [integridad](../tests/integration/reset-evidence.test.mjs) |
+
+La revisión agregó una protección de configuración: el manifiesto vincula también el Compose expandido, por lo que cambiar WEB_PORT heredado del proceso impide reanudar antes de tocar el destino. La integración completa probó ese rechazo y la posterior recuperación con la configuración original. Los servicios habituales permanecieron intactos; los ensayos usaron y limpiaron exclusivamente recursos sintéticos propios.
+
+Este es cierre técnico local del núcleo, no revisión humana o promoción final acreditadas. Cada PR conserva CI remoto completo propio y cinco artefactos revalidados antes de test; main requiere aprobación humana del candidato vigente. E4 CR-01/comparación, E5 visualizaciones, E6 video/copia limpia/tag y el total estimado del autor siguen pendientes. No existe todavía el video accesible ni tag entrega-final.
+
+## Panel compartido — E3-I04 / #49
+
+El [panel](replay-panel.md) tiene contrato compartido, adaptador, fachada y presentación sobre el EventSource existente. Pasaron las verificaciones locales focalizadas por cambio: validación/transporte/sincronización, nueve casos de fachada, tres de presentación y el caso afectado del shell. No se ejecutó toda la suite local de Angular por este incremento. Tipos compartidos/API/Angular y lint de los archivos afectados se contrastaron separadamente.
+
+La imagen web `sha256:a5faba10b88c8a6d34b8833964056b857e0a4c672b094ea3ab8a872470a34528` y API `sha256:a797c07fd9ba4bc5a31cdf5fab8d16b08f0d5fbadd743cb822cf40a257f7996b` pasaron [un recorrido focalizado Chromium](../tests/system/replay-panel.spec.mjs) con dos aplicaciones renderizadas. Comprobó control real, pausa sin nuevas ingestas, reanudación, navegación/minimización, ambos oráculos, identidades y 43 mensajes de dominio, teclado/inspector, informes separados, selección histórica con 20/2/2 conservado, recarga recuperando 0/22/2, logout independiente y 360 px. El reporte se validó contra el archivo/caso real, sin retries u omisiones. No equivale a ejecutar todos los recorridos Chromium ni a cerrar reset/entrega final.
+
+La primera compilación de la fachada detectó un opcional con undefined explícito; se estrechó el tipo sin relajar exactOptionalPropertyTypes. Lint detectó el manejador de teclado en un contenedor sin foco: se trasladó a los botones de las pestañas, conservando flechas/Home/End y repitiendo únicamente los casos afectados. La presentación mantiene Pendiente mientras no exista informe individual conservado.
+
+## Reset local — E3-I05 / #52
+
+El [comando local](demo-reset.md) añade identidad de proyecto/volumen, etiqueta sintética, captura fuera de Docker, comprobación SHA-256, detención ordenada y reanudación por manifiesto. Pasaron seis comprobaciones focalizadas de argumentos, destino, consumidores e integridad de archivos y un ensayo real Docker de reset. No se ejecutó la regresión local completa por esta issue.
+
+El ensayo creó su propio proyecto y datos mediante el motor HTTP real, conservó un informe conforme y probó consumidor ajeno, fallo de escritura del destino de evidencia, fallo después de cerrar la aplicación y respuesta perdida tras retirar el volumen. La reanudación recreó una base vacía con migraciones/cuenta/salud, instancia API nueva y sesión anterior inválida. Reanudar otra vez no borró datos nuevos; el volumen ajeno y los informes anteriores quedaron intactos durante el procedimiento. El cleanup final retiró únicamente recursos sintéticos creados por la prueba.
+
+Los primeros intentos detectaron una referencia de archivo equivocada, una espera del fixture que confundía finalización con informe listo y una expectativa401 que debía ser403 según el contrato de acceso existente. Se corrigieron y repitió solo el caso afectado; el último aprobó sin omisiones. Las imágenes locales ya construidas sirvieron para este procedimiento host/Compose: no se reconstruyeron API/Angular porque no cambió su código. CI de promoción conserva su ejecución propia y el cierre integral E3 sigue pendiente.
+
+## Cierre comprobado de E2
+
+[PR45](https://github.com/ngarayc/Nexo/pull/45#issuecomment-6343260777) se integró en main5bb7612e778e3b41b258e77b1cd9615e8d449417 tras aprobación real de ngarayc en main-review39791521046 y CI propio39791521071 intento2, mismo checkout1a576c865cc80851224f64c11e91f5570d374bf6. Cinco artefactos propios descargados/revalidados:397API/70Angular/107SQL/13Chromium. El intento1 fallido al consultar metadatos se conserva; su causa HTTP exacta no quedó demostrada. La repetición completa mantuvo fuente y controles.
+
+[Post-main39796147682](https://github.com/ngarayc/Nexo/actions/runs/39796147682), intento1, también pasó con cinco artefactos revalidados para ese merge, los mismos inventarios y árbol idéntico al candidato. Se cerraron las seis issues y milestone E2; la base EP-03 cuenta con revisión humana real. #38/#40 y las correcciones #43/#46/#48 también alcanzaron main. #44 conserva pendiente la causa histórica no demostrada.
+
+[PR50](https://github.com/ngarayc/Nexo/pull/50#issuecomment-6344180050) promovió el motor posterior09f6747 a test a9e87ff5abe3b901c428d0a80e39a673ef2fa83f después de CI propio39798378152 intento1 y cinco artefactos revalidados:458API/70Angular/116SQL/13Chromium. Es un candidato distinto de E2/main5bb; el panel de #49 conserva su verificación y promoción propias.
+
+## Motor compartido y control HTTP — E3-I03 / #42
+
+El incremento compone NestJS, acceso, recursos compartidos, diario, verificador y SSE. Pasaron las 454 pruebas API existentes al completar esa composición. Después se añadieron y ejecutaron por separado cuatro pruebas focalizadas de publicación: modo deshabilitado sin carga de material, lectura compartida con suscriptores, fallo sin publicar caché antigua y época SSE independiente de instancia API. No se repitió toda la suite por ese añadido. Tipos de API y lint de los archivos afectados pasaron.
+
+La imagen `sha256:a797c07fd9ba4bc5a31cdf5fab8d16b08f0d5fbadd743cb822cf40a257f7996b` pasó los tres casos de [control real](../tests/integration/replay-control.test.mjs) y los seis de [fallos del actor](../tests/integration/replay-control-faults.test.mjs). Comprueban par oficial HTTP 20/2/2 → 0/22/2, pausa/reanudación, simultaneidad, informes e historial, reinicio parcial y de API, COMMIT antes/después de confirmación, barrera desconocida, respuesta perdida y ausencia de reenvíos. Los dos streams Node son evidencia de transporte compartido, no de renderizado Angular.
+
+También pasaron los cinco casos focalizados de [recuperación HTTP](../tests/integration/recovery-http.test.mjs), necesarios por el turno de escritura compartido entre diario y recuperación: fallo transitorio, agotamiento concurrente, caída antes del commit, SIGTERM con trabajo activo y cuotas independientes de lectura/ingesta. La imagen completó el escaneo estricto Alpine/Node sin HIGH/CRITICAL o detalles ausentes; su ID fue contrastado con el reporte. Las migraciones y fixtures permanecen intactos. OpenAPI pasó validación estructural oficial con 33 esquemas y el inventario AST coincide con las 16 operaciones implementadas.
+
+La primera ejecución unitaria de la composición encontró dobles antiguos de bootstrap/sesión que no incluían DemoModule y un Buffer que Superagent serializaba como JSON. Se conservaron los fallos, se aisló el módulo ajeno al alcance de esas suites y se envió UTF-8 inválido como bytes reales. Los controles efectivos de sesión, origen, CSRF, cuota y parser permanecieron; las suites corregidas pasaron.
+
+La regresión local general iniciada después se interrumpió antes de terminar, sin resumen aprobatorio. A partir de este incremento, el desarrollo local ejecuta verificaciones focalizadas según el cambio y reserva la validación completa para cerrar una épica. Los workflows y controles de GitHub conservan sus ejecuciones completas; los resultados remotos de cada promoción se comprueban por separado. El panel, reset seguro, dos clientes renderizados y cierre E3 siguen pendientes.
 
 ## Aprovisionamiento de Chromium — #48
 
@@ -20,7 +76,7 @@ El [CI propio de PR #41, 39775782259](https://github.com/ngarayc/Nexo/actions/ru
 
 El [push39770957324](https://github.com/ngarayc/Nexo/actions/runs/39770957324) falló en realtime-pressure.test.mjs sobre05e12c8, mientras la [PR39770961770](https://github.com/ngarayc/Nexo/actions/runs/39770961770) del mismo código terminó satisfactoriamente. El runner anterior no conservó la etapa del fallo. Ese resultado fallido permanece visible; el verde paralelo no demuestra su resolución.
 
-La investigación repitió el caso tres veces en stacks nuevos con las imágenes parcheadas de #43:3/3pasaron, además de la regresión completa102/13ya descrita. No se reprodujo la causa original y no se atribuye su ausencia al parche de libc. Se añadió diagnóstico seguro de etapas, comprobado con la causa real de una aserción de Node y pruebas de rechazo de textos no permitidos. Los controles del CI pasan de34a37. No cambia la carga de128eventos/384mensajes, presupuestos del servidor, tiempos o aserciones, ni se introducen reintentos automáticos.
+La investigación repitió el caso tres veces en stacks nuevos con las imágenes parcheadas de #43:3/3pasaron, además de la regresión completa102/13ya descrita. No se reprodujo la causa original y no se atribuye su ausencia al parche de libc. La investigación/observabilidad de #44 se cerró con esa limitación según sus criterios condicionales: el código4230ff6 y sus tres negativas ya están promovidos a main5bb bajo la revisión y CI de PR45. No se declara resuelto un defecto de transporte de causa desconocida; un nuevo fallo conservará ahora su etapa para investigarlo. Se añadió diagnóstico seguro de etapas, comprobado con la causa real de una aserción de Node y pruebas de rechazo de textos no permitidos. Los controles del CI pasan de34a37. No cambia la carga de128eventos/384mensajes, presupuestos del servidor, tiempos o aserciones, ni se introducen reintentos automáticos.
 
 La causa del fallo original sigue sin determinarse. Una nueva ejecución que falle conservará la etapa admitida cuando esté disponible y seguirá bloqueando la promoción; un candidato debe pasar su propio inventario y cinco reportes, sin sustituirlo por otra ejecución verde. [CI](ci-controls.md) describe el límite del diagnóstico y la publicación.
 

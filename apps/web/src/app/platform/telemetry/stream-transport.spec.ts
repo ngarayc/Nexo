@@ -41,7 +41,7 @@ it('cierra EventSource y retira listeners antes de delegar el error al único du
   expect(failed).toHaveBeenCalledTimes(1);
   expect(control).not.toHaveBeenCalled();
   expect(frame).not.toHaveBeenCalled();
-  expect(remove).toHaveBeenCalledTimes(7);
+  expect(remove).toHaveBeenCalledTimes(8);
   expect(source.closes).toBe(1);
 });
 it('los controles no usan el Last-Event-ID heredado y un mensaje inválido cierra el transporte', () => {
@@ -73,4 +73,37 @@ it('los listeners de regreso se retiran juntos al cambiar de ámbito', () => {
   window.dispatchEvent(new Event('online'));
   document.dispatchEvent(new Event('visibilitychange'));
   expect(resume).toHaveBeenCalledTimes(3);
+});
+it('el resumen de replay usa el mismo EventSource y no se confunde con dominio o Last-Event-ID', () => {
+  vi.stubGlobal('EventSource', Source);
+  const replay = vi.fn(),
+    frame = vi.fn(),
+    failed = vi.fn();
+  new BrowserStreamTransport().connect({ control: vi.fn(), frame, replay, failed });
+  const source = Source.instances[0]!;
+  source.message(
+    'demo.replay.updated',
+    {
+      type: 'demo.replay.updated',
+      schemaVersion: 1,
+      streamInstanceId: instanceId,
+      instanceId,
+      controlVersion: 0,
+      viewRevision: 0,
+      observedAt: '2026-01-01T00:00:00Z',
+      allowedActions: ['start'],
+      blockedReason: null,
+      pendingAction: null,
+      scenario: null,
+      run: null,
+    },
+    'domain-message-id',
+  );
+  expect(Source.instances).toHaveLength(1);
+  expect(replay).toHaveBeenCalledOnce();
+  expect(frame).not.toHaveBeenCalled();
+  expect(failed).not.toHaveBeenCalled();
+  source.message('demo.replay.updated', {});
+  expect(failed).toHaveBeenCalledOnce();
+  expect(source.closes).toBe(1);
 });

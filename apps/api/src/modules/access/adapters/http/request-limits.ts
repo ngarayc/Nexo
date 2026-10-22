@@ -11,6 +11,7 @@ export class RequestLimits implements OnModuleDestroy {
   private readonly login: RequestHandler;
   private readonly reads: RequestHandler;
   private readonly streams: RequestHandler;
+  private readonly demoCommands: RequestHandler;
 
   constructor(@Inject(ACCESS_CONFIG) config: AccessConfig) {
     const create = (limit: number, key: string) => {
@@ -41,16 +42,23 @@ export class RequestLimits implements OnModuleDestroy {
     this.login = create(config.loginLimit, 'login');
     this.reads = create(config.readLimit, 'demo');
     this.streams = create(30, 'demo-stream');
+    this.demoCommands = create(60, 'demo-command');
   }
 
   async consume(
-    kind: 'login' | 'read' | 'stream',
+    kind: 'login' | 'read' | 'stream' | 'demo-command',
     request: Request,
     response: Response,
   ): Promise<void> {
     await new Promise<void>((resolve, reject) => {
       const result = (
-        kind === 'login' ? this.login : kind === 'stream' ? this.streams : this.reads
+        kind === 'login'
+          ? this.login
+          : kind === 'stream'
+            ? this.streams
+            : kind === 'demo-command'
+              ? this.demoCommands
+              : this.reads
       )(request, response, (error?: unknown) => (error ? reject(error) : resolve()));
       Promise.resolve(result).catch(reject);
     });

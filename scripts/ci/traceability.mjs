@@ -2,6 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { promotionMetadata } from './promotion-metadata.mjs';
 import {
   issueReferences,
   repository,
@@ -33,14 +34,25 @@ export function verifyTraceability(env = process.env) {
       throw new Error('No fue posible comprobar los metadatos de GitHub.');
     }
   };
+  const promotions = new Map();
+  const promotionPulls = (commit) => {
+    if (!promotions.has(commit))
+      promotions.set(
+        commit,
+        promotionMetadata({
+          commit,
+          message: git('show', '--no-patch', '--format=%B', commit),
+          parents: git('show', '--no-patch', '--format=%P', commit).split(' '),
+          api,
+        }),
+      );
+    return promotions.get(commit);
+  };
   if (git('rev-parse', 'HEAD') !== env.GITHUB_SHA) {
     throw new Error('El checkout no corresponde al SHA que se está evaluando.');
   }
   if (env.GITHUB_EVENT_NAME === 'push' && context.target !== 'development') {
-    validatePromotion(
-      api(`repos/${repository}/commits/${context.head}/pulls?per_page=100`),
-      context,
-    );
+    validatePromotion(promotionPulls(context.head), context);
   }
   const revision = context.base ? `${context.base}..${context.head}` : context.head;
   const commits = git('rev-list', '--reverse', revision).split('\n').filter(Boolean);
@@ -53,7 +65,7 @@ export function verifyTraceability(env = process.env) {
     } catch {
       const parents = git('show', '--no-patch', '--format=%P', commit).split(' ');
       if (parents.length < 2) throw new Error('Un commit propio carece de Refs válido.');
-      const pulls = api(`repos/${repository}/commits/${commit}/pulls?per_page=100`);
+      const pulls = promotionPulls(commit);
       const promotion = ['test', 'main'].some((target) => {
         try {
           validatePromotion(pulls, { target, head: commit });

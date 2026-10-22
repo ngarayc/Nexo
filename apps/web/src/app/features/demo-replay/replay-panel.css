@@ -1,0 +1,196 @@
+:host {
+  position: fixed;
+  right: 1rem;
+  bottom: 1rem;
+  z-index: 30;
+  max-width: calc(100vw - 2rem);
+  font-size: 0.9rem;
+  color: #18344c;
+}
+.replay-panel {
+  width: min(38rem, calc(100vw - 2rem));
+  background: #fff;
+  border: 1px solid #b6c9d6;
+  border-radius: 0.8rem;
+  box-shadow: 0 0.4rem 2rem #16304730;
+  overflow: hidden;
+}
+.toggle {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  font-weight: 700;
+  background: #163e59;
+  color: #fff;
+  border: 0;
+  padding: 0.9rem 1rem;
+}
+.body {
+  padding: 1rem;
+  max-height: calc(100dvh - 7rem);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+button,
+input,
+select {
+  font: inherit;
+  min-height: 2.6rem;
+  border: 1px solid #879ead;
+  border-radius: 0.35rem;
+}
+button {
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  margin: 0.2rem 0.2rem 0.2rem 0;
+  background: #f3f7fa;
+  color: #163e59;
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+:is(button, input, select, summary):focus-visible {
+  outline: 3px solid #2563eb;
+  outline-offset: 3px;
+}
+.tabs {
+  display: flex;
+  gap: 0.35rem;
+  margin-top: 1rem;
+  border-bottom: 1px solid #ccd9e1;
+}
+.tabs button[aria-selected='true'] {
+  background: #163e59;
+  color: #fff;
+}
+.counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+.counts div {
+  background: #f3f7fa;
+  padding: 0.5rem;
+  border-radius: 0.35rem;
+}
+.counts dt {
+  font-size: 0.8rem;
+}
+.counts dd {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0.25rem 0 0;
+}
+progress {
+  display: block;
+  width: 100%;
+  height: 1rem;
+  margin: 0.6rem 0;
+}
+label {
+  display: block;
+  font-weight: 600;
+  margin-top: 0.6rem;
+}
+input {
+  width: 7rem;
+  padding: 0.25rem 0.5rem;
+}
+select {
+  width: 100%;
+  padding: 0.35rem;
+}
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  margin: 0.6rem 0;
+}
+.warning {
+  background: #fff2d5;
+  border-left: 4px solid #946307;
+  padding: 0.7rem;
+}
+.scope,
+.intro {
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.table-scroll {
+  max-width: 100%;
+  overflow: auto;
+}
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.8rem;
+}
+th,
+td {
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid #d9e3ea;
+  padding: 0.6rem 0.35rem;
+}
+td {
+  overflow-wrap: anywhere;
+}
+code,
+.identity,
+pre {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+code {
+  display: block;
+  margin: 0.35rem 0;
+}
+pre {
+  white-space: pre-wrap;
+  font-size: 0.75rem;
+  background: #f3f7fa;
+  padding: 0.6rem;
+}
+.checks {
+  padding-left: 1.1rem;
+}
+.checks li {
+  margin: 1rem 0;
+}
+.report {
+  border-top: 1px solid #ccd9e1;
+  margin-top: 1rem;
+}
+summary {
+  cursor: pointer;
+  padding: 0.3rem 0;
+}
+h2 {
+  font-size: 1.1rem;
+}
+h3 {
+  font-size: 1rem;
+}
+@media (max-width: 400px) {
+  :host {
+    right: 0.5rem;
+    bottom: 0.5rem;
+    max-width: calc(100vw - 1rem);
+  }
+  .replay-panel {
+    width: calc(100vw - 1rem);
+  }
+  .body {
+    padding: 0.7rem;
+  }
+  .counts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .tabs {
+    gap: 0.1rem;
+  }
+  .tabs button {
+    flex: 1;
+    padding: 0.5rem 0.25rem;
+  }
+}

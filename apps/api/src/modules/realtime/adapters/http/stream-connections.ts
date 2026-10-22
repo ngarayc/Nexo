@@ -77,6 +77,9 @@ export class StreamConnections implements OnModuleDestroy {
       }
     }
   }
+  get subscriberCount(): number {
+    return this.all.size;
+  }
   closeAll(): void {
     for (const connection of this.all) connection.close();
   }

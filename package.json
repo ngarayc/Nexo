@@ -15,6 +15,7 @@
     "packages/contracts"
   ],
   "scripts": {
+    "demo:reset": "node scripts/demo/reset.mjs",
     "build": "npm run build --workspace @nexo/api && npm run build --workspace @nexo/web",
     "start:api": "npm run start --workspace @nexo/api",
     "start:web": "npm run start --workspace @nexo/web",

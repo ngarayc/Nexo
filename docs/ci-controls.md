@@ -48,6 +48,16 @@ El adaptador de reportes Vitest contrasta cada archivo del inventario con el res
 
 ## Evidencia y límites
 
+### Consulta de promociones — #56
+
+Los intentos39809550498/39809540823 fallaron al consultar metadata de promoción; sus logs no conservan el status HTTP original. Una reproducción posterior contra la asociación commit/PR de1cb4027 devolvió HTTP500 y cuerpo vacío. La consulta directa de PR53 sí confirmó ese merge. Se mantienen ambos hechos diferenciados.
+
+Para el formato estándar de merge de GitHub, el verificador usa la primera línea y sus dos padres solo para localizar un número candidato y consulta [la PR por REST](https://docs.github.com/en/rest/pulls/pulls#get-a-pull-request). Ese texto no autoriza la promoción: sigue exigiendo metadata remota, número solicitado, merged_at, SHA exacto, repositorio y ramas development→test→main. Otros formatos mantienen la [consulta de PR asociadas](https://docs.github.com/en/rest/commits/commits#list-pull-requests-associated-with-a-commit). API fallida o contenido no comprobable bloquean; no se amplían permisos ni se sustituye revisión humana.
+
+Cuatro pruebas focalizadas comprueban la localización y los rechazos ante texto falso, otra PR/SHA, fork, flujo incorrecto, no integrada o metadata ausente. La lectura real de PR53 confirma la promoción afectada sin depender del endpoint que devolvió500. Estos resultados no convierten los intentos históricos fallidos en aprobados; cada candidato remoto conserva su CI completo.
+
+[CI39813798583](https://github.com/ngarayc/Nexo/actions/runs/39813798583), intento1 sobre c43f1ca7e8a1cc16c5ad55dc1cea45a904d37753, completó los seis jobs. Sus cinco artefactos se descargaron/revalidaron:458API,90Angular,123integración y14Chromium, sin omisiones. Incluye la comprobación real de la promoción de PR54 dentro del rango publicado. Es evidencia de esta corrección; el recorrido ampliado de aceptación #55 conserva su candidato propio.
+
 Las 31 pruebas de los controles incluyen omisiones, reportes antiguos, discrepancias de conteo, ramas incorrectas, referencias a PR, metadatos ausentes y recuperación con un conjunto válido. Acreditan el comportamiento local de los validadores. CI y escaneos pasaron remotamente; [E0-I04](https://github.com/ngarayc/Nexo/issues/4) registra además los rechazos y recuperación remotos, con [metadatos y reportes saneados](evidence/control-proofs.json). La revisión humana de main conserva su criterio propio.
 
 ## Workflows y revisión del candidato

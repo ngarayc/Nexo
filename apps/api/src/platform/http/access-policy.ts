@@ -8,6 +8,7 @@ export type AccessPolicy =
   | 'session-stream'
   | 'session-write'
   | 'producer'
-  | 'demo-read';
+  | 'demo-read'
+  | 'demo-write';
 export const ACCESS_POLICY = Symbol('access-policy');
 export const RequireAccess = (policy: AccessPolicy) => SetMetadata(ACCESS_POLICY, policy);

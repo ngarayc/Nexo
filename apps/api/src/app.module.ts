@@ -6,9 +6,17 @@ import { AccessModule } from './modules/access/public.js';
 import { IngestionModule } from './modules/ingestion/public.js';
 import { QueriesModule } from './modules/queries/public.js';
 import { RealtimeModule } from './modules/realtime/public.js';
+import { DemoModule } from './modules/demo/public.js';
 
 @Module({
-  imports: [DatabaseModule, AccessModule, IngestionModule, QueriesModule, RealtimeModule],
+  imports: [
+    DatabaseModule,
+    AccessModule,
+    IngestionModule,
+    QueriesModule,
+    RealtimeModule,
+    DemoModule,
+  ],
   controllers: [AppController],
   providers: [ApplicationInfoService],
 })
