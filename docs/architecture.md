@@ -12,6 +12,8 @@ La primera migración crea `users`; la segunda incorpora las seis tablas de [per
 
 La tercera migración permite los cierres técnicos tempranos especificados, sin modificar tablas o datos existentes. [Recuperación](recovery.md) describe códigos cerrados, presupuesto durable y prueba de upgrade.
 
+La cuarta migración añade el [diario del reproductor](replay-journal.md): ejecución/escenario e intentos en dos tablas, con transición/revisión, resultados inmutables y recuperación sin envíos. El adaptador no llama al receptor ni está todavía compuesto como motor HTTP; los controles y su verificador conservan sus incrementos.
+
 ## Dirección aceptada
 
 El backend es un monolito modular con Recepción, Telemetría, Consultas, Tiempo real, Acceso y Demo. Las reglas y casos de uso se separan de HTTP, persistencia y cola; los módulos y abstracciones nacen cuando incorporan comportamiento útil.

@@ -52,6 +52,14 @@ export async function prepareDatabase(config: DatabaseConfig): Promise<void> {
       );
       await client.query(`GRANT UPDATE (available_at, published_at, attempts, last_error_code)
         ON public.outbox_messages TO nexo_app`);
+      await client.query(
+        'GRANT SELECT, INSERT ON public.replay_runs, public.replay_attempts TO nexo_app',
+      );
+      await client.query(`GRANT UPDATE (interval_ms,state,next_line,revision,verification,verification_document,
+        scenario_verification,scenario_document,scenario_closed_at,close_code,last_command_id,last_command_instance,
+        last_command_expected_version,last_command_document,updated_at) ON public.replay_runs TO nexo_app`);
+      await client.query(`GRANT UPDATE (state,outcome,reason_code,http_status,diagnostic_document,finalized_at)
+        ON public.replay_attempts TO nexo_app`);
       await client.query(`GRANT USAGE, SELECT ON SEQUENCE public.telemetry_events_event_pk_seq,
         public.vehicle_latest_vehicle_pk_seq TO nexo_app`);
       await prepareQueue(config, client);

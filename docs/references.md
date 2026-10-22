@@ -75,3 +75,7 @@ La selección de variantes usa [las imágenes oficiales de Node](https://github.
 ## Sincronización comprobada en navegador
 
 [Playwright Route](https://playwright.dev/docs/api/class-route) permite retener una respuesta real mediante fetch/fulfill o continuar una petición hacia otra URL HTTP. Las pruebas de carreras conservan el cuerpo obtenido de la API mientras provocan una ingesta real. El corte individual redirige solo el SSE de ese cliente a un intermediario de loopback que destruye sockets y transmite las tramas sin modificarlas. Esta herramienta de prueba es propia; no constituye una función del producto o una garantía de la emulación offline. [Sincronización](frontend-sync.md) y [verificación](verification.md) relacionan los casos y resultados.
+
+## Diario del emisor
+
+[Restricciones PostgreSQL18](https://www.postgresql.org/docs/18/ddl-constraints.html), [triggers de restricción diferidos](https://www.postgresql.org/docs/18/sql-createtrigger.html) y [bloqueos asesores transaccionales](https://www.postgresql.org/docs/18/explicit-locking.html#ADVISORY-LOCKS) sustentan la protección al COMMIT y las altas concurrentes del [diario](replay-journal.md). Nexo añade estados, prefijo confirmado, límite reservado y marcador de intención; las pruebas fuerzan un rollback entre respuesta/cursor y compiten desde dos coordinadores. Estas transacciones no incluyen el futuro HTTP del emisor y no reconstruyen una respuesta perdida.

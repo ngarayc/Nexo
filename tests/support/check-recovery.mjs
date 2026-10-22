@@ -5,8 +5,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Pool } from 'pg';
 import { PgBoss } from 'pg-boss';
+import { hash } from 'argon2';
+import { drizzle } from 'drizzle-orm/node-postgres';
+import { migrate } from 'drizzle-orm/node-postgres/migrator';
 import { readDatabaseConfig } from '/app/apps/api/dist/platform/database/config.js';
 import { prepareDatabase } from '/app/apps/api/dist/platform/database/prepare.js';
+import { passwordHashOptions } from '/app/apps/api/dist/platform/database/password-policy.js';
+import { prepareQueue } from '/app/apps/api/dist/platform/queue/prepare.js';
 import { queueOptions, ingestionQueue } from '/app/apps/api/dist/platform/queue/policy.js';
 import { DatabaseSlots } from '/app/apps/api/dist/platform/database/slots.js';
 import { AdmissionStore } from '/app/apps/api/dist/modules/ingestion/adapters/postgres/admission-store.js';
@@ -40,6 +45,34 @@ const event = (overrides = {}) => ({
   ...overrides,
 });
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+async function prepareHistoricalE1(configOwner, directory) {
+  // Fixture del esquema publicado E1, anterior a las tablas de replay. El
+  // preparador actual exige el esquema actual y se prueba después del upgrade.
+  await migrate(drizzle(owner), { migrationsFolder: directory });
+  await owner.query("INSERT INTO users(username,password_hash) VALUES('demo',$1)", [
+    await hash('demo', passwordHashOptions),
+  ]);
+  const client = await owner.connect();
+  try {
+    await client.query('REVOKE ALL ON SCHEMA public FROM PUBLIC');
+    await client.query('REVOKE TEMPORARY ON DATABASE nexo FROM PUBLIC');
+    await client.query('GRANT USAGE ON SCHEMA public, drizzle TO nexo_app');
+    await client.query('GRANT SELECT ON public.users, drizzle.__drizzle_migrations TO nexo_app');
+    await client.query(`GRANT SELECT, INSERT ON public.telemetry_events, public.vehicle_latest,
+      public.alerts, public.ingestion_batches, public.ingestion_items, public.outbox_messages TO nexo_app`);
+    await client.query('GRANT UPDATE (event_pk) ON public.vehicle_latest TO nexo_app');
+    await client.query(
+      'GRANT UPDATE ON public.ingestion_batches, public.ingestion_items TO nexo_app',
+    );
+    await client.query(`GRANT UPDATE (available_at, published_at, attempts, last_error_code)
+      ON public.outbox_messages TO nexo_app`);
+    await client.query(`GRANT USAGE, SELECT ON SEQUENCE public.telemetry_events_event_pk_seq,
+      public.vehicle_latest_vehicle_pk_seq TO nexo_app`);
+    await prepareQueue(configOwner, client);
+  } finally {
+    client.release();
+  }
+}
 async function admit(events = [event()]) {
   const id = randomUUID();
   await admission.admit(id, readBatch(JSON.stringify({ events })));
@@ -258,7 +291,7 @@ const cases = {
       await owner.query(
         'DROP SCHEMA public CASCADE;CREATE SCHEMA public;DROP SCHEMA IF EXISTS drizzle CASCADE',
       );
-      await prepareDatabase({ ...configOwner, migrationsFolder: directory });
+      await prepareHistoricalE1(configOwner, directory);
       const id = await admit([event(), event()]);
       await executeNext();
       const work = await current(id);

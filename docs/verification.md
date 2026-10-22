@@ -1,5 +1,15 @@
 # Verificación
 
+## Diario del reproductor — E3-I01
+
+La [issue #38](https://github.com/ngarayc/Nexo/issues/38) pasó calidad, **290 pruebas API, 70 Angular, 93 de integración y 13 Chromium**, sin omisiones. La imagen API reconstruida y utilizada por esos recorridos pasó Trivy sin altos/críticos; web conserva su código/imagen revisados. Las cuatro fuentes mantienen sus hashes. Este incremento incorpora el diario; no acredita todavía motor, controles HTTP, verificador oficial, panel o reset.
+
+Diez casos nuevos usan PostgreSQL real: relaciones/permisos/identidad, intención durable, respuestas/cursor en el mismo commit, pausa en la última línea, dos coordinadores con conexiones independientes, rollback inducido entre escrituras, recuperación de pausadas/en curso, diagnóstico permitido, historial con microsegundos y capacidad exacta de 1.000 ejecuciones. La migración desde el esquema publicado 0002 conserva cuenta/hash/telemetría/proyección/alerta comparados en memoria; repetir preparación tampoco los cambia. Los informes individuales y del escenario permanecen separados. Sus clasificaciones e informes controlados prueban políticas SQL, sin presentarlos como 24 envíos HTTP o conformidad oficial.
+
+La primera integración completa falló en dos casos antiguos de recuperación. Su fixture construía el esquema E1 con dos migraciones y llamaba al preparador actual, que ahora exige las tablas nuevas: se observó SQLSTATE42P01, ausencia de replay_runs y solo dos migraciones aplicadas. Ese fallo dejaba el caso siguiente sobre el esquema anterior. La preparación histórica se realiza ahora explícitamente con su seed/permisos originales y se usa el preparador actual al verificar el upgrade. Los nueve casos de recuperación corregidos pasaron; después pasó la integración completa de 93 y el recorrido Chromium. No se condicionaron los grants del producto a que existieran tablas, ni se cambiaron oráculos o cuotas para aprobar.
+
+[Diario durable](replay-journal.md) relaciona código, transacciones, recuperación, costes y fuentes. El CI de su promoción verifica el candidato limpio; una revisión técnica o prueba del diario no completa el reproductor obligatorio. La revisión humana de la base E2/EP-03 conserva su PR/candidato propios.
+
 ## Consolidación documental del dashboard — E2-I06
 
 La [issue #36](https://github.com/ngarayc/Nexo/issues/36) actualiza README, arquitectura, operación, reproducibilidad y API para describir flota/historial/alertas ya disponibles. [Trazabilidad](traceability.md) relaciona obligaciones, implementación, pruebas y pendientes; mantiene reproductor, CR-01, complementos y cierre final separados. La revisión del AST de controladores contrastó las catorce operaciones reales con OpenAPI, incluyendo su prefijo de servidor; no hubo diferencias ni cambios de endpoints.
