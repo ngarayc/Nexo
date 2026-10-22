@@ -29,6 +29,8 @@ El productor usa X-API-Key de entorno para POST /api/events/batch y GET /api/ing
 
 El perfil de demo/CI conserva 1.000 posiciones y 2 MiB. Las dos variables opcionales INGEST_MAX_EVENTS_PER_BATCH e INGEST_MAX_BODY_BYTES permiten reducirlo; valores incompatibles con esquema/proxy impiden arrancar. El tamaño retenido es contabilidad lógica y no espacio físico de disco.
 
+Las [consultas de flota, historial, alertas y snapshot](queries.md) usan sesión, cuota compartida de 600/minuto y el pool de lectura. POST /api/queries/vehicle-events requiere además origen/CSRF antes del parser de 2 MiB y conserva el GET de historial. GET /api/alerts todavía devuelve la colección global; CR-01 incorpora su filtro después. Estas rutas no crean trabajo ni usan la API key como acceso del panel.
+
 Se rechazan configuración ausente, secretos inválidos y reutilización del secreto de sesión como API key. La generación acredita el origen aleatorio; la longitud de un valor arbitrario no demuestra entropía. Los fallos HTTP no exponen cadenas de conexión, contraseñas o stacks.
 
 ## Persistencia y detención

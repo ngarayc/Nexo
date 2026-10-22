@@ -35,11 +35,11 @@ export function testStack({ webPort = 8080, publishWeb = true } = {}) {
     'infra/compose.yaml',
     ...(!publishWeb ? ['-f', webOverride] : []),
   ];
-  const compose = (...args) => {
+  const composeWithTimeout = (timeout, ...args) => {
     try {
       return execFileSync('docker', [...composeOptions, ...args], {
         encoding: 'utf8',
-        timeout: 180000,
+        timeout,
         maxBuffer: 8 * 1024 * 1024,
         stdio: ['pipe', 'pipe', 'pipe'],
       }).trim();
@@ -49,6 +49,7 @@ export function testStack({ webPort = 8080, publishWeb = true } = {}) {
       );
     }
   };
+  const compose = (...args) => composeWithTimeout(180000, ...args);
   const sql = (statement, { user = 'nexo_owner', expectedError } = {}) => {
     try {
       return execFileSync(
@@ -116,8 +117,19 @@ export function testStack({ webPort = 8080, publishWeb = true } = {}) {
     compose,
     sql,
     health,
-    apiScript(source) {
-      return compose('exec', '-T', 'api', 'node', '--input-type=module', '-e', source);
+    apiScript(source, { timeoutMilliseconds = 180000 } = {}) {
+      if (![180000, 300000].includes(timeoutMilliseconds))
+        throw new Error('Presupuesto del cliente de pruebas no admitido.');
+      return composeWithTimeout(
+        timeoutMilliseconds,
+        'exec',
+        '-T',
+        'api',
+        'node',
+        '--input-type=module',
+        '-e',
+        source,
+      );
     },
     apiTool(source) {
       return compose(

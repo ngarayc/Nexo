@@ -34,13 +34,19 @@ export class AccessGuard implements CanActivate {
       this.sessions.requireOrigin(request);
       return true;
     }
-    if (policy !== 'session-read' && policy !== 'session-write' && policy !== 'demo-read')
+    if (
+      policy !== 'session-read' &&
+      policy !== 'session-query' &&
+      policy !== 'session-write' &&
+      policy !== 'demo-read'
+    )
       throw accessError('ACCESS_POLICY_REQUIRED');
     this.sessions.require(request);
-    if (policy === 'session-write') {
+    if (policy === 'session-write' || policy === 'session-query') {
       this.sessions.requireOrigin(request);
       this.sessions.requireCsrf(request);
-    } else {
+    }
+    if (policy !== 'session-write') {
       await this.limits.consume('read', request, http.getResponse<Response>());
     }
     return true;
