@@ -1,5 +1,47 @@
 # Verificación de Nexo
 
+## Presentación temporal consistente en WebKit — #80
+
+La preparación ampliada de E6 detectó una diferencia real del parser nativo de fechas: WebKit27.2 redondeaba una fracción canónica de12 dígitos al segundo siguiente y rechazaba otra de20. El recorrido ISO con API/PostgreSQL/SSE reales y la imagen del cierre608152b reprodujo el fallo en la tabla: recibió00:00:02 donde debía mostrar00:00:01. Un primer intento del runner no inició casos por un argumento CLI incorrecto; se conservó como fallo de preparación y no se contó como evidencia del producto. El segundo sí ejecutó WebKit y conservó la aserción fallida.
+
+El formateador ahora obtiene los milisegundos mediante el lector de instantes compartido y trunca la fracción solo para presentar. Conserva Bogotá24h, el segundo correcto, cambio de día e instantes negativos; el dominio/DTO conserva toda su precisión. Pasaron sus tres pruebas, tipos/lint y seis recorridos reales focalizados: ISO y gráfico adversarial en Chromium, Firefox y WebKit, sin omisiones. El caso ISO amplía la fracción canónica comprobada a20 dígitos sin relajar fechas, orden o errores esperados.
+
+Solo se reconstruyó y reescaneó la imagen web afectada, `sha256:e12844230f53dc51a37207f8fdfd18a526e0adc62515c1c4780077ca86e8dca2`: inventario completo y cero HIGH/CRITICAL. Las imágenes API/DB del cierre ordinario permanecieron iguales. No se repitió la batería local general ya aprobada. Este defecto reproducido en WebKit es distinto de la exploración cruda de #73; tampoco sustituye el recorrido ampliado final de E6 o el CI remoto del nuevo candidato.
+
+## Cierre local ordinario E5 — #74
+
+La fuente `608152bac0137d2aa085314667189c32fd03b29d` completó una única batería local general al cierre de E5:463 pruebas API en46 archivos,122 Angular en27,127 PostgreSQL/HTTP y25 Chromium en19 archivos, sin fallos u omisiones. Los63 controles CI también pasaron. Quality, compilación, políticas de workflows/Compose,357 enlaces internos, fixtures y esquema quedaron comprobados. Se conservaron los oráculos20/2/2→0/22/2, identidades,20 eventos/8 vehículos/4 alertas y43 mensajes en sus escenarios propios.
+
+La auditoría de dependencias informó cero vulnerabilidades y el historial pasó el escaneo de secretos. Las tres imágenes y tres Dockerfiles completaron inventarios/escaneos sin HIGH/CRITICAL ni resultados inconclusos. Las imágenes construidas, escaneadas y usadas en integración/navegador fueron API `sha256:d35bfd9dab22d5af1a9a9e939edff5719996815fc26f77f87fcbaabab3cabbd2`, web `sha256:15ae1052f483c28dc92e3afa229bd591ccb24834c76651123f8149c728b95789` y DB `sha256:e4d4a3d9054879118858ec07768314ed605f6145af728d854a87aadb45777000`.
+
+Esta evidencia corresponde al recorrido ordinario de esa fuente. Firefox/WebKit, carga ampliada, CI del siguiente candidato, revisión humana y entrega final conservan sus comprobaciones propias. Una corrección posterior repite el alcance afectado; no se atribuye anticipadamente el cierre ampliado a Chromium ni se reinicia toda la batería local por documentación.
+
+## Coherencia visual y recuperación — E5-I05 / #74
+
+El recorrido focalizado de dos clientes pasó con ingesta, SQL, proxy y SSE reales. Conserva filtros AND y selección propia de historial/trayectoria/gráfico; un cambio de estado oculta la fila sin cerrar su detalle. Tras cortar un SSE mediante el intermediario TCP y dejar offline solo ese cliente, el segundo sigue recibiendo datos. Al recuperar el primero, snapshot e historial conservan selección y foco, ordenan el tardío y dejan una sola conexión activa por aplicación.
+
+La caída controlada de tiles afecta a ambos mapas, con reintentos manuales y gráfico, sesión e historial disponibles. Cada cliente conserva sus filtros; cerrar una sesión destruye sus visualizaciones y mantiene la otra. El caso usa datos propios:6 eventos/2 vehículos/2 alertas/13 mensajes, sin pendientes; los oráculos oficiales se comprueban en sus escenarios separados. Este resultado no sustituye todavía la batería local integral de cierre ni la revisión del autor.
+
+## Gráfico de velocidad — E5-I04 / #72
+
+Pasaron tipos web y14 pruebas focalizadas en tres archivos: modelo temporal del gráfico, componente y página. Conservan entradas/identidades, velocidades80/81, puntos visualmente coincidentes con instantes exactos distintos, vacío, muestra única y máximo finito, alternativa accesible, selección y destrucción. La auditoría de la dependencia fijada informó cero vulnerabilidades.
+
+Los dos primeros recorridos de canvas encontraron puntos incompletos en los límites explícitos del área gráfica. Se ajustó el recorte del dataset observado para mostrar esos puntos completos; no se bajó el requisito visual de las pruebas. Tras construir otra vez, ambos recorridos Chromium pasaron con API/PostgreSQL/NGINX reales y tiles sintéticos. Inspeccionan píxeles del canvas y pulsan el punto dibujado, sin acceder a una instancia global de Chart.js o a hooks agregados al producto.
+
+El caso oficial verifica dos clientes, selección gráfico/historial/trayectoria/alerta, cambio visible de color, avisos de licencia y ambos replays20/2/2→0/22/2 con20 eventos/8 vehículos/4 alertas/43 mensajes. El adversarial conserva muestras coincidentes y subnanosegundos,80sin alerta/81con alerta, selección estable y foco de búsqueda ante un tardío, duplicado sin puntos nuevos, ancho360px, una velocidad Number.MAX_VALUE sin errores y destrucción al cerrar sesión. La compilación y lint afectados pasaron. La batería local general permanece reservada al cierre E5; estos resultados no la sustituyen.
+
+## Normalización temporal entre entrada, API y presentación — #73
+
+Un recorrido Chromium con API/PostgreSQL/SSE reales pasó sobre el formateador original: tres observaciones con coma decimal, forma básica y offset ingresan fuera de orden; tabla, historial y mapas muestran hora Bogotá 24h, latest correcto y selección sin errores de página. El DTO devuelve UTC canónico y conserva la fracción exacta, incluida `2026-01-01T05:00:01.999999999999Z`.
+
+Una exploración directa del helper con sintaxis cruda encontró RangeError, pero la integración confirmó que esa entrada no corresponde al DTO canónico que recibe. El primer caso esperaba incorrectamente la sintaxis original en la respuesta; se corrigió a valores canónicos explícitos y se repitió sobre la implementación original. El cambio exploratorio del formateador se retiró: este incremento añade evidencia de normalización, sin atribuir a la aplicación un fallo que el recorrido real no reprodujo.
+
+## Promoción de filtros, mapa y trayectoria a test — PR69
+
+El candidato `e46392a4c3ae875576056df573178cab15c0eee0` completó su CI propio39850982896, intento1, con seis jobs y cinco artefactos descargados/revalidados:463 pruebas API,113 Angular,127 PostgreSQL/HTTP y21 Chromium, sin fallos u omisiones. El checkout de integración fue `ac75099ffa403946009daec9343b44f2112043d3`. Tras QA se integró [PR69](https://github.com/ngarayc/Nexo/pull/69) en test `6d98d4fe71b35f79b599c23f9c2e1a1c8528265f`, con el mismo árbol de código revisado.
+
+Ese candidato incorpora los tres primeros incrementos E5 y la corrección #71; no acredita el gráfico o la aceptación integral posterior. La revisión técnica del agente y la promoción a test no sustituyen la revisión humana de un futuro candidato a main.
+
 ## Selectores de conexión y diagnóstico cerrado — #71
 
 El CI propio39848095971 de PR69, sobre986c791, pasó los nuevos casos cartográficos y el resto de archivos Chromium salvo synchronization.spec.mjs. El log público conservó el archivo fallido, pero su detalle privado no quedó disponible para recuperar la causa exacta de esa ejecución. La repetición local del caso original sobre las fuentes publicadas pasó; no se declara probado el motivo histórico.
@@ -42,7 +84,7 @@ Se ejecutaron formato, lint, tipos, enlaces, fixtures y coherencia del esquema. 
 
 La auditoría de dependencias informó0 vulnerabilidades. El historial disponible y los cuatro commits incrementales posteriores pasaron el escaneo de secretos; los cambios documentales finales se revisaron por separado. Las tres imágenes y tres Dockerfiles completaron sus inventarios y escaneos sin HIGH/CRITICAL. Se conservaron las mismas imágenes durante las pruebas: API `sha256:cd341b122f28c4f1ce7841f16bd8a137a169319cfab2c82976de8e95445e0126`, web `sha256:085b9c80a33c3553288e1cf0a5dd4886988ffac7b8489075cfa65eaf5321c28d` y PostgreSQL `sha256:63bdd19b7e400b9f71e2c9d91219cbdf33d8787e3faaf0d87ca15337e3f8bcfc`. Los resultados no acreditan capacidad de producción ni reemplazan los escaneos del candidato remoto.
 
-La batería local completa se ejecutó al cierre de la épica; las correcciones posteriores repitieron solo las comprobaciones afectadas. [PR61](https://github.com/ngarayc/Nexo/pull/61) conserva QA, CI propio y promoción del nuevo origen. El CI de c97890e pasó antes463API/90Angular/125PostgreSQL/14Chromium con cinco artefactos revalidados; ese candidato anterior no acredita la interfaz ni las correcciones siguientes. La aprobación efectiva de ngarayc en main-review39844605142 cubrió el candidato0edba3b de [PR68](https://github.com/ngarayc/Nexo/pull/68). Su CI propio39844604982 pasó seis jobs y cinco artefactos revalidados (463API/95Angular/127PostgreSQL/16Chromium), checkout4acb9516b0f37588968efb1431bd4b0e72431906. Se integró en maincb494a285fe31b1bfad94cf6278e0f49462786eb; la comprobación posterior a esa integración continúa antes de cerrar sus issues. No se reutiliza la aprobación de E3 ni se atribuye a E5.
+La batería local completa se ejecutó al cierre de la épica; las correcciones posteriores repitieron solo las comprobaciones afectadas. [PR61](https://github.com/ngarayc/Nexo/pull/61) conserva QA, CI propio y promoción del nuevo origen. El CI de c97890e pasó antes463API/90Angular/125PostgreSQL/14Chromium con cinco artefactos revalidados; ese candidato anterior no acredita la interfaz ni las correcciones siguientes. La aprobación efectiva de ngarayc en main-review39844605142 cubrió el candidato0edba3b de [PR68](https://github.com/ngarayc/Nexo/pull/68). Su CI propio39844604982 pasó seis jobs y cinco artefactos revalidados (463API/95Angular/127PostgreSQL/16Chromium), checkout4acb9516b0f37588968efb1431bd4b0e72431906. Se integró en maincb494a285fe31b1bfad94cf6278e0f49462786eb; el CI posterior39848012781 también completó sus seis jobs y cinco artefactos revalidados con los mismos inventarios. E4 y sus siete issues quedaron cerradas. No se reutiliza la aprobación de E3 ni se atribuye a E5.
 
 ## Control de fronteras después de construir — #65
 

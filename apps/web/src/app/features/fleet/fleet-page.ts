@@ -18,10 +18,18 @@ import { FleetTable } from './fleet-table';
 import { VehicleHistory } from './vehicle-history';
 import { FleetMap } from './fleet-map';
 import { VehicleTrajectory } from './vehicle-trajectory';
+import { VehicleSpeedChart } from './vehicle-speed-chart';
 
 @Component({
   selector: 'nexo-fleet-page',
-  imports: [FleetTable, VehicleHistory, IdentityText, FleetMap, VehicleTrajectory],
+  imports: [
+    FleetTable,
+    VehicleHistory,
+    IdentityText,
+    FleetMap,
+    VehicleTrajectory,
+    VehicleSpeedChart,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './fleet-page.html',
   styleUrl: './fleet-page.css',

@@ -20,6 +20,10 @@ Cerrar historial devuelve foco a la fila si sigue visible; si no, a la búsqueda
 
 El [mapa Leaflet](cartography.md) recibe la misma colección visible que la tabla y comparte selección con el historial. Actualiza marcadores por identidad sin recentrar ante cada evento; Ver flota visible ajusta el encuadre expresamente. El detalle muestra además la trayectoria de sus observaciones aceptadas, con selección compartida por eventId desde historial, punto o alerta. Las uniones rectas describen muestras, no rutas sobre calles; los puntos coincidentes se pueden elegir en la tabla. Los fallos de cartografía tienen aviso y reintento locales. La atribución y dependencia del proveedor permanecen visibles; no se deducen nuevos datos GPS.
 
+## Gráfico de velocidad
+
+El detalle incorpora el [gráfico de velocidad recibida](speed-chart.md), con referencia80 km/h y selección compartida por evento. Las líneas unen muestras y la tabla conserva todos los valores y acciones por teclado, incluidos puntos coincidentes visualmente. La referencia no recalcula alertas.
+
 ## Alertas por vehículo
 
 La navegación Flota/Alertas conserva la base y conexión de la sesión. Alertas presenta eventos confirmados con más de 80 km/h, orden descendente exacto y contador global; buscar en flota no filtra esa lista. Ver evento abre el historial del vehículo, conserva eventId y destaca/enfoca la observación original. Otra observación recibida después no roba el foco de búsqueda. Vacío confirmado, primera carga y datos desactualizados se distinguen igual que en flota.

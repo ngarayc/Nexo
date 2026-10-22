@@ -45,3 +45,5 @@ El coste de estas decisiones es una composición modular y controles transaccion
 | Carreras entre HTTP, SSE y sesión               | Coordinador de sesión, capturas acotadas y generaciones de sincronización/selección          | Requiere recuperar la base tras perder continuidad         |
 
 Estos patrones responden a comportamiento existente y tienen pruebas de sus garantías. La [trazabilidad](traceability.md) identifica qué requisitos cubren y qué partes continúan pendientes.
+
+Los adaptadores de [cartografía](cartography.md) y [velocidad](speed-chart.md) reciben vistas de las fachadas y emiten IDs originales. Sus puertos separan Leaflet/Chart.js de los componentes; una superficie Leaflet compartida conserva configuración y ciclo de vida de los dos mapas. Las conversiones numéricas del gráfico no participan en las reglas exactas de dominio.

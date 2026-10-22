@@ -18,7 +18,7 @@ El [contrato suministrado](requirements/common-spec.md) y los fixtures son la re
 
 Cada evento nuevo aceptado con `speedKph > 80` produce una `OVERSPEED`, aunque sea tardío. Exactamente 80 no produce alerta. Duplicados y rechazados no crean efectos de dominio.
 
-La UI muestra español, America/Bogota y hora de 24 horas. No usa la etiqueta formateada para ordenar o comparar.
+La UI muestra español, America/Bogota y hora de24 horas. Para presentar obtiene milisegundos numéricos del instante compartido y trunca únicamente la fracción visual; evita diferencias del parser nativo entre navegadores. No usa la etiqueta formateada para ordenar o comparar, ni altera el instante exacto del dominio.
 
 ## Transporte y geografía
 
