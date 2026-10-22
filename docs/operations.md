@@ -23,9 +23,9 @@ Repetir el arranque conserva ID y hash. En una base inicializada, una cuenta aus
 
 Las migraciones usan `nexo_owner`. HTTP usa `nexo_app`, sin superusuario, creación de bases/roles, DDL o modificación de credenciales. Lee usuarios y metadatos de migración; E1 añade escritura acotada de sus seis tablas, con inmutabilidad de eventos, evidencia y payloads según [persistencia](persistence.md). El entrypoint elimina `DB_OWNER_PASSWORD` del entorno heredado por HTTP. La configuración administrativa de Docker contiene las variables necesarias para preparar el contenedor y no debe publicarse.
 
-E3 añade SELECT/INSERT y UPDATE por columnas del [diario](replay-journal.md), manteniendo identidades, evidencia y borrado protegidos. La migración no inicia el emisor ni inserta fixture/oráculos; todavía no hay controles públicos del replay en este incremento.
+E3 añade SELECT/INSERT y UPDATE por columnas del [diario](replay-journal.md), manteniendo identidades, evidencia y borrado protegidos. La migración no inicia el emisor ni inserta fixture/oráculos. El [motor](replay-emitter.md) añade controles autenticados del replay sin conceder permisos de borrado.
 
-La imagen API incorpora únicamente los tres archivos originales que utiliza el [verificador](replay-verification.md), además del lockfile necesario para identificar el material ejecutado. Son archivos de solo lectura, sin precarga de base; no proceden del navegador. Carga, comparación e inspección se prueban como componentes antes de componer el motor HTTP.
+La imagen API incorpora únicamente los tres archivos originales que utiliza el [verificador](replay-verification.md), además del lockfile necesario para identificar el material ejecutado. Son archivos de solo lectura, sin precarga de base; no proceden del navegador. Carga, comparación e inspección forman parte de la composición del motor HTTP y del panel.
 
 La preparación incorpora también el esquema interno de pg-boss y la cola, antes de servir. Sus permisos DML se limitan a ese esquema; no habilitan borrado de datos propios. [Admisión](ingestion.md) describe las rutas y [recuperación](recovery.md) describe reintentos acotados, reconciliación y cierres técnicos. No modificar manualmente sus tablas internas para operar la aplicación.
 
@@ -47,7 +47,7 @@ docker compose --env-file .env.local -f infra/compose.yaml down
 docker compose --env-file .env.local -f infra/compose.yaml up -d --wait
 ```
 
-`down` conserva el volumen. Este recorrido no utiliza `--volumes` ni limpieza global de Docker. Las pruebas crean recursos con un identificador aleatorio propio y eliminan únicamente esos recursos al terminar; no se ejecutan contra el volumen de la aplicación.
+`down` conserva el volumen. Este recorrido no utiliza `--volumes` ni limpieza global de Docker. El [reset local explícito](demo-reset.md) identifica y sustituye solo el almacenamiento sintético autorizado, conservando informes fuera de él. Las pruebas crean recursos con un identificador aleatorio propio y eliminan únicamente esos recursos al terminar; no se ejecutan contra el volumen de la aplicación.
 
 ## Desarrollo y comprobación
 
@@ -78,7 +78,7 @@ npm run test:e2e
 
 El recorrido de navegador crea un stack sintético nuevo por archivo en `127.0.0.1:8081`, con origen canónico `http://localhost:8081`, manteniendo `8080` para la aplicación local. Comprueba Angular compilado, dos contextos independientes, flota/historial/alertas, oráculos, carreras, cortes, recuperación, logout, proxy, cabeceras y CSP en Chromium. No guarda trace, HAR, vídeo, capturas o storageState. Los reportes crudos de cada invocación permanecen en reports/raw/system y solo se generan métricas para publicación, según [CI](ci-controls.md).
 
-La pantalla inicial muestra conexión, totales y [flota/historial/alertas](dashboard.md) mediante [sincronización Angular](frontend-sync.md). Mientras recupera conserva la base previa señalada como posiblemente desactualizada; tras agotar cinco reintentos ofrece Reconectar. Esa acción respeta Retry-After y no reinicia la API o PostgreSQL. El productor auxiliar del recorrido de sistema usa HTTP por NGINX y mantiene la clave dentro del contenedor API, sin entregarla a la página. El reproductor controlable permanece pendiente de E3.
+La pantalla inicial muestra conexión, totales y [flota/historial/alertas](dashboard.md) mediante [sincronización Angular](frontend-sync.md). Mientras recupera conserva la base previa señalada como posiblemente desactualizada; tras agotar cinco reintentos ofrece Reconectar. Esa acción respeta Retry-After y no reinicia la API o PostgreSQL. El productor auxiliar del recorrido de sistema usa HTTP por NGINX y mantiene la clave dentro del contenedor API, sin entregarla a la página. El [panel compartido](replay-panel.md) usa el mismo stream y controla el motor real; la clave del productor permanece en API.
 
 Los jobs de Actions preparan Node/npm y construyen sus propias imágenes. Usan tokens de lectura y una lista explícita de artefactos; los controles y su estado se describen en [CI](ci-controls.md).
 

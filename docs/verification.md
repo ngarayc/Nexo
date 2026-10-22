@@ -8,6 +8,14 @@ La imagen web `sha256:a5faba10b88c8a6d34b8833964056b857e0a4c672b094ea3ab8a872470
 
 La primera compilación de la fachada detectó un opcional con undefined explícito; se estrechó el tipo sin relajar exactOptionalPropertyTypes. Lint detectó el manejador de teclado en un contenedor sin foco: se trasladó a los botones de las pestañas, conservando flechas/Home/End y repitiendo únicamente los casos afectados. La presentación mantiene Pendiente mientras no exista informe individual conservado.
 
+## Reset local — E3-I05 / #52
+
+El [comando local](demo-reset.md) añade identidad de proyecto/volumen, etiqueta sintética, captura fuera de Docker, comprobación SHA-256, detención ordenada y reanudación por manifiesto. Pasaron seis comprobaciones focalizadas de argumentos, destino, consumidores e integridad de archivos y un ensayo real Docker de reset. No se ejecutó la regresión local completa por esta issue.
+
+El ensayo creó su propio proyecto y datos mediante el motor HTTP real, conservó un informe conforme y probó consumidor ajeno, fallo de escritura del destino de evidencia, fallo después de cerrar la aplicación y respuesta perdida tras retirar el volumen. La reanudación recreó una base vacía con migraciones/cuenta/salud, instancia API nueva y sesión anterior inválida. Reanudar otra vez no borró datos nuevos; el volumen ajeno y los informes anteriores quedaron intactos durante el procedimiento. El cleanup final retiró únicamente recursos sintéticos creados por la prueba.
+
+Los primeros intentos detectaron una referencia de archivo equivocada, una espera del fixture que confundía finalización con informe listo y una expectativa401 que debía ser403 según el contrato de acceso existente. Se corrigieron y repitió solo el caso afectado; el último aprobó sin omisiones. Las imágenes locales ya construidas sirvieron para este procedimiento host/Compose: no se reconstruyeron API/Angular porque no cambió su código. CI de promoción conserva su ejecución propia y el cierre integral E3 sigue pendiente.
+
 ## Cierre comprobado de E2
 
 [PR45](https://github.com/ngarayc/Nexo/pull/45#issuecomment-6343260777) se integró en main5bb7612e778e3b41b258e77b1cd9615e8d449417 tras aprobación real de ngarayc en main-review39791521046 y CI propio39791521071 intento2, mismo checkout1a576c865cc80851224f64c11e91f5570d374bf6. Cinco artefactos propios descargados/revalidados:397API/70Angular/107SQL/13Chromium. El intento1 fallido al consultar metadatos se conserva; su causa HTTP exacta no quedó demostrada. La repetición completa mantuvo fuente y controles.
