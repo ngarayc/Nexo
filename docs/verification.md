@@ -1,5 +1,21 @@
 # Verificación de Nexo
 
+## Panel compartido — E3-I04 / #49
+
+El [panel](replay-panel.md) tiene contrato compartido, adaptador, fachada y presentación sobre el EventSource existente. Pasaron las verificaciones locales focalizadas por cambio: validación/transporte/sincronización, nueve casos de fachada, tres de presentación y el caso afectado del shell. No se ejecutó toda la suite local de Angular por este incremento. Tipos compartidos/API/Angular y lint de los archivos afectados se contrastaron separadamente.
+
+La imagen web `sha256:a5faba10b88c8a6d34b8833964056b857e0a4c672b094ea3ab8a872470a34528` y API `sha256:a797c07fd9ba4bc5a31cdf5fab8d16b08f0d5fbadd743cb822cf40a257f7996b` pasaron [un recorrido focalizado Chromium](../tests/system/replay-panel.spec.mjs) con dos aplicaciones renderizadas. Comprobó control real, pausa sin nuevas ingestas, reanudación, navegación/minimización, ambos oráculos, identidades y 43 mensajes de dominio, teclado/inspector, informes separados, selección histórica con 20/2/2 conservado, recarga recuperando 0/22/2, logout independiente y 360 px. El reporte se validó contra el archivo/caso real, sin retries u omisiones. No equivale a ejecutar todos los recorridos Chromium ni a cerrar reset/entrega final.
+
+La primera compilación de la fachada detectó un opcional con undefined explícito; se estrechó el tipo sin relajar exactOptionalPropertyTypes. Lint detectó el manejador de teclado en un contenedor sin foco: se trasladó a los botones de las pestañas, conservando flechas/Home/End y repitiendo únicamente los casos afectados. La presentación mantiene Pendiente mientras no exista informe individual conservado.
+
+## Cierre comprobado de E2
+
+[PR45](https://github.com/ngarayc/Nexo/pull/45#issuecomment-6343260777) se integró en main5bb7612e778e3b41b258e77b1cd9615e8d449417 tras aprobación real de ngarayc en main-review39791521046 y CI propio39791521071 intento2, mismo checkout1a576c865cc80851224f64c11e91f5570d374bf6. Cinco artefactos propios descargados/revalidados:397API/70Angular/107SQL/13Chromium. El intento1 fallido al consultar metadatos se conserva; su causa HTTP exacta no quedó demostrada. La repetición completa mantuvo fuente y controles.
+
+[Post-main39796147682](https://github.com/ngarayc/Nexo/actions/runs/39796147682), intento1, también pasó con cinco artefactos revalidados para ese merge, los mismos inventarios y árbol idéntico al candidato. Se cerraron las seis issues y milestone E2; la base EP-03 cuenta con revisión humana real. #38/#40 y las correcciones #43/#46/#48 también alcanzaron main. #44 conserva pendiente la causa histórica no demostrada.
+
+[PR50](https://github.com/ngarayc/Nexo/pull/50#issuecomment-6344180050) promovió el motor posterior09f6747 a test a9e87ff5abe3b901c428d0a80e39a673ef2fa83f después de CI propio39798378152 intento1 y cinco artefactos revalidados:458API/70Angular/116SQL/13Chromium. Es un candidato distinto de E2/main5bb; el panel de #49 conserva su verificación y promoción propias.
+
 ## Motor compartido y control HTTP — E3-I03 / #42
 
 El incremento compone NestJS, acceso, recursos compartidos, diario, verificador y SSE. Pasaron las 454 pruebas API existentes al completar esa composición. Después se añadieron y ejecutaron por separado cuatro pruebas focalizadas de publicación: modo deshabilitado sin carga de material, lectura compartida con suscriptores, fallo sin publicar caché antigua y época SSE independiente de instancia API. No se repitió toda la suite por ese añadido. Tipos de API y lint de los archivos afectados pasaron.

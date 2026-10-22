@@ -20,6 +20,8 @@ Backend: monolito modular NestJS. Frontend: Angular organizado por funcionalidad
 
 Usar el lockfile y las versiones fijadas. No forzar peers, desactivar pruebas, aceptar suites vacías o agregar excepciones de seguridad para obtener verde. Dependencias o escaneos inconclusos se reportan como no verificados. No instalar herramientas globalmente como parte de scripts del proyecto.
 
+Durante el desarrollo local, ejecutar solo las pruebas y comprobaciones necesarias para el cambio. Reservar la validación local completa para el cierre de una épica; no repetir suites generales por cada issue o ajuste. GitHub conserva sus workflows completos y los controles efectivos de promoción.
+
 Preservar los fixtures y sus oráculos: 20/2/2 y luego 0/22/2 sin reset, 20 eventos, 8 vehículos y 4 alertas con las identidades esperadas. Casos adversariales y carga usan datos aislados. Un fallo se corrige en código; no se ajusta el oráculo para aprobarlo.
 
 Mantener la secuencia EP-03 base antes de CR-01. El filtro de alertas, incluido su POST JSON complementario, se incorpora en CR-01. Los GET obligatorios permanecen y las consultas complementarias deben ser equivalentes y carecer de efectos de negocio.

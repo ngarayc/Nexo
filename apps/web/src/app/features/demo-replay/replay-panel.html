@@ -1,0 +1,297 @@
+<aside class="replay-panel" aria-label="Reproductor de la demo">
+  <button
+    class="toggle"
+    type="button"
+    [attr.aria-expanded]="!minimized()"
+    aria-controls="replay-body"
+    (click)="minimized.set(!minimized())"
+  >
+    Reproductor · {{ state(replay.view()?.run?.state) }}
+    <span aria-hidden="true">{{ minimized() ? '＋' : '−' }}</span>
+  </button>
+  @if (!minimized()) {
+  <div id="replay-body" class="body">
+    <p class="intro">
+      Control compartido de las 24 líneas de la demo. Pausar o reiniciar la reproducción conserva
+      los datos recibidos.
+    </p>
+    @if (replay.stale()) {
+    <p role="status" class="warning">
+      Estado desactualizado. Recupera el control antes de otra orden.
+    </p>
+    } @if (replay.error()) {
+    <p role="alert" class="warning">{{ replay.error() }}</p>
+    } @if (replay.notice()) {
+    <p role="status" aria-live="polite">{{ replay.notice() }}</p>
+    }
+    <button type="button" (click)="replay.refresh()">Recuperar control</button>
+    @if (replay.pending()) {
+    <button type="button" (click)="replay.checkReceipt()">Consultar orden pendiente</button> }
+    <div class="tabs" role="tablist" aria-label="Vistas del reproductor">
+      <button
+        id="replay-control-tab"
+        type="button"
+        role="tab"
+        (keydown)="tabsKey($event)"
+        aria-controls="replay-control"
+        [attr.aria-selected]="tab() === 'control'"
+        [attr.tabindex]="tab() === 'control' ? 0 : -1"
+        (click)="tab.set('control')"
+      >
+        Control
+      </button>
+      <button
+        id="replay-deliveries-tab"
+        type="button"
+        role="tab"
+        (keydown)="tabsKey($event)"
+        aria-controls="replay-deliveries"
+        [attr.aria-selected]="tab() === 'deliveries'"
+        [attr.tabindex]="tab() === 'deliveries' ? 0 : -1"
+        (click)="tab.set('deliveries')"
+      >
+        Envíos
+      </button>
+      <button
+        id="replay-verification-tab"
+        type="button"
+        role="tab"
+        (keydown)="tabsKey($event)"
+        aria-controls="replay-verification"
+        [attr.aria-selected]="tab() === 'verification'"
+        [attr.tabindex]="tab() === 'verification' ? 0 : -1"
+        (click)="tab.set('verification')"
+      >
+        Verificación
+      </button>
+    </div>
+    @if (tab() === 'control') {
+    <section id="replay-control" role="tabpanel" aria-labelledby="replay-control-tab">
+      <h2>Recorrido actual</h2>
+      @if (replay.view(); as view) {
+      <p data-testid="replay-state">{{ state(view.run?.state) }}</p>
+      @if (view.run; as run) {
+      <p>{{ stage(run.stage) }}</p>
+      <label for="replay-progress"
+        >Resultados confirmados: {{ run.progress.classified }} de 24</label
+      >
+      <progress id="replay-progress" [value]="run.progress.classified" max="24">
+        {{ run.progress.classified }} de 24
+      </progress>
+      <dl class="counts" aria-label="Resultados del recorrido">
+        <div>
+          <dt>Aceptados</dt>
+          <dd data-testid="replay-accepted">{{ run.progress.accepted }}</dd>
+        </div>
+        <div>
+          <dt>Duplicados</dt>
+          <dd data-testid="replay-duplicates">{{ run.progress.duplicates }}</dd>
+        </div>
+        <div>
+          <dt>Rechazados</dt>
+          <dd data-testid="replay-rejected">{{ run.progress.rejected }}</dd>
+        </div>
+        <div>
+          <dt>En curso</dt>
+          <dd>{{ run.progress.inFlight }}</dd>
+        </div>
+        <div>
+          <dt>Inciertos</dt>
+          <dd>{{ run.progress.uncertain }}</dd>
+        </div>
+        <div>
+          <dt>Fallos técnicos</dt>
+          <dd>{{ run.progress.technicalFailure }}</dd>
+        </div>
+        <div>
+          <dt>Sin intentar</dt>
+          <dd>{{ run.progress.unattempted }}</dd>
+        </div>
+      </dl>
+      <p>
+        {{ run.nextLine <= 24 ? 'Siguiente línea: ' + run.nextLine : 'Las 24 líneas tienen resultado
+        confirmado.' }}
+      </p>
+      <p>Verificación del recorrido: <strong>{{ verification(run.verification) }}</strong>.</p>
+      @if (run.closeCode) {
+      <p>{{ replay.reason(run.closeCode) }} <code>{{ run.closeCode }}</code></p>
+      } } @else {
+      <p>Inicia con una base local preparada para comprobar el primer recorrido oficial.</p>
+      } @if (view.blockedReason) {
+      <p class="warning">
+        El servidor está recuperando o confirmando su diario. Espera y recupera el control.
+      </p>
+      } @if (view.pendingAction) {
+      <p role="status">Hay una transición en curso. El servidor resolverá el envío pendiente.</p>
+      }
+      <label for="replay-interval">Intervalo entre líneas (milisegundos)</label>
+      <input
+        id="replay-interval"
+        #interval
+        type="number"
+        min="100"
+        max="5000"
+        step="1"
+        [value]="intervalMs()"
+        (input)="intervalMs.set(interval.valueAsNumber)"
+        aria-describedby="replay-interval-help"
+      />
+      <p id="replay-interval-help">
+        Entre 100 y 5.000; se aplica al iniciar, reiniciar o reanudar. Predeterminado: 750.
+      </p>
+      <div class="actions">
+        @for (item of actions; track item.action) {
+        <button type="button" [disabled]="!replay.can(item.action)" (click)="act(item.action)">
+          {{ item.label }}
+        </button>
+        }
+      </div>
+      <p class="scope">
+        Minimizar, navegar o cerrar sesión no detiene una reproducción ya autorizada.
+      </p>
+      } @else {
+      <p>Esperando una lectura confirmada del servidor.</p>
+      }
+    </section>
+    } @else {
+    <div class="history">
+      <button type="button" (click)="replay.loadHistory()">Cargar historial</button>
+      <label for="replay-selection">Ejecución a inspeccionar</label>
+      <select
+        id="replay-selection"
+        #selection
+        [value]="replay.selectedRunId() ?? ''"
+        (change)="replay.selectRun(selection.value || null)"
+      >
+        <option value="">Ejecución actual</option>
+        @for (run of replay.history(); track run.runId) {
+        <option [value]="run.runId">
+          {{ formatTime(run.createdAt) }} · {{ state(run.state) }} · {{ run.runId }}
+        </option>
+        }
+      </select>
+      @if (replay.historyCursor()) {
+      <button type="button" (click)="replay.loadHistory(true)">
+        Mostrar ejecuciones anteriores
+      </button>
+      } @if (replay.selectedRunId()) {
+      <p>
+        Inspeccionando una ejecución conservada. Seleccionarla no la reactiva ni cambia el motor
+        actual.
+      </p>
+      }
+    </div>
+    @if (tab() === 'deliveries') {
+    <section id="replay-deliveries" role="tabpanel" aria-labelledby="replay-deliveries-tab">
+      <h2>Envíos de la ejecución seleccionada</h2>
+      @if (replay.detail(); as detail) {
+      <p>{{ stage(detail.run.stage) }} · {{ state(detail.run.state) }}</p>
+      <p class="identity">Ejecución: {{ detail.run.runId }}</p>
+      <p>La línea es su posición 1–24 en el archivo; cada petición usa el índice de lote 0.</p>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Línea</th>
+              <th>Evento</th>
+              <th>Resultado</th>
+              <th>Motivo</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of lines; track line) {
+            <tr>
+              <td>{{ line }}</td>
+              <td>{{ attempt(line)?.eventId ?? '—' }}</td>
+              <td>{{ outcome(line) }}</td>
+              <td>
+                @if (attempt(line); as attempt) { @if (attempt.reasonCode ||
+                attempt.diagnostic?.['code']) {
+                <span
+                  >{{ replay.reason(attempt.reasonCode ?? '' + attempt.diagnostic?.['code'])
+                  }}</span
+                ><code>{{ attempt.reasonCode ?? attempt.diagnostic?.['code'] }}</code> }
+                <details>
+                  <summary>Correlación del envío</summary>
+                  <p>Índice del lote: {{ attempt.batchIndex }}</p>
+                  <p>Ingesta: {{ attempt.ingestionId }}</p>
+                  <p>Inicio: {{ formatTime(attempt.startedAt) }}</p>
+                  @if (attempt.finalizedAt) {
+                  <p>Confirmación: {{ formatTime(attempt.finalizedAt) }}</p>
+                  }
+                  <p>
+                    {{ attempt.httpStatus ? 'HTTP ' + attempt.httpStatus : 'Sin estado HTTP
+                    confirmado' }}
+                  </p>
+                </details>
+                } @else { — }
+              </td>
+            </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      } @else {
+      <p>No hay detalle confirmado de esta ejecución.</p>
+      }
+    </section>
+    } @else {
+    <section id="replay-verification" role="tabpanel" aria-labelledby="replay-verification-tab">
+      <h2>Verificación de datos y recorridos</h2>
+      @if (replay.detail(); as detail) {
+      <p>
+        Resultado del recorrido:
+        <strong>{{ verification(detail.run.verification) }}</strong>.
+      </p>
+      <p>
+        Resultado del escenario: <strong>{{ verification(detail.scenario.verification) }}</strong>.
+      </p>
+      @if (detail.inspection.currentState === 'changed') {
+      <p class="warning">
+        El estado actual cambió desde el informe conservado. Su resultado histórico permanece
+        intacto.
+      </p>
+      } @if (detail.inspection.currentState === 'unavailable') {
+      <p class="warning">
+        No se pudo contrastar el estado actual. El informe conserva su alcance original.
+      </p>
+      } } @if (!replay.preparation() && !replay.detail()) {
+      <p>No hay un informe conservado todavía.</p>
+      } @for (report of [replay.preparation(), replay.detail()?.run?.verification !== 'pending' ?
+      replay.detail()?.inspection?.report : null, replay.detail()?.scenario?.report]; track $index)
+      { @if (report) {
+      <article class="report">
+        <h3>
+          {{ $index === 0 ? 'Preparación' : $index === 1 ? 'Informe individual conservado' : 'Cierre
+          del escenario' }}: {{ verification(report.result) }}
+        </h3>
+        <p>Comprobación: {{ formatTime(report.observedAt ?? report.attemptedAt) }}</p>
+        <ul class="checks">
+          @for (item of report.checks; track item.key) {
+          <li>
+            <strong>{{ item.label }} — {{ check(item.state) }}</strong>
+            <p>Esperado: {{ value(item.expected) }}. Observado: {{ value(item.observed) }}.</p>
+            <details>
+              <summary>Fuente y valores exactos</summary>
+              <p>{{ item.source }}</p>
+              <h4>Esperado</h4>
+              <pre>{{ exact(item.expected) }}</pre>
+              <h4>Observado</h4>
+              <pre>{{ exact(item.observed) }}</pre>
+            </details>
+          </li>
+          }
+        </ul>
+      </article>
+      } } @empty {
+      <p>No hay un informe conservado todavía.</p>
+      }
+      <p class="scope">
+        Recorrido completado y resultado conforme son comprobaciones diferentes. La evidencia
+        visual, CI y video se verifican por separado.
+      </p>
+    </section>
+    } }
+  </div>
+  }
+</aside>

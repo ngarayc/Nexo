@@ -4,11 +4,12 @@ import { AccessFacade } from '../../features/access/access-facade';
 import { LiveMonitor } from '../../features/live-monitoring/live-monitor';
 import { FleetFacade } from '../../features/fleet/fleet-facade';
 import { AlertsFacade } from '../../features/alerts/alerts-facade';
+import { ReplayPanel } from '../../features/demo-replay/replay-panel';
 import { formatTime } from '../presentation/format-time';
 
 @Component({
   selector: 'nexo-app-shell',
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, ReplayPanel],
   templateUrl: './app-shell.html',
   styleUrl: './app-shell.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

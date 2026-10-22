@@ -59,4 +59,5 @@
     <a routerLink="/alerts" routerLinkActive="active" ariaCurrentWhenActive="page">Alertas</a>
   </nav>
   <router-outlet />
+  @if (access.session()) { <nexo-replay-panel /> }
 </main>
