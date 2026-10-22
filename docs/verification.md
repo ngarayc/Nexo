@@ -1,5 +1,21 @@
 # Verificación
 
+## Flota e historial visibles — E2-I03
+
+La [issue #30](https://github.com/ngarayc/Nexo/issues/30) pasó calidad y **66 pruebas Angular y 9 Chromium**, sin omisiones, con la imagen web revisada reconstruida y sin vulnerabilidades altas/críticas en Trivy. El incremento cambia presentación/routing y pruebas de frontend; API, núcleo compartido, esquema y dependencias conservan el código verificado de E2-I02. El CI propio del nuevo candidato vuelve a ejecutar también sus regresiones.
+
+Las pruebas comprueban contenido de tabla, estado, encendido, identidad original al seleccionar, Unicode/HTML como texto, distinción entre carga/error/vacío/desconocido y foco al cerrar una fila ya oculta por la búsqueda. Chromium verifica mayúsculas, `%` y `_` literales por identidades exactas, totales globales independientes, historial ascendente, tardío por SSE que no cambia latest, fecha/hora 24h de Bogotá, pantalla de 360 px y navegación por teclado. Otro recorrido usa IDs de 70.000 caracteres, un sustituto aislado, NUL y `.`/`..` mediante POST JSON real, con CSRF y sin API key; consulta la identidad exacta y desplaza su representación completa por teclado.
+
+Se conservaron dos fallos de pruebas y sus correcciones. El primer supuesto de búsqueda por `_` omitía que el ID sintético de HTML también lo contenía; se contrasta ahora el conjunto exacto derivado de esos datos, manteniendo intactos los fixtures/oráculos oficiales. Un selector parcial de la fila B coincidía además con prefijos UUID aleatorios: se sustituyó por su encabezado de fila e identidad exacta. Las comprobaciones posteriores pasaron sin modificar el algoritmo de búsqueda.
+
+La revisión detectó además un defecto real del adaptador: intentaba GET con NUL, que NGINX rechazó con 400. Se conservó la prueba roja que observaba ese GET y se cambió a JSON, conservando el valor. La comprobación del parser URL evita también que `.`/`..` cambien la ruta. Las pruebas posteriores pasan por el proxy y verifican historial/identidad; no se relaja NGINX ni la validación de dominio.
+
+[Dashboard](dashboard.md) relaciona recorrido, código, fuentes y límites. Estos resultados no acreditan todavía lista de alertas base, dos vistas completas bajo fallos, reproductor o CR-01. La promoción mantiene checks/artefactos del SHA exacto y revisión humana propia de main.
+
+## Promoción de la coordinación a test
+
+La [PR #31](https://github.com/ngarayc/Nexo/pull/31) promovió `d44f429df8cb90fe31b403f18753340aa305f2d1` tras revisión técnica y [CI propio 39731905638](https://github.com/ngarayc/Nexo/actions/runs/39731905638), intento 1. Cinco artefactos descargados/revalidados del checkout `e60f6f0bfb9ba433f84350fa8c8c04a8d1e5d964`: 265 API, 59 Angular, 83 integración y 7 Chromium; cinco jobs, ci-required y escaneos aprobados. El merge en test es `932f8ed6ef03c6c963aff9b651d937ca751cc9d6`. La integración no sustituye la revisión humana de una futura promoción a main.
+
 ## Coordinación Angular — E2-I02
 
 La [issue #28](https://github.com/ngarayc/Nexo/issues/28) pasó localmente calidad, **265 pruebas API, 59 Angular, 83 de integración y 7 Chromium**, sin omisiones. Se conservan los 31 controles de CI y los hashes de los cuatro fixtures. Auditoría de dependencias sin vulnerabilidades, historial/índice sin secretos y Trivy de las tres imágenes y tres Dockerfiles sin hallazgos altos/críticos. API/web revisadas se reconstruyeron y escanearon antes del último recorrido de navegador; CI reconstruye las imágenes propias del candidato publicado.

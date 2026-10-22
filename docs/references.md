@@ -1,5 +1,7 @@
 # Procedencia de decisiones y herramientas
 
+[Flota e historial](dashboard.md) relaciona tablas semánticas W3C WAI e interpolación Angular con los componentes, foco, representación de IDs y pruebas reales aplicadas.
+
 La [coordinación de Angular](frontend-sync.md) relaciona las fuentes de Signals y EventSource con las fachadas, captura y recuperación propias de Nexo, sus pruebas y límites.
 
 Los requisitos suministrados se conservan en [requirements](requirements/common-spec.md) y [el backlog](requirements/backlog.md). Se distinguen de las elecciones propias de Nexo. No se copia una plataforma de seguimiento ni se atribuye código que no se haya tomado de una fuente.

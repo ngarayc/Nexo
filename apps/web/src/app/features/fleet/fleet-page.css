@@ -1,0 +1,39 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+.search {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+input {
+  flex: 1 1 12rem;
+  min-width: 0;
+  padding: 0.7rem;
+  border: 1px solid #79938f;
+  border-radius: 0.35rem;
+  font: inherit;
+}
+button {
+  padding: 0.7rem 1rem;
+  cursor: pointer;
+}
+.summary {
+  color: #526970;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.history {
+  margin-block: 2rem;
+  padding-block: 1rem;
+  border-block-start: 2px solid #13766d;
+}
+.history-heading {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}

@@ -37,9 +37,9 @@ it('usa GET con segmento codificado para un ID representable y conserva su ident
   expect((await pending).vehicleId).toBe(vehicleId);
   backend.verify();
 });
-it('IDs largos o sustitutos aislados usan POST JSON con CSRF y sin API key', async () => {
+it('IDs largos, NUL o sustitutos aislados usan POST JSON con CSRF y sin API key', async () => {
   const { api, backend } = setup();
-  for (const vehicleId of ['V'.repeat(5000), 'V\ud800']) {
+  for (const vehicleId of ['V'.repeat(5000), 'V\ud800', 'V\u0000', '.', '..']) {
     const pending = api.history(vehicleId, new AbortController().signal);
     const request = backend.expectOne('/api/queries/vehicle-events');
     expect(request.request.method).toBe('POST');

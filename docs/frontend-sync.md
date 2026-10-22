@@ -1,6 +1,6 @@
 # Sincronización de Angular
 
-La [issue #28](https://github.com/ngarayc/Nexo/issues/28) conecta Angular al [snapshot](queries.md) y al [stream SSE](realtime.md) protegidos. La pantalla inicial muestra conexión, última base confirmada y totales de vehículos/alertas. Tabla, detalle visible y lista de alertas conservan sus incrementos posteriores; el reproductor y CR-01 tampoco se atribuyen a esta capacidad.
+La [issue #28](https://github.com/ngarayc/Nexo/issues/28) conecta Angular al [snapshot](queries.md) y al [stream SSE](realtime.md) protegidos. La pantalla muestra conexión, última base confirmada y totales de vehículos/alertas. [Flota e historial](dashboard.md) incorporan después su presentación. Lista de alertas, reproductor y CR-01 conservan sus incrementos; no se atribuyen a esta coordinación.
 
 ## Responsabilidades y reglas compartidas
 
@@ -29,7 +29,7 @@ CaptureBudget permite hasta 1.000 mensajes y 2 MiB de tramas UTF-8 completas ret
 
 El detalle tiene una selección activa. Captura telemetry.accepted del vehículo antes de HTTP, combina por eventId y orden ascendente exacto, e inserta tardíos en su lugar. Cambiar/cerrar selección aborta HTTP y descarta respuestas antiguas. Un corte conserva datos anteriores pendientes y recarga historial después de la nueva base global. Revocar sesión limpia también la selección.
 
-El adaptador usa GET codificado si la ruta no supera 4.096 caracteres ASCII. Un ID largo o una unidad sustituta aislada usa el POST JSON complementario, con el interceptor CSRF del mismo origen. Ambas variantes comparten captura/cancelación y comprueban el vehículo exacto. Un fallo de detalle no borra flota ni abre otro stream.
+El adaptador usa GET codificado si la ruta no supera 4.096 caracteres ASCII y el ID no contiene NUL, cuyo escape %00 rechaza NGINX. Un ID largo, con NUL o una unidad sustituta aislada usa el POST JSON complementario, con el interceptor CSRF del mismo origen. Ambas variantes comparten captura/cancelación y comprueban el vehículo exacto. Un fallo de detalle no borra flota ni abre otro stream.
 
 ## Recuperación y sesión
 
@@ -47,4 +47,4 @@ Las pruebas controlan mensajes durante snapshot/consulta, respuestas de otra sel
 
 [Angular Signals](https://angular.dev/guide/signals) aporta señales de solo lectura y derivaciones calculadas. Nexo añade fachadas propietarias, vistas inmutables y coordinación de ciclo de vida. [HTML EventSource](https://html.spec.whatwg.org/multipage/server-sent-events.html#the-eventsource-interface) define eventos tipados, estados y close; snapshot, generaciones, presupuesto y backoff son decisiones propias de Nexo. Las funciones puras compartidas evitan divergencia de reglas entre servidor y navegador.
 
-El coste es descargar colecciones completas al recuperar y mantener índices en memoria. computed difiere ordenaciones hasta que un consumidor las consulta tras cambios. Los límites de captura no limitan el historial durable o tamaño total del snapshot; HTTP materializa respuestas completas. No se acredita capacidad productiva para miles de vehículos. Dos navegadores, tabla/lista completas y recuperación integral conservan su comprobación posterior de E2.
+El coste es descargar colecciones completas al recuperar y mantener índices en memoria. computed difiere ordenaciones hasta que un consumidor las consulta tras cambios. Los límites de captura no limitan el historial durable o tamaño total del snapshot; HTTP materializa respuestas completas. No se acredita capacidad productiva para miles de vehículos. Dos navegadores con vistas completas y recuperación integral conservan su comprobación posterior de E2.

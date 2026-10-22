@@ -1,0 +1,66 @@
+<section aria-labelledby="fleet-title">
+  <h2 id="fleet-title">Flota</h2>
+  <div class="search">
+    <label for="vehicle-search">Buscar vehículo</label>
+    <input
+      #search
+      id="vehicle-search"
+      type="search"
+      [value]="fleet.search()"
+      (input)="fleet.setSearch(search.value)"
+      autocomplete="off"
+      spellcheck="false"
+      [disabled]="!monitor.hasBase()"
+    />
+    @if (fleet.search()) {
+    <button type="button" (click)="fleet.setSearch('')">Limpiar búsqueda</button> }
+  </div>
+  @if (monitor.hasBase()) {
+  <p class="summary">
+    {{ fleet.visibleItems().length }} de {{ fleet.total() }} vehículos · {{ fleet.summary().MOVING
+    }} en movimiento · {{ fleet.summary().STOPPED }} detenidos · {{ fleet.summary().OFF }} apagados
+  </p>
+  @if (fleet.total() === 0) {
+  <p>No hay vehículos registrados.</p>
+  } @else if (fleet.visibleItems().length === 0) {
+  <p role="status">No hay vehículos que coincidan con la búsqueda.</p>
+  } @else {
+  <nexo-fleet-table
+    [items]="fleet.visibleItems()"
+    [selected]="detail.selected()"
+    (selectVehicle)="open($event)"
+  />
+  } }
+</section>
+@if (detail.selected(); as vehicleId) {
+<section
+  #historyPanel
+  id="vehicle-history"
+  tabindex="-1"
+  class="history"
+  aria-labelledby="history-title"
+  [attr.aria-busy]="detail.phase() === 'loading'"
+>
+  <div class="history-heading">
+    <h2 id="history-title">Historial del vehículo</h2>
+    <button type="button" (click)="close()">Cerrar historial</button>
+  </div>
+  <nexo-identity [value]="vehicleId" />
+  @switch (detail.phase()) { @case ('loading') {
+  <p role="status">Cargando historial…</p>
+  } @case ('waiting') {
+  <p role="status">Esperando para actualizar el historial.</p>
+  } @case ('error') {
+  <p role="alert">No fue posible cargar el historial. Vuelve a intentarlo.</p>
+  <button type="button" (click)="detail.retry()">Reintentar historial</button> } } @if
+  (detail.hasBase()) { @if (detail.phase() !== 'ready') {
+  <p>Los datos de este historial pueden estar desactualizados.</p>
+  }
+  <p>{{ detail.total() }} observaciones confirmadas.</p>
+  @if (detail.total() === 0 && detail.phase() === 'ready' && !fleet.get(vehicleId)) {
+  <p>Este vehículo no aparece en la flota actual.</p>
+  } @else if (detail.total() === 0) {
+  <p>No hay observaciones registradas para este vehículo.</p>
+  } @else { <nexo-vehicle-history [items]="detail.items()" /> } }
+</section>
+}

@@ -15,7 +15,13 @@ export class TelemetryApi {
     let path: string | undefined;
     try {
       const candidate = `/api/vehicles/${encodeURIComponent(vehicleId)}/events`;
-      if (candidate.length <= 4096) path = candidate;
+      // NGINX rechaza %00 antes de llegar al controlador; JSON conserva el ID.
+      if (
+        candidate.length <= 4096 &&
+        !vehicleId.includes('\u0000') &&
+        new URL(candidate, 'http://localhost').pathname === candidate
+      )
+        path = candidate;
     } catch {
       /* JSON conserva una unidad sustituta que encodeURIComponent no admite. */
     }

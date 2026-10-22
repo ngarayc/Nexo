@@ -2,7 +2,7 @@
 
 ## Estado implementado
 
-Nexo contiene dos aplicaciones y un núcleo compartido en un workspace npm: API NestJS/TypeScript ESM, Angular standalone y packages/contracts con DTO/reglas puras. La API compone controladores, servicios y acceso PostgreSQL mediante inyección; Angular presenta acceso, conexión en vivo y totales confirmados bajo el router protegido. Docker Compose integra web, API y PostgreSQL bajo un mismo origen.
+Nexo contiene dos aplicaciones y un núcleo compartido en un workspace npm: API NestJS/TypeScript ESM, Angular standalone y packages/contracts con DTO/reglas puras. La API compone controladores, servicios y acceso PostgreSQL mediante inyección; Angular presenta acceso, conexión en vivo, totales y [flota/historial](dashboard.md) bajo el router protegido. Docker Compose integra web, API y PostgreSQL bajo un mismo origen.
 
 Se verificaron instalación limpia, calidad, compilación, pruebas unitarias, migración y seed sobre PostgreSQL real, salud y conservación del usuario/hash tras recrear contenedores. Las credenciales de migración y ejecución se distinguen; la API HTTP no hereda la contraseña del propietario. Ingesta, recuperación y transporte SSE se describen abajo; el reproductor conserva su incremento propio.
 
