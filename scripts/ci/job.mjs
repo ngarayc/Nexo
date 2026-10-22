@@ -15,8 +15,8 @@ if (
 if (execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim())
   throw new Error('El checkout de CI contiene cambios de fuentes sin registrar.');
 const checks = [];
-const command = (program, args) =>
-  execFileSync(program, args, { stdio: 'inherit', timeout: 600000 });
+const command = (program, args, timeout = 600000) =>
+  execFileSync(program, args, { stdio: 'inherit', timeout });
 const json = async (file) => JSON.parse(await readFile(file, 'utf8'));
 const passed = (name, tests) =>
   checks.push({ name, status: 'passed', ...(tests ? { tests } : {}) });
@@ -61,7 +61,7 @@ if (job === 'quality') {
     'db',
     'web',
   ]);
-  command('npm', ['run', 'test:integration']);
+  command('npm', ['run', 'test:integration'], 1200000);
   passed('postgresql', await json('reports/integration-summary.json'));
 } else if (job === 'security-source') {
   command(process.execPath, ['scripts/ci/install-tools.mjs']);
@@ -122,7 +122,7 @@ if (job === 'quality') {
   command('npm', ['run', 'test:e2e']);
   passed('browser', await json('reports/system-summary.json'));
   // La persistencia se verifica de nuevo sobre las mismas imágenes del recorrido.
-  command('npm', ['run', 'test:integration']);
+  command('npm', ['run', 'test:integration'], 1200000);
   passed('persistence');
 }
 

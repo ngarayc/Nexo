@@ -1,0 +1,1809 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Nexo API",
+    "version": "0.1.0",
+    "description": "Contratos efectivos del backend E1 y transporte SSE E2. Monolito NestJS y demo HTTP local. Reproductor, dashboard y filtro CR-01 mantienen sus incrementos posteriores. Ver api.md y realtime.md para incertidumbre, límites y recuperación."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api",
+      "description": "Demo local predeterminada; usar el origen configurado en otras copias."
+    }
+  ],
+  "security": [
+    {
+      "sessionCookie": []
+    }
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "describeApplication",
+        "summary": "Identidad pública del servicio",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Servicio Nexo",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Application"
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "readHealth",
+        "summary": "Salud pública mínima",
+        "description": "Tiempo real requiere revisión satisfactoria reciente, ningún fallo pendiente y edad de pendientes no mayor de treinta segundos. No detiene la ingesta ni inventa salud por recibir heartbeat.",
+        "responses": {
+          "200": {
+            "description": "Base, esquema y dispatcher disponibles",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Health"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Base, esquema o dispatcher no disponible",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": ["status"],
+                  "properties": {
+                    "status": {
+                      "const": "unavailable"
+                    }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        },
+        "security": []
+      }
+    },
+    "/session": {
+      "post": {
+        "operationId": "createSession",
+        "summary": "Acceder con demo/demo",
+        "description": "Regenera el SID y revoca el anterior. No requiere CSRF de una sesión previa. Diez solicitudes/minuto y dos hashes simultáneos; hasta 32 sesiones. DEMO_ENABLED=false devuelve 404.",
+        "responses": {
+          "200": {
+            "description": "Sesión nueva; SID solo en Set-Cookie",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Cookie nexo.sid firmada, HttpOnly, SameSite=Strict, Path=/, cuatro horas absolutas. Perfil HTTP local: Secure=false.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "408": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "413": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "security": [],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "JSON UTF-8, hasta 4 KiB. Origen antes del parser; formato antes de cuota/hash.",
+          "x-max-body-bytes": 4096,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Credentials"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "operationId": "readSession",
+        "summary": "Consultar sesión sin renovar su plazo",
+        "description": "",
+        "responses": {
+          "200": {
+            "description": "Usuario, vencimiento absoluto y mismo token",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Session"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteSession",
+        "summary": "Revocar exclusivamente la sesión actual",
+        "description": "Cookie y token de esta sesión. No consume la cuota de lecturas.",
+        "responses": {
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "204": {
+            "description": "Sesión revocada y cookie retirada; sin cuerpo",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              },
+              "Set-Cookie": {
+                "description": "Elimina nexo.sid; no registrar el valor.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ]
+      }
+    },
+    "/events/batch": {
+      "post": {
+        "operationId": "ingestBatch",
+        "summary": "Admitir durablemente y esperar clasificaciones",
+        "description": "Autentica antes del parser. Contadores mínimos accepted/duplicates/rejected/errors. Idempotency-Key opcional UUID v4 recupera el recibo con igual cuerpo estructural; otro cuerpo da 409. Presupuesto HTTP 60 s; un 503 pendiente no revierte lo admitido. Consultar el recibo sin reenviar.",
+        "responses": {
+          "200": {
+            "description": "Todas las posiciones clasificadas; incluye rechazos de dominio individuales",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/IngestionFailure"
+          },
+          "403": {
+            "$ref": "#/components/responses/IngestionFailure"
+          },
+          "408": {
+            "$ref": "#/components/responses/IngestionFailure"
+          },
+          "409": {
+            "$ref": "#/components/responses/IngestionFailure"
+          },
+          "413": {
+            "$ref": "#/components/responses/IngestionFailure"
+          },
+          "415": {
+            "$ref": "#/components/responses/IngestionFailure"
+          },
+          "429": {
+            "$ref": "#/components/responses/IngestionFailure"
+          },
+          "500": {
+            "$ref": "#/components/responses/IngestionFailure"
+          },
+          "503": {
+            "$ref": "#/components/responses/IngestionFailure"
+          }
+        },
+        "security": [
+          {
+            "producerKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Perfil predeterminado: hasta 2 MiB y 1.000 posiciones; configuración puede reducirlo. application/json UTF-8 sin compresión.",
+          "x-max-body-bytes": 2097152,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ingestions/{ingestionId}": {
+      "get": {
+        "operationId": "readProducerReceipt",
+        "summary": "Leer recibo mediante API key",
+        "description": "Cuota de 1.200 lecturas/minuto, independiente de los 1.200 POST de productor. 404 no demuestra ausencia de una admisión concurrente.",
+        "responses": {
+          "200": {
+            "description": "Recibo coherente, final/pendiente/fallo técnico",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/IngestionFailure"
+          },
+          "403": {
+            "$ref": "#/components/responses/IngestionFailure"
+          },
+          "404": {
+            "$ref": "#/components/responses/IngestionFailure"
+          },
+          "429": {
+            "$ref": "#/components/responses/IngestionFailure"
+          },
+          "503": {
+            "$ref": "#/components/responses/IngestionFailure"
+          }
+        },
+        "security": [
+          {
+            "producerKey": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IngestionId"
+          }
+        ]
+      }
+    },
+    "/demo/ingestions/{ingestionId}": {
+      "get": {
+        "operationId": "readDemoReceipt",
+        "summary": "Leer el mismo recibo con sesión demo",
+        "description": "Requiere modo demo y sesión. Comparte las 600 lecturas/minuto; fuera de demo devuelve 404.",
+        "responses": {
+          "200": {
+            "description": "Recibo coherente sin exponer API key al navegador",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IngestionId"
+          }
+        ]
+      }
+    },
+    "/vehicles": {
+      "get": {
+        "operationId": "readFleet",
+        "summary": "Consultar flota y búsqueda literal",
+        "description": "Orden vehicleId por puntos de código canónicos. OFF si ignitionOn=false; MOVING si encendido y speedKph>0; STOPPED si encendido y cero. No hay paginación ni truncamiento.",
+        "responses": {
+          "200": {
+            "description": "Último evento confirmado por vehículo y resumen global",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Fleet"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Subcadena literal sin distinguir mayúsculas; ausente/vacío devuelve todos. No se recorta; %/_ no son patrones. Solo q simple; repetidos, estructuras o parámetros ajenos dan 400."
+          }
+        ]
+      }
+    },
+    "/vehicles/{vehicleId}/events": {
+      "get": {
+        "operationId": "readVehicleHistory",
+        "summary": "Historial completo del vehículo",
+        "description": "Identidad exacta sensible a mayúsculas. Incluye eventos tardíos. La variante POST comparte el caso de uso y evita pérdida de identidad en URL.",
+        "responses": {
+          "200": {
+            "description": "Historial ascendente; desconocido 200 vacío",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/History"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/VehicleId"
+          }
+        ]
+      }
+    },
+    "/queries/vehicle-events": {
+      "post": {
+        "operationId": "queryVehicleHistory",
+        "summary": "Historial equivalente mediante JSON",
+        "description": "Sesión, Origin, CSRF y cuota antes del parser. Reserva el cupo compartido antes de leer; no adquiere SQL mientras espera cuerpo. No crea efectos de negocio. Campos ajenos son inertes.",
+        "responses": {
+          "200": {
+            "description": "Mismo contenido, orden y total del GET sobre datos estables",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/History"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "408": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "413": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "415": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        },
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "description": "Hasta 2 MiB reales, JSON UTF-8 sin compresión; cuerpo recibido en 15 s.",
+          "x-max-body-bytes": 2097152,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HistoryInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alerts": {
+      "get": {
+        "operationId": "readAlerts",
+        "summary": "Todas las alertas históricas de exceso",
+        "description": "Incluye eventos tardíos; no duplica por duplicados o rechazos. El filtro vehicleId y su alternativa JSON se incorporarán en CR-01; esta versión todavía no filtra.",
+        "responses": {
+          "200": {
+            "description": "Alertas OVERSPEED por speedKph estrictamente superior a 80",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alerts"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      }
+    },
+    "/snapshot": {
+      "get": {
+        "operationId": "readSnapshot",
+        "summary": "Vista coherente de flota y alertas",
+        "description": "Una transacción corta REPEATABLE READ READ ONLY; cliente liberado antes de transmitir HTTP. Captura schemaVersion=1 e instanceId al comenzar la consulta. Comparar con stream.ready; una transición concurrente puede devolver la generación anterior.",
+        "responses": {
+          "200": {
+            "description": "Colecciones de la misma vista confirmada",
+            "headers": {
+              "Cache-Control": {
+                "description": "no-store",
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Snapshot"
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      }
+    },
+    "/stream": {
+      "get": {
+        "operationId": "streamCommittedChanges",
+        "summary": "Notificaciones SSE de cambios confirmados",
+        "description": "Sesión vigente; si Origin existe debe coincidir con el canónico. Ready primero, heartbeat cada quince segundos. Cuatro conexiones por SID, dieciséis globales y treinta aperturas/minuto por cuenta. Sin replay histórico por Last-Event-ID; resincronizar snapshot al reconectar/cambiar generación. La API key no autoriza. Ver realtime.md.",
+        "parameters": [
+          {
+            "name": "Origin",
+            "in": "header",
+            "required": false,
+            "description": "GET del mismo origen puede omitirlo; si se aporta debe coincidir exactamente con PUBLIC_ORIGIN.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Last-Event-ID",
+            "in": "header",
+            "required": false,
+            "description": "No solicita retransmisión histórica. Siempre recuperar snapshot al reconectar.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stream abierto; cada trama termina en línea vacía y data contiene un JSON de control o dominio. OpenAPI describe el cuerpo como stream de texto; x-sse-message-schema identifica los JSON por trama.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "private, no-store, no-transform"
+                }
+              }
+            },
+            "content": {
+              "text/event-stream": {
+                "schema": {
+                  "type": "string"
+                },
+                "x-sse-message-schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/StreamControl"
+                    },
+                    {
+                      "$ref": "#/components/schemas/StreamChange"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "producerKey": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Secreto solo en entorno servidor/productor. Nunca en Angular o ejemplos públicos."
+      },
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "nexo.sid",
+        "description": "Cookie emitida por POST /session; no enviar una API key como sustituto."
+      },
+      "csrfToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-CSRF-Token",
+        "description": "Token sincronizado de la sesión vigente, mantenido solo en memoria."
+      }
+    },
+    "parameters": {
+      "Origin": {
+        "name": "Origin",
+        "in": "header",
+        "required": true,
+        "description": "Debe coincidir exactamente con PUBLIC_ORIGIN; predeterminado http://localhost:8080. No se permite ausente, null o un origen alternativo.",
+        "schema": {
+          "type": "string"
+        }
+      },
+      "IdempotencyKey": {
+        "name": "Idempotency-Key",
+        "in": "header",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+        },
+        "description": "UUID v4 de recepción; independiente de eventId. Si falta se genera. Conservarlo para consultar ante incertidumbre."
+      },
+      "IngestionId": {
+        "name": "ingestionId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+        }
+      },
+      "VehicleId": {
+        "name": "vehicleId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+        },
+        "description": "Identidad exacta escapada para URL. Usar POST JSON para IDs largos o no representables fielmente."
+      }
+    },
+    "responses": {
+      "Failure": {
+        "description": "Error sanitizado; el código y el tipo de contenido distinguen acceso, validación o indisponibilidad. La frontera proxy también puede rechazar el transporte.",
+        "headers": {
+          "Cache-Control": {
+            "description": "no-store",
+            "schema": {
+              "const": "no-store"
+            }
+          },
+          "Retry-After": {
+            "description": "Segundos hasta poder reintentar cuando aplica una cuota. No ordena reenviar una ingesta incierta.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AccessError"
+            }
+          },
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        }
+      },
+      "IngestionFailure": {
+        "description": "Error de ingesta: ver code, admission y resultsAvailable antes de interpretar los contadores.",
+        "headers": {
+          "Cache-Control": {
+            "description": "no-store",
+            "schema": {
+              "const": "no-store"
+            }
+          },
+          "Retry-After": {
+            "description": "Segundos hasta poder reintentar cuando aplica una cuota. No ordena reenviar una ingesta incierta.",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/IngestionProblem"
+            }
+          },
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/AccessError"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Event": {
+        "type": "object",
+        "required": [
+          "eventId",
+          "vehicleId",
+          "observedAt",
+          "latitude",
+          "longitude",
+          "speedKph",
+          "ignitionOn"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+          },
+          "vehicleId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+          },
+          "observedAt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "speedKph": {
+            "type": "number",
+            "minimum": 0
+          },
+          "ignitionOn": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Vehicle": {
+        "type": "object",
+        "required": [
+          "eventId",
+          "vehicleId",
+          "observedAt",
+          "latitude",
+          "longitude",
+          "speedKph",
+          "ignitionOn",
+          "status"
+        ],
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+          },
+          "vehicleId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+          },
+          "observedAt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "speedKph": {
+            "type": "number",
+            "minimum": 0
+          },
+          "ignitionOn": {
+            "type": "boolean"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["OFF", "MOVING", "STOPPED"]
+          }
+        },
+        "additionalProperties": false
+      },
+      "Alert": {
+        "type": "object",
+        "required": [
+          "type",
+          "eventId",
+          "vehicleId",
+          "observedAt",
+          "latitude",
+          "longitude",
+          "speedKph"
+        ],
+        "properties": {
+          "type": {
+            "const": "OVERSPEED"
+          },
+          "eventId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+          },
+          "vehicleId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+          },
+          "observedAt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+          },
+          "latitude": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "longitude": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "speedKph": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false
+      },
+      "Fleet": {
+        "type": "object",
+        "required": ["items", "total", "overallTotal", "summary"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Vehicle"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "overallTotal": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "summary": {
+            "type": "object",
+            "required": ["OFF", "MOVING", "STOPPED"],
+            "properties": {
+              "OFF": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "MOVING": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "STOPPED": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false,
+        "description": "items se filtra con q; total es filtrado. overallTotal y summary describen la flota global de esa misma lectura."
+      },
+      "History": {
+        "type": "object",
+        "required": ["vehicleId", "items", "total"],
+        "properties": {
+          "vehicleId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false,
+        "description": "Colección completa ascendente por instante exacto y eventId. Desconocido: 200 con items vacío y total 0."
+      },
+      "Alerts": {
+        "type": "object",
+        "required": ["items", "total", "overallTotal"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            }
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "overallTotal": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "additionalProperties": false,
+        "description": "Colección global completa, descendente por instante exacto y eventId. El filtro CR-01 aún no forma parte de esta versión."
+      },
+      "Snapshot": {
+        "type": "object",
+        "required": ["schemaVersion", "instanceId", "vehicles", "alerts"],
+        "properties": {
+          "schemaVersion": {
+            "const": 1
+          },
+          "instanceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "vehicles": {
+            "$ref": "#/components/schemas/Fleet"
+          },
+          "alerts": {
+            "$ref": "#/components/schemas/Alerts"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Flota y alertas de una transacción común REPEATABLE READ READ ONLY. La generación cambia al reiniciar API o recuperar degradación SSE; comparar con stream.ready."
+      },
+      "HistoryInput": {
+        "type": "object",
+        "required": ["vehicleId"],
+        "properties": {
+          "vehicleId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+          }
+        },
+        "additionalProperties": true,
+        "description": "Otros campos son inertes. No transforman la consulta o los permisos."
+      },
+      "Credentials": {
+        "type": "object",
+        "required": ["username", "password"],
+        "properties": {
+          "username": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Entre 1 y 64 bytes UTF-8; cuenta local demo."
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1,
+            "writeOnly": true,
+            "description": "Entre 1 y 256 bytes UTF-8. Credencial local pública acordada: demo."
+          }
+        },
+        "additionalProperties": true
+      },
+      "Session": {
+        "type": "object",
+        "required": ["user", "expiresAt", "csrfToken"],
+        "properties": {
+          "user": {
+            "type": "object",
+            "required": ["id", "username"],
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "username": {
+                "const": "demo"
+              }
+            },
+            "additionalProperties": false
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "csrfToken": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "additionalProperties": false,
+        "description": "No contiene SID, hash, contraseña o API key. El token CSRF se mantiene en memoria; el vencimiento es absoluto, cuatro horas."
+      },
+      "BatchInput": {
+        "type": "object",
+        "required": ["events"],
+        "properties": {
+          "events": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 1000,
+            "items": {},
+            "description": "Cada posición puede ser JSON inválido para el dominio: se clasifica individualmente. No validar todo el arreglo como Event antes de admitirlo."
+          }
+        },
+        "additionalProperties": true
+      },
+      "ItemResult": {
+        "type": "object",
+        "required": ["index", "eventId", "outcome"],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "eventId": {
+            "type": ["string", "null"]
+          },
+          "outcome": {
+            "type": "string",
+            "enum": ["accepted", "duplicate", "rejected"]
+          }
+        },
+        "additionalProperties": false
+      },
+      "ItemError": {
+        "type": "object",
+        "required": ["index", "eventId", "reason"],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "eventId": {
+            "type": ["string", "null"]
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "ItemFailure": {
+        "type": "object",
+        "required": ["index", "code"],
+        "properties": {
+          "index": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "code": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Código técnico cerrado y sanitizado; no es rechazo de validación."
+      },
+      "Receipt": {
+        "type": "object",
+        "required": [
+          "ingestionId",
+          "revision",
+          "complete",
+          "total",
+          "accepted",
+          "duplicates",
+          "rejected",
+          "results",
+          "errors",
+          "pendingIndexes",
+          "failedIndexes",
+          "failures",
+          "requestId"
+        ],
+        "properties": {
+          "ingestionId": {
+            "type": "string",
+            "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "complete": {
+            "type": "boolean"
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "accepted": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "duplicates": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "rejected": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemResult"
+            }
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemError"
+            }
+          },
+          "pendingIndexes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "failedIndexes": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "failures": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemFailure"
+            }
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Una lectura coherente: resultados clasificados, pendientes y fallidos particionan total. complete solo si todas las posiciones tienen clasificación de dominio. GET devuelve 200 aunque el recibo esté pendiente o tenga fallos técnicos."
+      },
+      "AccessError": {
+        "type": "object",
+        "required": ["code", "message"],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Error de acceso/infraestructura sanitizado, sin detalles SQL o configuración."
+      },
+      "Problem": {
+        "type": "object",
+        "required": ["type", "title", "status", "detail", "code", "requestId"],
+        "properties": {
+          "type": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer",
+            "minimum": 400,
+            "maximum": 599
+          },
+          "detail": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": true,
+        "description": "Problem Details de ingesta/consultas. Puede contener extensiones de recibo, contadores, admission y resultsAvailable; consultar IngestionProblem y api.md."
+      },
+      "IngestionProblem": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Problem"
+          },
+          {
+            "type": "object",
+            "required": [
+              "accepted",
+              "duplicates",
+              "rejected",
+              "errors",
+              "admission",
+              "resultsAvailable"
+            ],
+            "properties": {
+              "accepted": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "duplicates": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "rejected": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "errors": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ItemError"
+                }
+              },
+              "admission": {
+                "type": "string",
+                "enum": ["not_admitted", "admitted", "unknown"]
+              },
+              "resultsAvailable": {
+                "type": "boolean"
+              },
+              "ingestionId": {
+                "type": "string",
+                "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-4[a-fA-F0-9]{3}-[89abAB][a-fA-F0-9]{3}-[a-fA-F0-9]{12}$"
+              },
+              "revision": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "complete": {
+                "type": "boolean"
+              },
+              "total": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "results": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ItemResult"
+                }
+              },
+              "pendingIndexes": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "failedIndexes": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "failures": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ItemFailure"
+                }
+              }
+            }
+          }
+        ],
+        "description": "Si resultsAvailable=true incluye el recibo coherente y admission=admitted. Con estado no comprobable faltan revisión/listas/complete; contadores cero y errors vacío no afirman ausencia de efectos. No reenviar automáticamente."
+      },
+      "Application": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "const": "Nexo"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Health": {
+        "type": "object",
+        "required": ["status", "database", "schema"],
+        "properties": {
+          "status": {
+            "const": "ok"
+          },
+          "database": {
+            "const": "ok"
+          },
+          "schema": {
+            "const": "ok"
+          }
+        },
+        "additionalProperties": false
+      },
+      "StreamControl": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": ["type", "schemaVersion", "instanceId", "heartbeatMilliseconds"],
+            "properties": {
+              "type": {
+                "const": "stream.ready"
+              },
+              "schemaVersion": {
+                "const": 1
+              },
+              "instanceId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "heartbeatMilliseconds": {
+                "const": 15000
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "schemaVersion", "instanceId"],
+            "properties": {
+              "type": {
+                "const": "stream.heartbeat"
+              },
+              "schemaVersion": {
+                "const": 1
+              },
+              "instanceId": {
+                "type": "string",
+                "format": "uuid"
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": ["type", "schemaVersion", "instanceId", "reason"],
+            "properties": {
+              "type": {
+                "const": "stream.resync-required"
+              },
+              "schemaVersion": {
+                "const": 1
+              },
+              "instanceId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "reason": {
+                "const": "CLIENT_CAPACITY"
+              }
+            },
+            "additionalProperties": false
+          }
+        ],
+        "description": "JSON de controles SSE sin id de dominio. Resync es best effort; cierre exige recuperar snapshot aunque no llegue el control."
+      },
+      "StreamChange": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "messageId",
+              "schemaVersion",
+              "type",
+              "eventId",
+              "vehicleId",
+              "observedAt",
+              "data"
+            ],
+            "properties": {
+              "messageId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "schemaVersion": {
+                "const": 1
+              },
+              "type": {
+                "const": "telemetry.accepted"
+              },
+              "eventId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+              },
+              "vehicleId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+              },
+              "observedAt": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+              },
+              "data": {
+                "type": "object",
+                "required": [
+                  "eventId",
+                  "vehicleId",
+                  "observedAt",
+                  "latitude",
+                  "longitude",
+                  "speedKph",
+                  "ignitionOn"
+                ],
+                "properties": {
+                  "eventId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+                  },
+                  "vehicleId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+                  },
+                  "observedAt": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+                  },
+                  "latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "speedKph": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "ignitionOn": {
+                    "type": "boolean"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "messageId",
+              "schemaVersion",
+              "type",
+              "eventId",
+              "vehicleId",
+              "observedAt",
+              "data"
+            ],
+            "properties": {
+              "messageId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "schemaVersion": {
+                "const": 1
+              },
+              "type": {
+                "const": "vehicle.updated"
+              },
+              "eventId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+              },
+              "vehicleId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+              },
+              "observedAt": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+              },
+              "data": {
+                "type": "object",
+                "required": [
+                  "eventId",
+                  "vehicleId",
+                  "observedAt",
+                  "latitude",
+                  "longitude",
+                  "speedKph",
+                  "ignitionOn",
+                  "state"
+                ],
+                "properties": {
+                  "eventId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+                  },
+                  "vehicleId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+                  },
+                  "observedAt": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+                  },
+                  "latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "speedKph": {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  "ignitionOn": {
+                    "type": "boolean"
+                  },
+                  "state": {
+                    "enum": ["OFF", "MOVING", "STOPPED"]
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "required": [
+              "messageId",
+              "schemaVersion",
+              "type",
+              "eventId",
+              "vehicleId",
+              "observedAt",
+              "data"
+            ],
+            "properties": {
+              "messageId": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+              },
+              "schemaVersion": {
+                "const": 1
+              },
+              "type": {
+                "const": "alert.created"
+              },
+              "eventId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+              },
+              "vehicleId": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+              },
+              "observedAt": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+              },
+              "data": {
+                "type": "object",
+                "required": [
+                  "eventId",
+                  "vehicleId",
+                  "observedAt",
+                  "latitude",
+                  "longitude",
+                  "speedKph",
+                  "ignitionOn",
+                  "type"
+                ],
+                "properties": {
+                  "eventId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+                  },
+                  "vehicleId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Identidad exacta, sin normalizar o recortar. Sin máximo adicional al cuerpo HTTP. JSON conserva NUL y sustitutos escapados; usar POST de historial si la URL no representa el ID."
+                  },
+                  "observedAt": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Instante ISO 8601 UTC con Z; conserva toda la fracción admitida y puede usar año expandido. No se limita al formato RFC 3339 de cuatro dígitos ni a Date/nanosegundos."
+                  },
+                  "latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "speedKph": {
+                    "type": "number",
+                    "exclusiveMinimum": 80
+                  },
+                  "ignitionOn": {
+                    "type": "boolean"
+                  },
+                  "type": {
+                    "const": "OVERSPEED"
+                  }
+                },
+                "additionalProperties": false
+              }
+            },
+            "additionalProperties": false
+          }
+        ],
+        "description": "JSON del cambio confirmado. SSE id coincide con messageId y event con type. Top-level IDs/instante coinciden con data; esa igualdad se valida en el servidor. Puede repetirse un UUID ante marcado no confirmado."
+      }
+    }
+  }
+}

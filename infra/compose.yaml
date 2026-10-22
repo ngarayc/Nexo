@@ -68,7 +68,9 @@ services:
     ports: ['127.0.0.1:${WEB_PORT:-8080}:8080']
     depends_on:
       api:
-        condition: service_healthy
+        # El proxy debe permitir ingesta/diagnóstico aun si falla la outbox.
+        # Los healthchecks completos y --wait siguen reflejando la degradación.
+        condition: service_started
     healthcheck:
       test:
         [CMD-SHELL, 'curl --fail --silent --max-time 4 http://127.0.0.1:8080/api/health >/dev/null']

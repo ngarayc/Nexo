@@ -13,11 +13,11 @@ docker compose --env-file .env.local -f infra/compose.yaml up --build -d --wait
 
 El script requiere Bash y OpenSSL. Genera cuatro valores independientes de 32 bytes aleatorios en hexadecimal, usa permisos privados y rechaza reemplazar un `.env.local` existente. `.env.example` describe las variables sin valores utilizables. La configuración real queda fuera de Git y del contexto de build. Usar `compose config --quiet` para validar sin volcar secretos.
 
-Abrir `http://localhost:8080` e ingresar con `demo` / `demo`. `PUBLIC_ORIGIN` se deriva en Compose de ese puerto canónico; no usar otro host en el navegador. `GET /api` identifica Nexo y `GET /api/health` comprueba conexión, versión de migración y usuario preparado. La salud no anuncia cola o SSE antes de que existan.
+Abrir `http://localhost:8080` e ingresar con `demo` / `demo`. `PUBLIC_ORIGIN` se deriva en Compose de ese puerto canónico; no usar otro host en el navegador. `GET /api` identifica Nexo y `GET /api/health` comprueba conexión, versión de migración, usuario preparado y disponibilidad real del [dispatcher SSE](realtime.md).
 
 ## Arranque y credenciales
 
-Compose espera la salud de PostgreSQL antes de iniciar API y la de API antes de iniciar web. La API aplica migraciones y prepara `demo` / `demo` antes de aceptar tráfico. El seed utiliza Argon2id con 19 MiB, dos iteraciones y paralelismo uno; revisa los parámetros mediante la biblioteca, sin depender de su orden serializado.
+Compose espera la salud de PostgreSQL antes de iniciar API. Web inicia después de que arranque el contenedor API, para mantener accesibles ingesta y diagnóstico si la outbox comienza degradada. La API aplica migraciones y prepara `demo` / `demo` antes de aceptar tráfico; durante esa preparación el proxy puede responder 502. Los probes de API/web conservan la salud completa y `up --wait` no aprueba mientras persista indisponibilidad. El seed utiliza Argon2id con 19 MiB, dos iteraciones y paralelismo uno; revisa los parámetros mediante la biblioteca, sin depender de su orden serializado.
 
 Repetir el arranque conserva ID y hash. En una base inicializada, una cuenta ausente o incompatible impide preparar el servicio: no se reemplaza silenciosamente. SQL permite únicamente el nombre `demo` y su unicidad. `DEMO_ENABLED=false` omite seed y deniega login/sesiones sin borrar la cuenta. Reiniciar API invalida sesiones; volver a ingresar conserva los datos durables.
 
@@ -28,6 +28,8 @@ La preparación incorpora también el esquema interno de pg-boss y la cola, ante
 El productor usa X-API-Key de entorno para POST /api/events/batch y GET /api/ingestions/:id; Angular no recibe esa credencial. El panel puede leer el mismo recibo con sesión en GET /api/demo/ingestions/:id. El POST devuelve 200 cuando todas sus posiciones quedan clasificadas dentro del plazo; si continúa pendiente responde 503 con recibo. Consultar no crea ni reenvía trabajo. El reconciliador conserva el presupuesto tras reinicio; agotar tres oportunidades o detectar una invariante conocida cierra técnicamente el lote sin contar rechazos de dominio. Un POST que observa ese cierre devuelve 500; leer el recibo mediante GET sigue siendo 200. Reiniciar no reactiva un lote terminal. Conservar ingestionId, especialmente si la primera respuesta se perdió.
 
 El perfil de demo/CI conserva 1.000 posiciones y 2 MiB. Las dos variables opcionales INGEST_MAX_EVENTS_PER_BATCH e INGEST_MAX_BODY_BYTES permiten reducirlo; valores incompatibles con esquema/proxy impiden arrancar. El tamaño retenido es contabilidad lógica y no espacio físico de disco.
+
+Las [consultas de flota, historial, alertas y snapshot](queries.md) usan sesión, cuota compartida de 600/minuto y el pool de lectura. POST /api/queries/vehicle-events requiere además origen/CSRF antes del parser de 2 MiB y conserva el GET de historial. GET /api/alerts todavía devuelve la colección global; CR-01 incorpora su filtro después. Estas rutas no crean trabajo ni usan la API key como acceso del panel.
 
 Se rechazan configuración ausente, secretos inválidos y reutilización del secreto de sesión como API key. La generación acredita el origen aleatorio; la longitud de un valor arbitrario no demuestra entropía. Los fallos HTTP no exponen cadenas de conexión, contraseñas o stacks.
 

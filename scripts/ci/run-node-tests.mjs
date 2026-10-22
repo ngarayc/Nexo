@@ -17,7 +17,12 @@ const files = (await readdir(directory))
 if (files.length === 0) throw new Error('Inventario de pruebas vacío.');
 const observed = new Set();
 let summary;
-for await (const event of run({ files, concurrency: false, timeout: 180000 })) {
+// La integración incorpora el recorrido acumulado de 10k y su repetición.
+for await (const event of run({
+  files,
+  concurrency: false,
+  timeout: scope === 'integration' ? 360000 : 180000,
+})) {
   if (event.type === 'test:fail') {
     console.error(
       `Prueba fallida: ${relative(process.cwd(), event.data.file ?? directory)}:${event.data.line ?? 0}`,

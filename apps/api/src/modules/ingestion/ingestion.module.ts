@@ -13,9 +13,10 @@ import { IngestionWorker } from './adapters/queue/ingestion-worker.js';
 import { RecoverItem } from './adapters/postgres/recover-item.js';
 import { ReconcileIngestion } from './application/reconcile.js';
 import { IngestionReconciler } from './adapters/queue/ingestion-reconciler.js';
+import { RuntimeModule } from '../../platform/runtime/runtime.module.js';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, RuntimeModule],
   controllers: [IngestionController],
   providers: [
     WriteDatabase,

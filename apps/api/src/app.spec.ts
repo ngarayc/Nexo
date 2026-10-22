@@ -32,6 +32,14 @@ vi.mock('./modules/ingestion/public.js', async () => {
   return { IngestionModule: IngestionStubModule, IngestionIngress: IngressStub };
 });
 
+// Despacho SQL/streams cuentan con suites propias; aquí se comprueba bootstrap.
+vi.mock('./modules/realtime/public.js', async () => {
+  const { Module } = await import('@nestjs/common');
+  class RealtimeStubModule {}
+  Module({})(RealtimeStubModule);
+  return { RealtimeModule: RealtimeStubModule };
+});
+
 describe('bootstrap HTTP y metadatos de inyección Nest', () => {
   let app: INestApplication | undefined;
   beforeEach(() => {

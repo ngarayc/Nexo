@@ -11,7 +11,7 @@ runs:
         package-manager-cache: false
     - shell: bash
       run: |
-        npm install --prefix "$RUNNER_TEMP/nexo-npm" --no-save --package-lock=false --ignore-scripts npm@12.2.0
+        npm install --prefix "$RUNNER_TEMP/nexo-npm" --no-save --package-lock=false --ignore-scripts --no-audit npm@12.2.0
         printf '%s\n' "$RUNNER_TEMP/nexo-npm/node_modules/.bin" >> "$GITHUB_PATH"
     - shell: bash
-      run: npm ci
+      run: npm ci --no-audit
