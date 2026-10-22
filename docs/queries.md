@@ -1,13 +1,14 @@
 # Consultas autenticadas
 
-La [issue #20](https://github.com/ngarayc/Nexo/issues/20) añade el modelo de lectura de flota, historial, alertas y snapshot. Todas las rutas requieren sesión demo vigente, conservan `Cache-Control: no-store` y comparten la cuota de 600 consultas por minuto de la cuenta. La API key del productor no sustituye la sesión.
+La [issue #20](https://github.com/ngarayc/Nexo/issues/20) añade el modelo de lectura de flota, historial, alertas y snapshot. Todas las rutas requieren sesión demo vigente, conservan `Cache-Control: no-store` y comparten la cuota de 600 consultas por minuto de la cuenta. La API key del productor no sustituye la sesión. [CR-01 #59](https://github.com/ngarayc/Nexo/issues/59) añade el filtro exacto de alertas y su transporte JSON.
 
 | Ruta                                  | Resultado                                                       |
 | ------------------------------------- | --------------------------------------------------------------- |
 | `GET /api/vehicles?q=...`             | `items`, `total` filtrado, `overallTotal` y `summary` globales  |
 | `GET /api/vehicles/:vehicleId/events` | `vehicleId`, `items`, `total`; historial completo               |
 | `POST /api/queries/vehicle-events`    | El mismo historial, con `vehicleId` en JSON                     |
-| `GET /api/alerts`                     | `items`, `total`, `overallTotal`; alertas históricas completas  |
+| `GET /api/alerts?vehicleId=...`       | Alertas históricas con filtro exacto opcional                   |
+| `POST /api/queries/alerts`            | Las mismas alertas filtradas, con `vehicleId` en JSON           |
 | `GET /api/snapshot`                   | `schemaVersion`, `instanceId`, `vehicles` y `alerts` coherentes |
 
 ## Contenido y orden
@@ -20,17 +21,23 @@ La flota lee la proyección confirmada y ordena por vehicleId según la codifica
 
 El historial compara la clave binaria completa y devuelve todos los eventos aceptados, incluidos tardíos, por `(segundo UTC, fracción, eventId)` ascendente. Un vehículo desconocido devuelve 200 con su identificador, `items: []` y `total: 0`. La identidad sigue siendo exacta y sensible a mayúsculas, espacios, NUL o sustitutos escapados: la búsqueda parcial de flota no modifica esa regla.
 
-Las alertas incluyen type OVERSPEED, eventId, vehicleId, observedAt, speedKph, latitude y longitude. Se ordenan por instante y eventId descendentes. Esta base devuelve todas las alertas: el filtro especializado vehicleId y su POST complementario se incorporan después en CR-01. En este incremento un parámetro vehicleId en GET /alerts no filtra la colección. Las colecciones son completas; no hay truncamiento o paginación implícitos.
+Las alertas incluyen type OVERSPEED, eventId, vehicleId, observedAt, speedKph, latitude y longitude. Se ordenan por instante y eventId descendentes. GET sin filtro devuelve todas las alertas. vehicleId opcional exige un único string no vacío; compara el ID completo sin recortar, cambiar mayúsculas, normalizar ni buscar subcadenas. Vacío, repetido, array, objeto, parámetro ajeno o URI mal codificada produce 400 INVALID_QUERY. Un vehículo desconocido devuelve 200 con items vacío y total cero; overallTotal conserva el número global de alertas de esa lectura. total siempre coincide con items.length. Las colecciones son completas; no hay truncamiento o paginación implícitos.
 
-## Historial mediante JSON
+## Historial y alertas mediante JSON
 
-El GET exigido permanece disponible. El POST transporta exactamente la misma identidad mediante `{"vehicleId":"VEH-001"}` y usa el mismo caso de consulta. Permite IDs que exceden los límites de URL o contienen unidades que no pueden representarse fielmente en ella. Un fallo de URL/transporte no equivale a historial vacío; el cliente debe usar la variante JSON cuando corresponda.
+Los GET exigidos permanecen disponibles. POST /queries/vehicle-events y POST /queries/alerts transportan exactamente la misma identidad mediante `{"vehicleId":"VEH-001"}` y usan el mismo caso de consulta de su GET. Permiten IDs que exceden los límites de URL o contienen unidades que no pueden representarse fielmente en ella. Un fallo de URL/transporte no equivale a una colección vacía; el cliente debe usar la variante JSON cuando corresponda.
 
 El guard verifica sesión, Origin exacto y X-CSRF-Token, y después consume la cuota compartida de lectura. El controlador reserva el cupo de consultas antes de leer el cuerpo. El parser común de transporte, compartido con ingesta, admite application/json UTF-8 sin compresión y hasta 2 MiB reales. Su espera de recepción es de 15 segundos; la conexión SQL solo se adquiere después de recibir y validar el documento.
 
 Se exige objeto y vehicleId string no vacío, sin coerción, recorte o normalización. Los demás campos son inertes y no configuran acceso o consulta. JSON malformado/UTF-8 inválido da 400 MALFORMED_JSON; cuerpo/ID incorrecto, 400 INVALID_QUERY; exceso, 413 BODY_TOO_LARGE; formato ajeno, 415 UNSUPPORTED_MEDIA_TYPE. La aplicación utiliza Problem Details para esos errores; los rechazos de acceso mantienen el contrato de sesión. Un fallo SQL produce error sanitizado, sin reemplazarlo por una colección vacía.
 
 La comparación GET/POST se verifica sobre datos estables: mismo contenido, orden y totales. Peticiones separadas pueden observar commits distintos; no se promete igualdad si se escribe entre ambas. Las consultas no admiten eventos, crean jobs o alteran recibos, proyecciones, alertas u outbox.
+
+## Consistencia del filtro de alertas
+
+La variante filtrada usa una sola sentencia SELECT parametrizada en el pool de consultas. Compara e.vehicle_key=$1 con Buffer.from(encodeIdentity(vehicleId)); %, _, comillas, espacios, NUL y sustitutos son datos. Un agregado global de alerts se une mediante LEFT JOIN a los eventos del vehículo que tienen alerta. La fila del agregado mantiene overallTotal incluso sin coincidencias; el adaptador retira esa fila nula de items. El conteo y los eventos comparten el snapshot de la sentencia PostgreSQL. No hay dos lecturas independientes ni conversión de fallo SQL a vacío. El orden usa segundo, fracción exacta COLLATE "C" y event_key descendentes.
+
+No se añade DDL. El conteo global todavía requiere contar alertas; el índice hash existente puede servir para igualdad de vehículo, sin garantizar un plan o tiempo concretos. Antes de recomendar un índice deben revisarse el plan real y datos representativos. La prueba alertsConsistency ejecutó EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) sobre la sentencia capturada del adaptador real; no impone uso de índice ni un umbral de latencia.
 
 ## Snapshot y recursos
 
@@ -50,4 +57,4 @@ Todas las consultas comparten las 16 operaciones admitidas por DatabaseSlots y e
 
 EXPLAIN ANALYZE verifica el historial de un vehículo con 100 eventos sobre los 10.000 persistidos. El informe local `reports/volume-sample.json`, fuera de Git, conserva tiempos, nodos y picos observados, sin IDs de entrada ni credenciales. Un índice de igualdad puede reducir filas candidatas y aun requerir ordenación residual. Los tiempos de una ejecución local no acreditan capacidad productiva ni constituyen un umbral universal de rendimiento.
 
-Las pruebas nativas comparan ambos oráculos por HTTP, últimos estados, ocho historiales, alertas y snapshot, incluyendo ausencia de efectos persistidos. Casos separados cubren IDs largos/sustitutos, fracciones subnanosegundo, literales de búsqueda, límites de API/proxy, 16 cuerpos retenidos/aborto y cuota GET/POST compartida. Una prueba intercala una ingesta real entre las dos lecturas del snapshot y comprueba READ ONLY/REPEATABLE READ. [Verificación](verification.md) mantiene resultados y candidatos; no se atribuye dashboard, SSE o CR-01 a estas consultas.
+Las pruebas nativas comparan ambos oráculos por HTTP, últimos estados, ocho historiales, alertas y snapshot, incluyendo ausencia de efectos persistidos. Casos separados cubren IDs largos/sustitutos, fracciones subnanosegundo, literales de búsqueda, límites de API/proxy, 16 cuerpos retenidos/aborto y cuota GET/POST compartida. Una prueba intercala una ingesta real entre las dos lecturas del snapshot y comprueba READ ONLY/REPEATABLE READ. [Verificación](verification.md) mantiene resultados y candidatos; esos resultados previos no acreditan CR-01. Las pruebas nuevas ejecutadas cubren los dos replays oficiales, igualdad literal GET/POST, POST largo/sustitutos, API/proxy 2 MiB exacto/+1, parser/acceso/cuota/cupo, una única sentencia PostgreSQL real y ausencia de efectos incluyendo cuenta y tablas de replay. Los parches originales pasaron sus casos focalizados y el SQL seleccionado conserva esa implementación; el lector compartido posterior tiene verificación propia documentada. Se conserva un fallo de ejecución sin causa determinada y su repetición diagnóstica aprobada. No se declaran rendimiento productivo ni aprobación humana de CR-01.

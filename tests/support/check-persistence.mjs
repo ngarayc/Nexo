@@ -211,6 +211,39 @@ const cases = {
       );
     }
   },
+  async compressed_identity() {
+    const vehicle = prefix + '\u0000\ud800' + 'x'.repeat(70000);
+    const first = await insertEvent(prefix + 'first', vehicle, '2026-01-01T18:00:00Z');
+    const next = await insertEvent(prefix + 'next', vehicle, '2026-01-01T18:01:00Z');
+    await db.insert(vehicleLatest).values({ vehicleKey: first.vehicleKey, eventPk: first.eventPk });
+    const storage = await runtime.query(
+      'SELECT pg_column_size(vehicle_key)<octet_length(vehicle_key) AS compressed FROM vehicle_latest WHERE event_pk=$1',
+      [first.eventPk],
+    );
+    assert.equal(storage.rows[0].compressed, true);
+    const client = await runtime.connect();
+    try {
+      await client.query('BEGIN');
+      // Acota la regresión; no constituye una promesa de latencia productiva.
+      await client.query("SET LOCAL statement_timeout='1500ms'");
+      const canonical = await client.query(
+        'SELECT nexo_identity_is_canonical(vehicle_key) AS valid FROM vehicle_latest WHERE event_pk=$1',
+        [first.eventPk],
+      );
+      assert.equal(canonical.rows[0].valid, true);
+      const updated = await client.query(
+        'UPDATE vehicle_latest SET event_pk=$1 WHERE vehicle_key=$2 RETURNING vehicle_key,event_pk::text',
+        [next.eventPk.toString(), bytes(vehicle)],
+      );
+      assert.equal(updated.rowCount, 1);
+      assert.equal(updated.rows[0].event_pk, next.eventPk.toString());
+      assert.equal(decodeIdentity(updated.rows[0].vehicle_key), vehicle);
+      await client.query('COMMIT');
+    } finally {
+      await client.query('ROLLBACK');
+      client.release();
+    }
+  },
   async long_identity() {
     const id = prefix + randomBytes(50000).toString('hex');
     const vehicle = 'V' + id;

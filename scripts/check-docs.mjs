@@ -20,6 +20,7 @@ const files = [
   resolve('README.md'),
   resolve('AGENTS.md'),
   resolve('AGENT-GOVERNANCE.md'),
+  resolve('AGENT-EFFICIENCY.md'),
   ...(await markdownFiles('docs')),
   ...(await markdownFiles('skills')),
 ];

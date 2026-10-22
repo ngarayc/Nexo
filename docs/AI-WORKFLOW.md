@@ -1,6 +1,6 @@
 # Uso de IA durante la construcción
 
-El [ciclo EP-03](agent-cycles/EP-03.md) registra la historia funcional de alertas base, propuesta, workflows aplicados, pruebas/correcciones observadas y estado de revisión humana. Conserva su referencia anterior al filtro CR-01 y no anticipa el resultado de la comparación posterior.
+El [ciclo EP-03](agent-cycles/EP-03.md) registra la historia funcional de alertas base, propuesta, workflows aplicados, pruebas/correcciones observadas y estado de revisión humana. Conserva su referencia anterior al filtro. [CR-01](agent-cycles/CR-01.md) registra el cambio posterior de API y [AGENT-EFFICIENCY](../AGENT-EFFICIENCY.md) la comparación ejecutada y sus limitaciones.
 
 ## Preparación de E0-I01
 
@@ -10,7 +10,7 @@ El agente contrastó la solicitud con los requisitos y el flujo de bootstrap. En
 
 Se prepararon externamente el cuerpo de la issue E0-I01, reglas, tres procedimientos y archivos candidatos de NestJS/Angular. La issue [#1](https://github.com/ngarayc/Nexo/issues/1) se publicó antes de incorporar los archivos al repositorio. Se resolvió el lockfile y se ejecutaron instalación limpia, calidad, compilación, 13 pruebas y arranque HTTP de las dos aplicaciones.
 
-Esta preparación no constituye los dos ciclos funcionales requeridos. [EP-03](agent-cycles/EP-03.md) ya incorpora la lista de alertas y su revisión técnica; la revisión humana del candidato a main permanece pendiente. CR-01 añadirá el filtro después de una referencia estable y revisada de la base.
+Esta preparación no constituye los dos ciclos funcionales requeridos. EP-03 dispone de revisión humana real en su registro; CR-01 parte de su base estable y tiene especificación, implementación y comparación de API propias. La selección visual y revisión humana del candidato CR-01 conservan su estado separado.
 
 ## Registro de cada ciclo
 
@@ -26,4 +26,8 @@ El agente publica y promueve a test con revisión técnica y CI; las PR hacia ma
 - `nexo-implement-change`: preparar e incorporar el workspace bajo la issue #1 y ejecutar sus comandos.
 - `nexo-review-change`: detectar Vite vulnerable en el árbol real, comprobar el parche, revisar metadatos de inyección y corregir la incompatibilidad de tipos del adaptador multibundler sin silenciar el typecheck.
 
-La corrección se verificó con auditoría sin hallazgos, calidad, builds y 13 pruebas. Esta revisión técnica la realizó el agente; no se atribuye como revisión humana ni sustituye las iteraciones funcionales EP-03/CR-01 pendientes. La revisión del candidato hacia main y las decisiones humanas de esos ciclos se registrarán cuando ocurran.
+La corrección se verificó con auditoría sin hallazgos, calidad, builds y 13 pruebas. Esta revisión técnica la realizó el agente; no se atribuye como revisión humana ni sustituye los ciclos funcionales. Sus registros propios identifican candidatos, comprobaciones y decisiones humanas reales.
+
+## Comparación aplicada en CR-01
+
+Dos propuestas autorizadas de solo lectura se prepararon en contextos separados sobre el mismo checkout. El principal aplicó y comprobó ambas desde el mismo árbol; no se crearon entornos agénticos adicionales. Las condiciones se publicaron antes de los intentos. La comparación conserva parches originales, lecturas declaradas, criterios comunes, resultados y un fallo de transporte indeterminado con repetición puntual aprobada. Se seleccionó la consulta de una sentencia general y el lector JSON compartido focalizado. La consolidación se verifica por separado; no se afirma ahorro causal o métricas de tokens ausentes. [El informe](../AGENT-EFFICIENCY.md) permite revisar esos hechos sin publicar conversaciones o planes privados.

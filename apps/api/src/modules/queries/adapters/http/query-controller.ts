@@ -10,8 +10,9 @@ import {
   DomainQueries,
   InvalidQuery,
   readFleetQuery,
+  readAlertsQuery,
   readVehicleId,
-  readHistoryBody,
+  readVehicleQueryBody,
 } from '../../application/queries.js';
 
 const problems = {
@@ -26,6 +27,19 @@ const problems = {
   REQUEST_TIMEOUT: [408, 'Tiempo de espera agotado', 'El cuerpo no se recibió dentro del plazo.'],
   QUERY_CAPACITY_EXCEEDED: [503, 'Servicio ocupado', 'Hay consultas en curso. Inténtalo de nuevo.'],
 } as const;
+
+function readAlertFilter(request: Request): string | undefined {
+  const separator = request.originalUrl.indexOf('?');
+  const source = separator === -1 ? '' : request.originalUrl.slice(separator + 1);
+  try {
+    decodeURIComponent(source);
+  } catch {
+    throw new InvalidQuery();
+  }
+  const query = new URLSearchParams(source);
+  if (query.getAll('vehicleId').length > 1) throw new InvalidQuery();
+  return readAlertsQuery(Object.fromEntries(query));
+}
 
 @Controller()
 @RequireAccess('session-read')
@@ -44,7 +58,7 @@ export class QueryController {
   }
   @Get('alerts')
   alerts(@Req() request: Request) {
-    return this.run(request, () => this.queries.alerts());
+    return this.run(request, () => this.queries.alerts(readAlertFilter(request)));
   }
   @Get('snapshot')
   snapshot(@Req() request: Request) {
@@ -54,16 +68,25 @@ export class QueryController {
   @HttpCode(200)
   @RequireAccess('session-query')
   queryHistory(@Req() request: Request) {
-    return this.run(request, async () => {
-      const source = await readJsonBody(request, 2 * 1024 * 1024, Date.now() + 15000);
-      let body: unknown;
-      try {
-        body = JSON.parse(source) as unknown;
-      } catch {
-        throw new JsonBodyError('MALFORMED_JSON');
-      }
-      return this.queries.history(readHistoryBody(body));
-    });
+    return this.run(request, async () =>
+      this.queries.history(await this.readVehicleQuery(request)),
+    );
+  }
+  @Post('queries/alerts')
+  @HttpCode(200)
+  @RequireAccess('session-query')
+  queryAlerts(@Req() request: Request) {
+    return this.run(request, async () => this.queries.alerts(await this.readVehicleQuery(request)));
+  }
+  private async readVehicleQuery(request: Request): Promise<string> {
+    const source = await readJsonBody(request, 2 * 1024 * 1024, Date.now() + 15000);
+    let body: unknown;
+    try {
+      body = JSON.parse(source) as unknown;
+    } catch {
+      throw new JsonBodyError('MALFORMED_JSON');
+    }
+    return readVehicleQueryBody(body);
   }
   private async run<T>(request: Request, operation: () => Promise<T>): Promise<T> {
     try {

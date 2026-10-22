@@ -9,6 +9,8 @@ for (const [scenario, description] of Object.entries({
     'consultas autenticadas y snapshot conservan ambos oráculos, historial, latest y alertas sin efectos de negocio',
   adversarial:
     'consultas conservan identidad exacta, fracción subnanosegundo, búsqueda literal y límites JSON por API/proxy',
+  alerts: 'CR-01 conserva igualdad binaria, orden, límites API/proxy y ausencia de efectos',
+  alertsConsistency: 'CR-01 obtiene items y total global con una sola sentencia PostgreSQL real',
   snapshot: 'snapshot REPEATABLE READ no mezcla una ingesta confirmada entre sus dos lecturas',
   capacity:
     'dieciséis cuerpos de consulta ocupan el cupo antes del parser y el aborto lo libera sin escrituras',

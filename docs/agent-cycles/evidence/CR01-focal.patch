@@ -1,0 +1,896 @@
+diff --git a/apps/api/src/modules/queries/application/queries.ts b/apps/api/src/modules/queries/application/queries.ts
+--- a/apps/api/src/modules/queries/application/queries.ts
++++ b/apps/api/src/modules/queries/application/queries.ts
+@@ -12,7 +12,7 @@
+ export interface ReadModel {
+   fleet(): Promise<readonly EventView[]>;
+   history(vehicleId: string): Promise<readonly EventView[]>;
+-  alerts(): Promise<readonly AlertView[]>;
++  alerts(vehicleId?: string): Promise<AlertCollection>;
+   snapshot(): Promise<{
+     readonly vehicles: readonly EventView[];
+     readonly alerts: readonly AlertView[];
+@@ -48,8 +48,8 @@
+     const items = await this.model.history(vehicleId);
+     return { vehicleId, items, total: items.length };
+   }
+-  async alerts() {
+-    return alertView(await this.model.alerts());
++  async alerts(vehicleId?: string) {
++    return this.model.alerts(vehicleId);
+   }
+   async snapshot() {
+     const instanceId = this.instance.id;
+diff --git a/apps/api/src/modules/queries/adapters/http/query-controller.ts b/apps/api/src/modules/queries/adapters/http/query-controller.ts
+--- a/apps/api/src/modules/queries/adapters/http/query-controller.ts
++++ b/apps/api/src/modules/queries/adapters/http/query-controller.ts
+@@ -27,6 +27,30 @@
+   QUERY_CAPACITY_EXCEEDED: [503, 'Servicio ocupado', 'Hay consultas en curso. Inténtalo de nuevo.'],
+ } as const;
+ 
++// El parser permisivo de query strings puede sustituir UTF-8/escapes inválidos.
++// Decodificar aquí permite rechazarlos sin cambiar la identidad ni otros GET.
++function readAlertFilter(url: string): string | undefined {
++  const offset = url.indexOf('?');
++  if (offset === -1) return undefined;
++  let vehicleId: string | undefined;
++  for (const field of url.slice(offset + 1).split('&')) {
++    if (field === '') continue;
++    const separator = field.indexOf('=');
++    const rawName = separator === -1 ? field : field.slice(0, separator);
++    const rawValue = separator === -1 ? '' : field.slice(separator + 1);
++    let name: string, value: string;
++    try {
++      name = decodeURIComponent(rawName.replace(/\+/g, ' '));
++      value = decodeURIComponent(rawValue.replace(/\+/g, ' '));
++    } catch {
++      throw new InvalidQuery();
++    }
++    if (name !== 'vehicleId' || vehicleId !== undefined) throw new InvalidQuery();
++    vehicleId = readVehicleId(value);
++  }
++  return vehicleId;
++}
++
+ @Controller()
+ @RequireAccess('session-read')
+ export class QueryController {
+@@ -44,7 +68,7 @@
+   }
+   @Get('alerts')
+   alerts(@Req() request: Request) {
+-    return this.run(request, () => this.queries.alerts());
++    return this.run(request, () => this.queries.alerts(readAlertFilter(request.originalUrl)));
+   }
+   @Get('snapshot')
+   snapshot(@Req() request: Request) {
+@@ -54,16 +78,23 @@
+   @HttpCode(200)
+   @RequireAccess('session-query')
+   queryHistory(@Req() request: Request) {
+-    return this.run(request, async () => {
+-      const source = await readJsonBody(request, 2 * 1024 * 1024, Date.now() + 15000);
+-      let body: unknown;
+-      try {
+-        body = JSON.parse(source) as unknown;
+-      } catch {
+-        throw new JsonBodyError('MALFORMED_JSON');
+-      }
+-      return this.queries.history(readHistoryBody(body));
+-    });
++    return this.run(request, async () => this.queries.history(await this.readVehicleQuery(request)));
++  }
++  @Post('queries/alerts')
++  @HttpCode(200)
++  @RequireAccess('session-query')
++  queryAlerts(@Req() request: Request) {
++    return this.run(request, async () => this.queries.alerts(await this.readVehicleQuery(request)));
++  }
++  private async readVehicleQuery(request: Request): Promise<string> {
++    const source = await readJsonBody(request, 2 * 1024 * 1024, Date.now() + 15000);
++    let body: unknown;
++    try {
++      body = JSON.parse(source) as unknown;
++    } catch {
++      throw new JsonBodyError('MALFORMED_JSON');
++    }
++    return readHistoryBody(body);
+   }
+   private async run<T>(request: Request, operation: () => Promise<T>): Promise<T> {
+     try {
+diff --git a/apps/api/src/modules/queries/adapters/postgres/read-model.ts b/apps/api/src/modules/queries/adapters/postgres/read-model.ts
+--- a/apps/api/src/modules/queries/adapters/postgres/read-model.ts
++++ b/apps/api/src/modules/queries/adapters/postgres/read-model.ts
+@@ -1,7 +1,7 @@
+ import type { Pool, PoolClient } from 'pg';
+ import { decodeIdentity, encodeIdentity, observedInstantUtc } from '../../../telemetry/public.js';
+ import type { EventView } from '../../../telemetry/public.js';
+-import type { AlertView, ReadModel } from '../../application/queries.js';
++import type { AlertCollection, AlertView, ReadModel } from '../../application/queries.js';
+ 
+ type EventRow = {
+   event_key: Buffer;
+@@ -16,7 +16,9 @@
+ const columns =
+   'e.event_key,e.vehicle_key,e.observed_epoch_second::text,e.observed_fraction,e.latitude,e.longitude,e.speed_kph,e.ignition_on';
+ const fleetSql = `SELECT ${columns} FROM vehicle_latest v JOIN telemetry_events e ON e.event_pk=v.event_pk ORDER BY v.vehicle_key`;
+-const alertsSql = `SELECT ${columns} FROM alerts a JOIN telemetry_events e ON e.event_pk=a.event_pk ORDER BY e.observed_epoch_second DESC,e.observed_fraction COLLATE "C" DESC,e.event_key DESC`;
++const alertsSelect = `SELECT ${columns} FROM alerts a JOIN telemetry_events e ON e.event_pk=a.event_pk`;
++const alertsOrder = ` ORDER BY e.observed_epoch_second DESC,e.observed_fraction COLLATE "C" DESC,e.event_key DESC`;
++const alertsSql = alertsSelect + alertsOrder;
+ function eventView(row: EventRow): EventView {
+   return {
+     eventId: decodeIdentity(row.event_key),
+@@ -58,8 +60,29 @@
+       )
+     ).rows.map(eventView);
+   }
+-  async alerts(): Promise<readonly AlertView[]> {
+-    return (await this.pool.query<EventRow>(alertsSql)).rows.map(alertView);
++  async alerts(vehicleId?: string): Promise<AlertCollection> {
++    if (vehicleId === undefined) {
++      const items = (await this.pool.query<EventRow>(alertsSql)).rows.map(alertView);
++      return { items, total: items.length, overallTotal: items.length };
++    }
++    const client: PoolClient = await this.pool.connect();
++    let confirmed = false;
++    try {
++      await client.query('BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY');
++      await client.query("SET LOCAL transaction_timeout='10s'");
++      const items = (
++        await client.query<EventRow>(`${alertsSelect} WHERE e.vehicle_key=$1${alertsOrder}`, [
++          Buffer.from(encodeIdentity(vehicleId)),
++        ])
++      ).rows.map(alertView);
++      const counts = await client.query<{ count: string }>('SELECT count(*) FROM alerts');
++      const overallTotal = Number(counts.rows[0]!.count);
++      await client.query('COMMIT');
++      confirmed = true;
++      return { items, total: items.length, overallTotal };
++    } finally {
++      client.release(!confirmed);
++    }
+   }
+   async snapshot() {
+     const client: PoolClient = await this.pool.connect();
+diff --git a/apps/api/src/modules/queries/application/queries.spec.ts b/apps/api/src/modules/queries/application/queries.spec.ts
+--- a/apps/api/src/modules/queries/application/queries.spec.ts
++++ b/apps/api/src/modules/queries/application/queries.spec.ts
+@@ -22,7 +22,7 @@
+   return {
+     fleet: vi.fn().mockResolvedValue(events),
+     history: vi.fn().mockResolvedValue(events),
+-    alerts: vi.fn().mockResolvedValue([]),
++    alerts: vi.fn().mockResolvedValue({ items: [], total: 0, overallTotal: 0 }),
+     snapshot: vi.fn().mockResolvedValue({ vehicles: events, alerts: [] }),
+   };
+ }
+@@ -105,3 +105,33 @@
+   expect((await first).instanceId).toBe('before');
+   expect((await queries.snapshot()).instanceId).toBe('after');
+ });
++
++it('alertas delega el filtro exacto y conserva orden, valores y totales del puerto coherente', async () => {
++  const source = model();
++  const id = " A_%'\u0000\ud800 ";
++  const item = {
++    type: 'OVERSPEED' as const,
++    eventId: 'z',
++    vehicleId: id,
++    observedAt: '2026-01-01T00:00:00.1234567890001Z',
++    latitude: 4,
++    longitude: -74,
++    speedKph: 81,
++  };
++  const result = { items: [item], total: 1, overallTotal: 4 };
++  source.alerts = vi.fn().mockResolvedValue(result);
++  const queries = new DomainQueries(source, { id: 'instance' });
++  expect(await queries.alerts(id)).toBe(result);
++  expect(source.alerts).toHaveBeenCalledExactlyOnceWith(id);
++  await queries.alerts();
++  expect(source.alerts).toHaveBeenLastCalledWith(undefined);
++  source.alerts = vi.fn().mockResolvedValue({ items: [], total: 0, overallTotal: 4 });
++  expect(await queries.alerts('unknown')).toEqual({ items: [], total: 0, overallTotal: 4 });
++});
++it('un fallo de alertas se propaga y no se etiqueta como colección vacía', async () => {
++  const source = model();
++  source.alerts = vi.fn().mockRejectedValue(new Error('unavailable'));
++  const queries = new DomainQueries(source, { id: 'instance' });
++  await expect(queries.alerts('A')).rejects.toThrow('unavailable');
++  await expect(queries.alerts()).rejects.toThrow('unavailable');
++});
+diff --git a/apps/api/src/modules/queries/adapters/http/query-http.spec.ts b/apps/api/src/modules/queries/adapters/http/query-http.spec.ts
+--- a/apps/api/src/modules/queries/adapters/http/query-http.spec.ts
++++ b/apps/api/src/modules/queries/adapters/http/query-http.spec.ts
+@@ -9,6 +9,7 @@
+ import { ACCESS_CONFIG } from '../../../access/adapters/http/access-config.js';
+ import { IngestionIngress } from '../../../ingestion/public.js';
+ import { DomainQueries } from '../../application/queries.js';
++import type { AlertCollection } from '../../application/queries.js';
+ import { QueryController } from './query-controller.js';
+ 
+ // Sesión/CSRF/cuota/parser reales; el modelo SQL se verifica en integración.
+@@ -33,6 +34,9 @@
+     overallTotal: 0,
+     summary: { OFF: 0, MOVING: 0, STOPPED: 0 },
+   }));
++  const alerts = vi
++    .fn<(vehicleId?: string) => Promise<AlertCollection>>()
++    .mockResolvedValue({ items: [], total: 0, overallTotal: 0 });
+   async function start(readLimit = 600) {
+     const module = await Test.createTestingModule({
+       imports: [AccessModule, DatabaseModule],
+@@ -43,7 +47,7 @@
+           useValue: {
+             history,
+             fleet,
+-            alerts: async () => ({ items: [], total: 0, overallTotal: 0 }),
++            alerts,
+             snapshot: async () => ({ schemaVersion: 1, instanceId: 'instance' }),
+           },
+         },
+@@ -85,11 +89,17 @@
+         .post('/api/queries/vehicle-events')
+         .set('Origin', origin)
+         .set('X-CSRF-Token', logged.body.csrfToken as string);
+-    return { client, post };
++    const postAlerts = () =>
++      client
++        .post('/api/queries/alerts')
++        .set('Origin', origin)
++        .set('X-CSRF-Token', logged.body.csrfToken as string);
++    return { client, post, postAlerts };
+   }
+   beforeEach(() => {
+     history.mockClear();
+     fleet.mockClear();
++    alerts.mockClear();
+   });
+   afterEach(async () => {
+     await app?.close();
+@@ -169,4 +179,111 @@
+     await client.post('/api/queries/vehicle-events').set('Origin', origin).send('{').expect(403);
+     expect(history).toHaveBeenCalledOnce();
+   });
++  it('alertas comprueba sesión, origen y CSRF antes de leer JSON', async () => {
++    const { client } = await start();
++    await request(app!.getHttpServer())
++      .get('/api/alerts?vehicleId=A')
++      .set('X-API-Key', '1'.repeat(64))
++      .expect(403);
++    await request(app!.getHttpServer())
++      .post('/api/queries/alerts')
++      .set('X-API-Key', '1'.repeat(64))
++      .set('Content-Type', 'application/json')
++      .send('{')
++      .expect(403);
++    for (const headers of [
++      {},
++      { Origin: origin },
++      { Origin: origin, 'X-CSRF-Token': 'invalid' },
++      { Origin: 'http://foreign.invalid', 'X-CSRF-Token': 'invalid' },
++    ]) {
++      await client
++        .post('/api/queries/alerts')
++        .set(headers)
++        .set('Content-Type', 'application/json')
++        .send('{')
++        .expect(403);
++    }
++    expect(alerts).not.toHaveBeenCalled();
++  });
++  it('alertas GET/POST preserva ID literal, ausencia y desconocidos', async () => {
++    const { client, postAlerts } = await start();
++    const id = " A/%_'\"+\u0000😀 ";
++    for (const value of [id, 'unknown']) {
++      const get = await client.get('/api/alerts?vehicleId=' + encodeURIComponent(value)).expect(200);
++      expect(get.body).toEqual((await postAlerts().send({ vehicleId: value }).expect(200)).body);
++      expect(alerts).toHaveBeenLastCalledWith(value);
++    }
++    await client.get('/api/alerts').expect(200);
++    expect(alerts).toHaveBeenLastCalledWith(undefined);
++    await client.get('/api/alerts?vehicleId=+').expect(200);
++    expect(alerts).toHaveBeenLastCalledWith(' ');
++    const long = 'x'.repeat(12000) + '\ud800';
++    await postAlerts().send({ vehicleId: long }).expect(200);
++    expect(alerts).toHaveBeenLastCalledWith(long);
++  });
++  it('alertas rechaza vacíos, repetidos, estructuras y escapes URI inválidos', async () => {
++    const { client, postAlerts } = await start();
++    for (const query of [
++      'vehicleId',
++      'vehicleId=',
++      'vehicleId=A&vehicleId=B',
++      'vehicleId=A&%76ehicleId=B',
++      'vehicleId[]=A',
++      'vehicleId[x]=A',
++      'vehicleId=%',
++      'vehicleId=%C3%28',
++      'vehicleId=%ED%A0%80',
++      'vehicleId=A&extra=B',
++    ]) {
++      const response = await client.get('/api/alerts?' + query).expect(400);
++      expect(response.headers['content-type']).toContain('application/problem+json');
++      expect(response.body.code).toBe('INVALID_QUERY');
++      expect(response.body).not.toHaveProperty('stack');
++    }
++    for (const body of [null, [], {}, { vehicleId: '' }, { vehicleId: 1 }, { vehicleId: {} }])
++      await postAlerts().set('Content-Type', 'application/json').send(JSON.stringify(body)).expect(400);
++    expect(alerts).not.toHaveBeenCalled();
++  });
++  it('alertas reutiliza JSON UTF-8, límite exacto de 2 MiB y errores sanitizados', async () => {
++    const { postAlerts } = await start();
++    await postAlerts().set('Content-Type', 'application/json').send('{').expect(400);
++    await postAlerts().type('text').send('{}').expect(415);
++    await postAlerts().set('Content-Encoding', 'gzip').send({ vehicleId: 'A' }).expect(415);
++    await postAlerts()
++      .set('Content-Type', 'application/json')
++      .send(Buffer.from([0xc3, 0x28]))
++      .expect(400);
++    const exact = '{"vehicleId":"A"}'.padEnd(2 * 1024 * 1024);
++    await postAlerts().set('Content-Type', 'application/json; charset=utf-8').send(exact).expect(200);
++    await postAlerts().set('Content-Type', 'application/json').send(exact + ' ').expect(413);
++    expect(alerts).toHaveBeenCalledExactlyOnceWith('A');
++    alerts.mockRejectedValueOnce(new Error('private database detail'));
++    const failed = await postAlerts().send({ vehicleId: 'A' }).expect(503);
++    expect(failed.body).toEqual({
++      code: 'SERVICE_UNAVAILABLE',
++      message: 'Servicio temporalmente no disponible.',
++    });
++  });
++  it('alertas libera el cuerpo incompleto al agotar el plazo compartido de 15 segundos', async () => {
++    const { postAlerts } = await start();
++    const result = await postAlerts()
++      .set('Content-Type', 'application/json')
++      .set('Content-Length', '100')
++      .send('{')
++      .expect(408);
++    expect(result.body.code).toBe('REQUEST_TIMEOUT');
++    expect(alerts).not.toHaveBeenCalled();
++  }, 22000);
++  it('GET/POST de alertas y el historial consumen la misma cuota', async () => {
++    const { client, post, postAlerts } = await start(3);
++    await client.get('/api/alerts').expect(200);
++    await postAlerts().send({ vehicleId: 'A' }).expect(200);
++    await post().send({ vehicleId: 'A' }).expect(200);
++    for (const path of ['/api/alerts?vehicleId=A', '/api/vehicles'])
++      expect((await client.get(path).expect(429)).body.code).toBe('RATE_LIMITED');
++    expect((await postAlerts().send({ vehicleId: 'A' }).expect(429)).body.code).toBe('RATE_LIMITED');
++    await client.post('/api/queries/alerts').set('Origin', origin).send('{').expect(403);
++    expect(alerts).toHaveBeenCalledTimes(2);
++  });
+ });
+diff --git a/tests/integration/queries.test.mjs b/tests/integration/queries.test.mjs
+--- a/tests/integration/queries.test.mjs
++++ b/tests/integration/queries.test.mjs
+@@ -10,6 +10,8 @@
+   adversarial:
+     'consultas conservan identidad exacta, fracción subnanosegundo, búsqueda literal y límites JSON por API/proxy',
+   snapshot: 'snapshot REPEATABLE READ no mezcla una ingesta confirmada entre sus dos lecturas',
++  alertFilter: 'CR-01 filtra identidades literales por SQL y conserva orden, totales y límites API/proxy',
++  alertSnapshot: 'CR-01 conserva filas y total global coherentes incluso con resultado vacío',
+   capacity:
+     'dieciséis cuerpos de consulta ocupan el cupo antes del parser y el aborto lo libera sin escrituras',
+   quota:
+diff --git a/tests/support/check-queries.mjs b/tests/support/check-queries.mjs
+--- a/tests/support/check-queries.mjs
++++ b/tests/support/check-queries.mjs
+@@ -118,6 +118,28 @@
+   assert.equal(r.status, 200);
+   return r.body;
+ }
++async function alertQuery(vehicleId, proxy = true) {
++  const r = await request('/api/queries/alerts', { body: { vehicleId }, proxy });
++  assert.equal(r.status, 200);
++  assert.equal(r.headers['cache-control'], 'no-store');
++  return r.body;
++}
++async function assertOfficialAlertFilters(all) {
++  assert.deepEqual([all.total, all.overallTotal], [4, 4]);
++  for (const [vehicleId, ids] of [
++    ['VEH-005', ['E-005-02', 'E-005-03']],
++    ['VEH-001', ['E-001-00']],
++    ['VEH-004', []],
++    ['unknown', []],
++    ['veh-005', []],
++  ]) {
++    const filtered = await get('/api/alerts?vehicleId=' + encodeURIComponent(vehicleId));
++    assert.deepEqual(filtered, await alertQuery(vehicleId));
++    assert.deepEqual(filtered.items, all.items.filter((item) => item.vehicleId === vehicleId));
++    assert.deepEqual([filtered.total, filtered.overallTotal], [ids.length, 4]);
++    assert.deepEqual(filtered.items.map((item) => item.eventId).sort(), [...ids].sort());
++  }
++}
+ async function settled() {
+   for (let n = 0; n < 750; n++) {
+     const state = (
+@@ -141,12 +163,20 @@
+     outbox_messages: 'message_id',
+     ingestion_batches: 'ingestion_id',
+     ingestion_items: 'ingestion_id,item_index',
++    replay_runs: 'run_id',
++    replay_attempts: 'run_id,line_number',
+   }))
+     rows[table] = (
+       await owner.query(
+         `SELECT coalesce(json_agg(t ORDER BY ${order}),'[]'::json)::text AS data FROM ${table} t`,
+       )
+     ).rows[0].data;
++  // Comprobar también la cuenta sin incorporar hashes de contraseña a fallos.
++  rows.accountDigest = (
++    await owner.query(
++      "SELECT md5(coalesce(json_agg(t ORDER BY id),'[]'::json)::text) AS digest FROM users t",
++    )
++  ).rows[0].digest;
+   rows.jobs = (
+     await owner.query(
+       "SELECT coalesce(json_agg(t ORDER BY id),'[]'::json)::text AS data FROM pgboss.job t WHERE name='telemetry.ingest'",
+@@ -155,6 +185,174 @@
+   return rows;
+ }
+ const cases = {
++  async alertFilter() {
++    const ids = [
++      'A_%',
++      'a_%',
++      ' A_% ',
++      'A_%suffix',
++      'A',
++      "quote'\";--",
++      'plus+id',
++      '\u0000',
++      ' ',
++      'x'.repeat(12000) + '\ud800',
++    ];
++    const events = ids.flatMap((vehicleId, n) => [
++      event({
++        vehicleId,
++        eventId: `alert-${n}-a`,
++        observedAt: '2026-01-01T00:00:00.1234567890001Z',
++      }),
++      event({
++        vehicleId,
++        eventId: `alert-${n}-z`,
++        observedAt: '2026-01-01T01:00:00.1234567890001+01:00',
++        speedKph: 95,
++      }),
++      event({
++        vehicleId,
++        eventId: `alert-${n}-late`,
++        observedAt: '2026-01-01T00:00:00.123456789Z',
++        speedKph: 82,
++      }),
++    ]);
++    assert.equal((await ingest(events)).accepted, events.length);
++    await settled();
++    const before = await snapshotRows();
++    const all = await get('/api/alerts');
++    assert.deepEqual([all.total, all.overallTotal], [events.length, events.length]);
++    assert.deepEqual(all.items.map((item) => item.eventId), [
++      ...ids.flatMap((_, n) => [`alert-${n}-a`, `alert-${n}-z`]).sort().reverse(),
++      ...ids.map((_, n) => `alert-${n}-late`).sort().reverse(),
++    ]);
++    for (const proxy of [true, false]) {
++      for (const [n, vehicleId] of ids.entries()) {
++        const filtered = await alertQuery(vehicleId, proxy);
++        assert.deepEqual([filtered.total, filtered.overallTotal], [3, events.length]);
++        assert.deepEqual(filtered.items, all.items.filter((item) => item.vehicleId === vehicleId));
++        assert.deepEqual(filtered.items.map((item) => item.eventId), [
++          `alert-${n}-z`,
++          `alert-${n}-a`,
++          `alert-${n}-late`,
++        ]);
++        assert.equal(filtered.items[0].observedAt, '2026-01-01T00:00:00.1234567890001Z');
++        assert.deepEqual(filtered.items.map((item) => item.speedKph), [95, 81, 82]);
++        if (!vehicleId.includes('\ud800')) {
++          const direct = await request('/api/alerts?vehicleId=' + encodeURIComponent(vehicleId), {
++            proxy,
++          });
++          assert.equal(direct.status, 200);
++          assert.deepEqual(direct.body, filtered);
++        }
++      }
++      for (const vehicleId of ['unknown', 'a', 'A_%suffi']) {
++        const empty = { items: [], total: 0, overallTotal: events.length };
++        assert.deepEqual(await alertQuery(vehicleId, proxy), empty);
++        const direct = await request('/api/alerts?vehicleId=' + encodeURIComponent(vehicleId), {
++          proxy,
++        });
++        assert.equal(direct.status, 200);
++        assert.deepEqual(direct.body, empty);
++      }
++      for (const query of [
++        'vehicleId=',
++        'vehicleId=A&vehicleId=B',
++        'vehicleId[]=A',
++        'vehicleId[x]=A',
++        'vehicleId=%',
++        'vehicleId=%C3%28',
++      ])
++        assert.equal((await request('/api/alerts?' + query, { proxy })).status, 400);
++      const exact = '{"vehicleId":"unknown"}'.padEnd(2 * 1024 * 1024);
++      for (const [raw, status] of [
++        [exact, 200],
++        [exact + ' ', 413],
++        ['{', 400],
++        [Buffer.from([0xc3, 0x28]), 400],
++      ]) {
++        const result = await request('/api/queries/alerts', { raw, proxy });
++        assert.equal(result.status, status);
++        if (status === 200)
++          assert.deepEqual(result.body, { items: [], total: 0, overallTotal: events.length });
++      }
++      for (const access of [
++        { csrf: 'invalid' },
++        { requestOrigin: 'http://foreign.invalid' },
++        { authenticated: false, key: true },
++      ])
++        assert.equal((await request('/api/queries/alerts', { raw: '{', proxy, ...access })).status, 403);
++    }
++    assert.deepEqual(await snapshotRows(), before);
++  },
++  async alertSnapshot() {
++    await ingest([event({ vehicleId: 'first' })]);
++    for (const vehicleId of ['first', 'unknown']) {
++      const expected = await alertQuery(vehicleId);
++      let injected = false,
++        captured;
++      const pool = {
++        connect: async () => {
++          const client = await runtime.connect();
++          return new Proxy(client, {
++            get(target, property) {
++              if (property === 'query')
++                return async (text, ...args) => {
++                  const result = await target.query(text, ...args);
++                  if (
++                    typeof text === 'string' &&
++                    text.includes('WHERE e.vehicle_key=$1') &&
++                    !injected
++                  ) {
++                    captured = { text, parameters: args[0] };
++                    assert.equal(
++                      (await target.query('SHOW transaction_read_only')).rows[0].transaction_read_only,
++                      'on',
++                    );
++                    assert.equal(
++                      (await target.query('SHOW transaction_isolation')).rows[0].transaction_isolation,
++                      'repeatable read',
++                    );
++                    injected = true;
++                    const receipt = await ingest([
++                      event({ vehicleId }),
++                      event({ vehicleId: randomUUID() }),
++                    ]);
++                    assert.equal(receipt.accepted, 2);
++                  }
++                  return result;
++                };
++              const value = Reflect.get(target, property, target);
++              return typeof value === 'function' ? value.bind(target) : value;
++            },
++          });
++        },
++      };
++      const during = await new PostgresReadModel(pool).alerts(vehicleId);
++      assert.equal(injected, true);
++      assert.deepEqual(during, expected);
++      assert.deepEqual(captured.parameters, [Buffer.from(encodeIdentity(vehicleId))]);
++      const after = await alertQuery(vehicleId);
++      assert.equal(after.total, expected.total + 1);
++      assert.equal(after.overallTotal, expected.overallTotal + 2);
++      // SQL y parámetros capturados de una ejecución sobre PostgreSQL real.
++      const plan = (
++        await runtime.query(
++          'EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) ' + captured.text,
++          captured.parameters,
++        )
++      ).rows[0]['QUERY PLAN'][0];
++      assert.equal(plan.Plan['Actual Rows'], after.total);
++      assert.ok(plan['Execution Time'] >= 0);
++    }
++    await settled();
++    const before = await snapshotRows();
++    for (let n = 0; n < 10; n++) {
++      await alertQuery('first');
++      await get('/api/alerts?vehicleId=unknown');
++    }
++    assert.deepEqual(await snapshotRows(), before);
++  },
+   async volume() {
+     const runId = randomUUID();
+     const sources = Array.from({ length: 10000 }, (_, n) =>
+@@ -367,7 +565,7 @@
+           {
+             hostname: '127.0.0.1',
+             port: 3000,
+-            path: '/api/queries/vehicle-events',
++            path: n % 2 === 0 ? '/api/queries/vehicle-events' : '/api/queries/alerts',
+             method: 'POST',
+             headers: {
+               Host: 'localhost',
+@@ -394,7 +592,7 @@
+       }
+       assert.equal(probe.status, 503);
+       assert.equal(probe.body.code, 'QUERY_CAPACITY_EXCEEDED');
+-      const seventeenth = await request('/api/queries/vehicle-events', { raw: '{', proxy: false });
++      const seventeenth = await request('/api/queries/alerts', { raw: '{', proxy: false });
+       assert.equal(seventeenth.status, 503);
+       assert.equal(seventeenth.body.code, 'QUERY_CAPACITY_EXCEEDED');
+     } finally {
+@@ -416,8 +614,8 @@
+     const before = await snapshotRows();
+     const started = Date.now();
+     for (const [path, options, status] of [
+-      ['/api/vehicles', {}, 200],
+-      ['/api/queries/vehicle-events', { raw: '{' }, 400],
++      ['/api/alerts?vehicleId=unknown', {}, 200],
++      ['/api/queries/alerts', { raw: '{' }, 400],
+     ]) {
+       for (let group = 0; group < 30; group++) {
+         const responses = await Promise.all(
+@@ -430,13 +628,15 @@
+     for (const [path, options] of [
+       ['/api/vehicles', {}],
+       ['/api/queries/vehicle-events', { raw: '{' }],
++      ['/api/alerts?vehicleId=unknown', {}],
++      ['/api/queries/alerts', { raw: '{' }],
+     ]) {
+       const response = await request(path, options);
+       assert.equal(response.status, 429);
+       assert.equal(response.body.code, 'RATE_LIMITED');
+     }
+     assert.equal(
+-      (await request('/api/queries/vehicle-events', { raw: '{', csrf: 'invalid' })).status,
++      (await request('/api/queries/alerts', { raw: '{', csrf: 'invalid' })).status,
+       403,
+     );
+     assert.deepEqual(await snapshotRows(), before);
+@@ -454,6 +654,7 @@
+       const receipt = await ingest(events);
+       assert.deepEqual([receipt.accepted, receipt.duplicates, receipt.rejected], counts);
+       assert.deepEqual(receipt.errors, expected.rejections_at_input_indexes_zero_based);
++      await assertOfficialAlertFilters(await get('/api/alerts'));
+     }
+     await settled();
+     const before = await snapshotRows();
+@@ -508,10 +709,15 @@
+         ['type', 'eventId', 'vehicleId', 'observedAt', 'latitude', 'longitude', 'speedKph'].sort(),
+       );
+     }
++    await assertOfficialAlertFilters(alerts);
+     assert.deepEqual(
+-      await get('/api/alerts?vehicleId=VEH-005'),
+-      alerts,
+-      'CR-01 no está incorporado en la base.',
++      (
++        await owner.query(`SELECT
++          (SELECT count(*)::int FROM telemetry_events) AS events,
++          (SELECT count(*)::int FROM vehicle_latest) AS vehicles,
++          (SELECT count(*)::int FROM alerts) AS alerts`)
++      ).rows[0],
++      { events: 20, vehicles: 8, alerts: 4 },
+     );
+     const snapshot = await get('/api/snapshot');
+     assert.equal(snapshot.schemaVersion, 1);
+diff --git a/docs/api.md b/docs/api.md
+--- a/docs/api.md
++++ b/docs/api.md
+@@ -1,8 +1,8 @@
+ # API de Nexo
+ 
+-La [issue #24](https://github.com/ngarayc/Nexo/issues/24) consolida el contrato del backend E1. La descripción [OpenAPI 3.1.1 versionada](openapi.json) enumera las catorce operaciones actuales, incluido el transporte SSE de la [issue #26](https://github.com/ngarayc/Nexo/issues/26). Las pruebas HTTP, reglas de dominio y respuestas reales conservan la autoridad sobre su comportamiento; OpenAPI no sustituye la validación del servidor.
++La [issue #24](https://github.com/ngarayc/Nexo/issues/24) consolida el contrato del backend E1. La descripción [OpenAPI 3.1.1 versionada](openapi.json) enumera las operaciones actuales, incluido el transporte SSE de la [issue #26](https://github.com/ngarayc/Nexo/issues/26). Las pruebas HTTP, reglas de dominio y respuestas reales conservan la autoridad sobre su comportamiento; OpenAPI no sustituye la validación del servidor.
+ 
+-Origen predeterminado: `http://localhost:8080`; prefijo: `/api`. Una copia de comprobación puede configurar otro puerto/origen. El perfil soportado es HTTP local con una instancia API. No habilita CORS ni ofrece transporte de producción. El [dashboard](dashboard.md) consume estas operaciones; el motor de demo tiene controles protegidos descritos abajo; su panel y el filtro CR-01 conservan sus incrementos posteriores.
++Origen predeterminado: `http://localhost:8080`; prefijo: `/api`. Una copia de comprobación puede configurar otro puerto/origen. El perfil soportado es HTTP local con una instancia API. No habilita CORS ni ofrece transporte de producción. El [dashboard](dashboard.md) consume estas operaciones; el motor de demo tiene controles protegidos descritos abajo; la selección visual del filtro de alertas conserva su incremento posterior.
+ 
+ ## Rutas y acceso
+ 
+@@ -19,7 +19,8 @@
+ | `GET /api/vehicles?q=...`               | Sesión                          | Flota, total filtrado y resumen global            |
+ | `GET /api/vehicles/:vehicleId/events`   | Sesión                          | Historial completo ascendente                     |
+ | `POST /api/queries/vehicle-events`      | Sesión, Origin y CSRF           | El mismo historial transportando el ID en JSON    |
+-| `GET /api/alerts`                       | Sesión                          | Todas las alertas históricas, orden descendente   |
++| `GET /api/alerts?vehicleId=...`          | Sesión                          | Alertas globales o de un ID exacto                 |
++| `POST /api/queries/alerts`              | Sesión, Origin y CSRF           | La misma consulta de alertas mediante JSON        |
+ | `GET /api/snapshot`                     | Sesión                          | Flota y alertas de una vista SQL coherente        |
+ | `GET /api/stream`                       | Sesión; Origin válido si existe | SSE de cambios confirmados y controles            |
+ 
+@@ -78,7 +79,9 @@
+ 
+ Historial usa identidad exacta y contiene todos los eventos aceptados por `(instante, eventId)` ascendente. Vehículo desconocido: 200 con vehicleId, items vacío y total cero. El POST `{"vehicleId":"VEH-001"}` usa el mismo caso de uso; resuelve IDs largos o unidades no representables fielmente en URL. Sobre datos estables, GET/POST devuelven igual contenido, orden y total. Entre peticiones separadas puede haber commits distintos.
+ 
+-Alertas devuelve items/total/overallTotal globales, por instante/eventId descendente. Esta versión todavía no implementa el filtro vehicleId de CR-01; tampoco existe su futuro POST complementario. El snapshot reúne vehicles y alerts con schemaVersion 1 e instanceId, de una misma transacción de lectura. Comparar generación con stream.ready; cambia al reiniciar API o recuperar degradación del dispatcher. Las colecciones son completas y no tienen paginación o truncamiento implícitos.
++CR-01 ([issue #59](https://github.com/ngarayc/Nexo/issues/59)) permite `GET /api/alerts?vehicleId=VEH-005` y `POST /api/queries/alerts` con `{"vehicleId":"VEH-005"}`. Sin filtro, GET conserva todas las alertas. El filtro exige un único string no vacío y compara la identidad completa: no recorta, normaliza, cambia mayúsculas ni busca subcadenas. `%`, `_`, comillas, espacios y NUL son datos. Valor vacío, repetido, array, objeto o escape URI inválido devuelve 400; también se rechazan parámetros ajenos. POST exige objeto con vehicleId string no vacío; los demás campos son inertes. Usar JSON para IDs largos o sustitutos escapados que no puedan viajar fielmente en URL.
++
++Alertas conserva `items`, `total` visible y `overallTotal` global por instante/eventId descendente, incluidos eventos tardíos. Desconocido devuelve 200 con items vacío y total cero, conservando el conteo global. Filas filtradas y conteo se leen con el mismo cliente en REPEATABLE READ READ ONLY; un fallo nunca se convierte en vacío. GET/POST comparten caso de uso, identidad y SQL; sobre datos estables coinciden contenido, orden y totales. El snapshot reúne vehicles y alerts con schemaVersion 1 e instanceId, de una misma transacción de lectura. Comparar generación con stream.ready; cambia al reiniciar API o recuperar degradación del dispatcher. Las colecciones son completas y no tienen paginación o truncamiento implícitos.
+ 
+ Las vistas omiten extras arbitrarios y detalles internos. observedAt se serializa en UTC con Z y fracción exacta; no se limita a Date o nanosegundos. La presentación posterior usa español, America/Bogota y 24 horas. [Consultas](queries.md) describe campos, orden, cuotas, consistencia, planes y costes.
+ 
+@@ -94,7 +97,7 @@
+ | Lote                             | 2 MiB y 1.000 posiciones; 16 POST activos; 1.200 POST/minuto                                       |
+ | Consulta de recibo por API key   | 1.200 lecturas/minuto, separadas del contador POST                                                 |
+ | Lecturas de sesión, GET y POST   | 600/minuto compartidas por cuenta; 16 operaciones y pool compartido de cuatro conexiones           |
+-| Cuerpo de historial JSON         | 2 MiB y recepción de 15 segundos, tras comprobar acceso y reservar cupo                            |
++| Cuerpo de consultas JSON         | 2 MiB y recepción de 15 segundos, tras comprobar acceso y reservar cupo                            |
+ | Aperturas SSE                    | 30/minuto por cuenta; cuatro streams por SID y dieciséis globales                                  |
+ | Salida SSE por conexión          | 1.000 tramas/2 MiB, incluyendo writableLength; cierre tras 15 s sin progreso                       |
+ | Espera HTTP de ingesta           | 60 segundos totales; proxy 75; no retiene conexión SQL mientras espera                             |
+diff --git a/docs/queries.md b/docs/queries.md
+--- a/docs/queries.md
++++ b/docs/queries.md
+@@ -7,7 +7,8 @@
+ | `GET /api/vehicles?q=...`             | `items`, `total` filtrado, `overallTotal` y `summary` globales  |
+ | `GET /api/vehicles/:vehicleId/events` | `vehicleId`, `items`, `total`; historial completo               |
+ | `POST /api/queries/vehicle-events`    | El mismo historial, con `vehicleId` en JSON                     |
+-| `GET /api/alerts`                     | `items`, `total`, `overallTotal`; alertas históricas completas  |
++| `GET /api/alerts?vehicleId=...`        | Alertas globales o de un vehículo exacto                        |
++| `POST /api/queries/alerts`            | La misma consulta de alertas con vehicleId en JSON              |
+ | `GET /api/snapshot`                   | `schemaVersion`, `instanceId`, `vehicles` y `alerts` coherentes |
+ 
+ ## Contenido y orden
+@@ -20,11 +21,11 @@
+ 
+ El historial compara la clave binaria completa y devuelve todos los eventos aceptados, incluidos tardíos, por `(segundo UTC, fracción, eventId)` ascendente. Un vehículo desconocido devuelve 200 con su identificador, `items: []` y `total: 0`. La identidad sigue siendo exacta y sensible a mayúsculas, espacios, NUL o sustitutos escapados: la búsqueda parcial de flota no modifica esa regla.
+ 
+-Las alertas incluyen type OVERSPEED, eventId, vehicleId, observedAt, speedKph, latitude y longitude. Se ordenan por instante y eventId descendentes. Esta base devuelve todas las alertas: el filtro especializado vehicleId y su POST complementario se incorporan después en CR-01. En este incremento un parámetro vehicleId en GET /alerts no filtra la colección. Las colecciones son completas; no hay truncamiento o paginación implícitos.
++Las alertas incluyen type OVERSPEED, eventId, vehicleId, observedAt, speedKph, latitude y longitude. Se ordenan por instante y eventId descendentes. CR-01 ([issue #59](https://github.com/ngarayc/Nexo/issues/59)) añade el filtro opcional `vehicleId`: igualdad de la identidad completa, sensible a mayúsculas, espacios y unidades originales, sin recorte, normalización ni subcadenas. GET sin filtro conserva la colección global. Solo admite un vehicleId string no vacío; vacíos, repetidos, arrays, objetos, parámetros ajenos o escapes URI/UTF-8 inválidos producen 400 INVALID_QUERY. El adaptador HTTP decodifica estrictamente el query para evitar sustituciones silenciosas del parser permisivo. Las colecciones son completas; no hay truncamiento o paginación implícitos.
+ 
+-## Historial mediante JSON
++## Historial y alertas mediante JSON
+ 
+-El GET exigido permanece disponible. El POST transporta exactamente la misma identidad mediante `{"vehicleId":"VEH-001"}` y usa el mismo caso de consulta. Permite IDs que exceden los límites de URL o contienen unidades que no pueden representarse fielmente en ella. Un fallo de URL/transporte no equivale a historial vacío; el cliente debe usar la variante JSON cuando corresponda.
++Los GET exigidos permanecen disponibles. `POST /api/queries/vehicle-events` y `POST /api/queries/alerts` transportan exactamente la misma identidad mediante `{"vehicleId":"VEH-001"}` y reutilizan sus respectivos casos de consulta de GET. Estos POST permiten IDs que exceden los límites de URL o contienen unidades que no pueden representarse fielmente en ella. Un fallo de URL/transporte no equivale a historial vacío; el cliente debe usar la variante JSON cuando corresponda.
+ 
+ El guard verifica sesión, Origin exacto y X-CSRF-Token, y después consume la cuota compartida de lectura. El controlador reserva el cupo de consultas antes de leer el cuerpo. El parser común de transporte, compartido con ingesta, admite application/json UTF-8 sin compresión y hasta 2 MiB reales. Su espera de recepción es de 15 segundos; la conexión SQL solo se adquiere después de recibir y validar el documento.
+ 
+@@ -36,6 +37,8 @@
+ 
+ El snapshot contiene `vehicles` con el sobre de flota completo y `alerts` con el sobre global de alertas. `schemaVersion: 1` identifica el protocolo y `instanceId` es el UUID de la instancia API, provisto por RuntimeModule. El [stream](realtime.md) comparte esa identidad. Se captura antes de iniciar la lectura; una transición concurrente puede devolver la generación anterior, que el cliente debe descartar frente a ready nuevo. Reinicio o recuperación de degradación renuevan la generación; la coordinación Angular conserva su incremento propio.
+ 
++`PostgresReadModel.alerts(vehicleId)` reserva un cliente del mismo pool de consultas y abre REPEATABLE READ READ ONLY con transaction_timeout de diez segundos. Selecciona por `e.vehicle_key=$1` usando `encodeIdentity` y cuenta las alertas globales dentro del mismo snapshot, incluso si no hay coincidencias. Devuelve `total = items.length` y `overallTotal` global, sin dos lecturas independientes ni errores etiquetados como vacío. Sin filtro basta una sentencia global; el snapshot y SSE siguen usando alertas globales.
++
+ `PostgresReadModel.snapshot` reserva un cliente, abre `REPEATABLE READ READ ONLY`, aplica transaction_timeout de diez segundos, lee flota y alertas y confirma antes de devolver el resultado. Así una ingesta confirmada entre ambas sentencias no añade solo su alerta a una flota anterior. El cliente se libera antes de serializar/transmitir HTTP; ante error se destruye para no devolver una transacción incierta al pool.
+ 
+ Todas las consultas comparten las 16 operaciones admitidas por DatabaseSlots y el pool de cuatro conexiones de consultas/sesiones/salud. No existe una cola adicional ilimitada; saturar el cupo devuelve 503 QUERY_CAPACITY_EXCEEDED antes del parser. Abortar un cuerpo libera su turno. Siguen vigentes adquisición de dos segundos, sentencia SQL de cinco y timeout cliente de seis. Esos presupuestos acotan operaciones; no garantizan tiempo de respuesta bajo cualquier volumen.
+@@ -44,10 +47,10 @@
+ 
+ `modules/queries/application` define puertos, respuestas, filtros y validación pura. Los adaptadores HTTP aplican transporte/cupo y el adaptador PostgreSQL realiza consultas parametrizadas. La composición Nest conecta el pool y RuntimeInstance. `platform/http/read-body.ts` comparte la lectura incremental sin incorporar reglas de ingesta a las consultas; el adaptador de ingesta conserva sus propios errores y requestId.
+ 
+-[PostgreSQL: aislamiento](https://www.postgresql.org/docs/18/transaction-iso.html#XACT-REPEATABLE-READ) sustenta la vista repetible; [node-postgres: transacciones](https://node-postgres.com/features/transactions) exige el mismo cliente. Nexo añade la liberación previa a HTTP y el presupuesto compartido. El [índice hash](https://www.postgresql.org/docs/18/indexes-types.html#INDEXES-TYPES-HASH) sirve para igualdad, no para orden ni subcadenas: historial conserva la clave completa como predicado y ordena después; flota y alertas ordenan sus colecciones. No se añaden índices que impongan un máximo oculto a los IDs.
++[PostgreSQL: aislamiento](https://www.postgresql.org/docs/18/transaction-iso.html#XACT-REPEATABLE-READ) sustenta la vista repetible; [node-postgres: transacciones](https://node-postgres.com/features/transactions) exige el mismo cliente. Nexo añade la liberación previa a HTTP y el presupuesto compartido. El [índice hash](https://www.postgresql.org/docs/18/indexes-types.html#INDEXES-TYPES-HASH) sirve para igualdad, no para orden ni subcadenas: historial conserva la clave completa como predicado y ordena después; flota y alertas ordenan sus colecciones. CR-01 reutiliza el predicado binario de igualdad, el join por evento y el orden existente; no añade DDL ni otro límite al ID. El conteo global y la ordenación residual tienen coste según los datos. Antes de proponer un índice se debe revisar EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON) del SQL y parámetros reales. Una muestra sintética pequeña no demuestra rendimiento productivo.
+ 
+ `tests/integration/volume.test.mjs` incorpora a la integración ordinaria 10.000 eventos por HTTP en lotes de 1.000, con dos lotes simultáneos, y repite los 10.000 sin limpiar. Comprueba 100 vehículos, 4.000 alertas, 20 recibos/20.000 posiciones y ausencia de nuevos efectos de dominio en la repetición. Durante la ingesta consulta snapshots y muestrea conexiones: escrituras hasta seis, consultas hasta cuatro y cola hasta cinco incluyendo su listener adicional. El dispatcher outbox usa su conexión antes reservada dentro del presupuesto total de 16. La comparación de efectos antes/después de lecturas espera a que consumidor y dispatcher estén quietos, para no atribuir a un GET el marcado autónomo de published_at.
+ 
+ EXPLAIN ANALYZE verifica el historial de un vehículo con 100 eventos sobre los 10.000 persistidos. El informe local `reports/volume-sample.json`, fuera de Git, conserva tiempos, nodos y picos observados, sin IDs de entrada ni credenciales. Un índice de igualdad puede reducir filas candidatas y aun requerir ordenación residual. Los tiempos de una ejecución local no acreditan capacidad productiva ni constituyen un umbral universal de rendimiento.
+ 
+-Las pruebas nativas comparan ambos oráculos por HTTP, últimos estados, ocho historiales, alertas y snapshot, incluyendo ausencia de efectos persistidos. Casos separados cubren IDs largos/sustitutos, fracciones subnanosegundo, literales de búsqueda, límites de API/proxy, 16 cuerpos retenidos/aborto y cuota GET/POST compartida. Una prueba intercala una ingesta real entre las dos lecturas del snapshot y comprueba READ ONLY/REPEATABLE READ. [Verificación](verification.md) mantiene resultados y candidatos; no se atribuye dashboard, SSE o CR-01 a estas consultas.
++Las pruebas nativas comparan ambos oráculos por HTTP, últimos estados, ocho historiales, alertas y snapshot, incluyendo ausencia de efectos persistidos. Casos separados cubren IDs largos/sustitutos, fracciones subnanosegundo, literales de búsqueda, límites de API/proxy, 16 cuerpos retenidos/aborto y cuota GET/POST compartida. Una prueba intercala una ingesta real entre las dos lecturas del snapshot y comprueba READ ONLY/REPEATABLE READ. [Verificación](verification.md) mantiene resultados y candidatos; no sustituye la revisión humana del candidato. Los casos CR-01 propuestos comprueban los filtros oficiales (VEH-005: 2/4; VEH-001: 1/4; VEH-004, desconocido y veh-005: 0/4), literales separados del fixture, orden exacto y GET/POST por API/proxy. Intercalan una ingesta real entre selección y conteo, incluso con selección vacía, y ejecutan EXPLAIN sobre el SQL capturado. Su ejecución y revisión del plan deben registrarse para el SHA aplicado; la propuesta por sí sola no acredita resultados ni tiempos.
+diff --git a/docs/openapi.json b/docs/openapi.json
+--- a/docs/openapi.json
++++ b/docs/openapi.json
+@@ -3,7 +3,7 @@
+   "info": {
+     "title": "Nexo API",
+     "version": "0.1.0",
+-    "description": "Contratos efectivos de Nexo: backend, dashboard SSE y motor HTTP compartido de demo. Monolito NestJS y perfil HTTP local. Panel/reset de demo y filtro CR-01 conservan sus incrementos propios. Ver api.md, realtime.md y replay-emitter.md para límites, incertidumbre y recuperación."
++    "description": "Contratos efectivos de Nexo: backend, dashboard SSE y motor HTTP compartido de demo. Monolito NestJS y perfil HTTP local. CR-01 ofrece filtro exacto de alertas y POST JSON; la selección visual conserva su incremento propio. Ver api.md, realtime.md y replay-emitter.md para límites, incertidumbre y recuperación."
+   },
+   "servers": [
+     {
+@@ -585,11 +585,94 @@
+         }
+       }
+     },
++    "/queries/alerts": {
++      "post": {
++        "operationId": "queryAlerts",
++        "summary": "Alertas de un vehículo exacto mediante JSON",
++        "description": "Sesión, Origin, CSRF y cuota de lectura compartida antes del parser. Mismo caso de uso e identidad exacta que GET /alerts?vehicleId=...; sin efectos de negocio. Campos ajenos inertes. Desconocido: 200 vacío con total cero y overallTotal global coherente. JSON permite IDs largos, NUL y sustitutos escapados sin un nuevo límite de dominio.",
++        "responses": {
++          "200": {
++            "description": "Mismos items, orden y totales que el GET filtrado sobre datos estables",
++            "headers": {
++              "Cache-Control": {
++                "description": "no-store",
++                "schema": {
++                  "const": "no-store"
++                }
++              }
++            },
++            "content": {
++              "application/json": {
++                "schema": {
++                  "$ref": "#/components/schemas/Alerts"
++                }
++              }
++            }
++          },
++          "400": {
++            "$ref": "#/components/responses/Failure"
++          },
++          "403": {
++            "$ref": "#/components/responses/Failure"
++          },
++          "408": {
++            "$ref": "#/components/responses/Failure"
++          },
++          "413": {
++            "$ref": "#/components/responses/Failure"
++          },
++          "415": {
++            "$ref": "#/components/responses/Failure"
++          },
++          "429": {
++            "$ref": "#/components/responses/Failure"
++          },
++          "503": {
++            "$ref": "#/components/responses/Failure"
++          }
++        },
++        "security": [
++          {
++            "sessionCookie": [],
++            "csrfToken": []
++          }
++        ],
++        "parameters": [
++          {
++            "$ref": "#/components/parameters/Origin"
++          }
++        ],
++        "requestBody": {
++          "required": true,
++          "description": "Hasta 2 MiB reales, JSON UTF-8 sin compresión; cuerpo recibido en 15 s.",
++          "x-max-body-bytes": 2097152,
++          "content": {
++            "application/json": {
++              "schema": {
++                "$ref": "#/components/schemas/HistoryInput"
++              }
++            }
++          }
++        }
++      }
++    },
+     "/alerts": {
+       "get": {
+         "operationId": "readAlerts",
+-        "summary": "Todas las alertas históricas de exceso",
+-        "description": "Incluye eventos tardíos; no duplica por duplicados o rechazos. El filtro vehicleId y su alternativa JSON se incorporarán en CR-01; esta versión todavía no filtra.",
++        "summary": "Alertas históricas globales o de un vehículo exacto",
++        "description": "Incluye eventos tardíos; sin vehicleId conserva todas las alertas. Un único string no vacío compara la identidad completa sin recortar, normalizar, cambiar mayúsculas ni buscar subcadenas. Vacío, repetido, array, objeto, parámetro ajeno o escape URI inválido da 400. Desconocido: items vacío y total cero con overallTotal global. Selección y conteo comparten snapshot SQL. Usar POST JSON para IDs largos o no transportables por URL.",
++        "parameters": [
++          {
++            "name": "vehicleId",
++            "in": "query",
++            "required": false,
++            "schema": {
++              "type": "string",
++              "minLength": 1
++            },
++            "description": "Identidad exacta opcional; solo un valor. Ausente conserva todas. %, _, comillas y espacios son datos. No hay un máximo nuevo de dominio; usar POST JSON si la URL no representa el ID."
++          }
++        ],
+         "responses": {
+           "200": {
+             "description": "Alertas OVERSPEED por speedKph estrictamente superior a 80",
+@@ -1276,7 +1359,7 @@
+           }
+         },
+         "additionalProperties": false,
+-        "description": "Colección global completa, descendente por instante exacto y eventId. El filtro CR-01 aún no forma parte de esta versión."
++        "description": "Colección completa descendente por instante exacto y eventId. total es items.length; overallTotal cuenta todas las alertas de la misma lectura coherente. GET sin filtro y snapshot conservan la colección global. GET filtrado y POST desconocidos devuelven items vacío y total cero."
+       },
+       "Snapshot": {
+         "type": "object",
+@@ -1310,7 +1393,7 @@
+           }
+         },
+         "additionalProperties": true,
+-        "description": "Otros campos son inertes. No transforman la consulta o los permisos."
++        "description": "Objeto compartido por las consultas JSON de historial y alertas. Otros campos son inertes; no transforman la consulta o los permisos."
+       },
+       "Credentials": {
+         "type": "object",
