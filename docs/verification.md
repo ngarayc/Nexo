@@ -1,5 +1,23 @@
 # Verificación
 
+## Dos clientes, carreras y recuperación — E2-I05
+
+La [issue #35](https://github.com/ngarayc/Nexo/issues/35) pasó calidad y **13 pruebas Chromium**, ninguna omitida, junto con los 31 controles de CI. API/web productivos, dependencias y esquema conservan el incremento anterior; CI del nuevo candidato reconstruye y comprueba también sus regresiones. Los cuatro fixtures conservan sus hashes.
+
+Dos contextos con SIDs independientes reciben exactamente los mismos 43 UUID de dominio. El fixture se envía en su orden original: 20/2/2 y después 0/22/2 sin reset entre pasadas. Ambas vistas conservan ocho vehículos, cuatro alertas, siete MOVING y uno STOPPED. Se comparan las ocho proyecciones, los historiales de los veinte eventos y las identidades de alertas; SQL confirma 20/8/4 y 43 mensajes publicados. Cada aplicación mantiene una conexión y su búsqueda propia; navegar no abre otra.
+
+Las carreras conservan respuestas obtenidas de HTTP real: un commit posterior al snapshot retenido llega por SSE antes de instalarlo y permanece en la vista; lo mismo ocurre con un tardío durante historial. Cambiar de A a B aborta la solicitud anterior y no cruza su contenido. Las pruebas unitarias anteriores verifican además que una respuesta que ignore abort tampoco supere la generación de selección.
+
+Un intermediario de prueba corta sockets del SSE de A, conserva sus datos marcados como desactualizados y permite que B siga progresando. Restablecerlo recupera el evento perdido con una sola conexión activa. Un trigger propio impide marcar la outbox: salud pasa a503 y ambas aplicaciones retiran En vivo, pero se admite otra ingesta. Retirar el fallo recupera salud, cuatro vehículos y tres alertas. Logout limpia A y revoca su SID; B conserva acceso y recibe el quinto evento. Volver a ingresar A recupera la base sin conexiones antiguas activas.
+
+Se conservaron fallos reales del desarrollo de las pruebas: esperar solo la cantidad de filas podía observar todavía el historial anterior de igual tamaño; se espera ahora su contenido exacto. Activar offline no cortó un SSE existente dentro de cinco segundos, por lo que el escenario usa un corte explícito y observable de sockets. La primera variante del intermediario cambiaba el host y recibió403; conservar localhost permitió mantener el acceso sin modificar políticas productivas. Los recorridos corregidos pasaron; no se alteraron oráculos ni cuotas.
+
+Cada archivo parte de recursos sintéticos nuevos y limpia solo su stack. Los diagnósticos crudos se conservan localmente por invocación y no se publican. Reproductor controlable, CR-01 y entrega ampliada permanecen pendientes; estas pruebas no los acreditan.
+
+## Promoción de alertas base a test
+
+La [PR #34](https://github.com/ngarayc/Nexo/pull/34) se integró en `499f2604b136a4fb44927e9d9117ee85d2b29162` tras [CI propio 39741133553](https://github.com/ngarayc/Nexo/actions/runs/39741133553), intento1, y [QA](https://github.com/ngarayc/Nexo/pull/34#issuecomment-6335780884). Sus cinco artefactos descargados/revalidados pertenecen al checkout `465212b82b67613cda584ad7d3942d63d3df8b44` y origen `0f780a576530896b35a7142052cec4bfb3da660d`: 265 API, 70 Angular, 83 integración y 10 Chromium, con escaneos y ci-required aprobados. La revisión humana de EP-03 permanece pendiente de la promoción a main del candidato concreto.
+
 ## Alertas base — E2-I04 / EP-03
 
 La [issue #33](https://github.com/ngarayc/Nexo/issues/33) pasó calidad, **70 pruebas Angular y 10 Chromium**, sin omisiones. La imagen web del incremento se reconstruyó y pasó Trivy sin altos/críticos. API, núcleo, esquema y dependencias conservan la base verificada; CI del candidato ejecuta sus regresiones completas. Los cuatro fixtures mantienen sus hashes.

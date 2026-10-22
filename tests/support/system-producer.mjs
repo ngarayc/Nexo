@@ -1,17 +1,6 @@
-import { execFileSync } from 'node:child_process';
-import { isAbsolute, basename, dirname } from 'node:path';
+import { systemApiScript } from './system-runtime.mjs';
 
 export function produceSystemEvents(events) {
-  const project = process.env.NEXO_SYSTEM_PROJECT;
-  const envFile = process.env.NEXO_SYSTEM_ENV_FILE;
-  if (
-    !/^nexo-e0-check-[a-f0-9]{12}$/.test(project ?? '') ||
-    !envFile ||
-    !isAbsolute(envFile) ||
-    basename(envFile) !== 'environment' ||
-    !basename(dirname(envFile)).startsWith('nexo-test-config-')
-  )
-    throw new Error('Falta el stack sintético propio del runner de sistema.');
   const source = `
     import http from 'node:http';
     try {
@@ -40,28 +29,7 @@ export function produceSystemEvents(events) {
     } catch { process.stderr.write('Productor sintético no aprobado.'); process.exitCode = 1; }
   `;
   try {
-    return JSON.parse(
-      execFileSync(
-        'docker',
-        [
-          'compose',
-          '--project-name',
-          project,
-          '--env-file',
-          envFile,
-          '-f',
-          'infra/compose.yaml',
-          'exec',
-          '-T',
-          'api',
-          'node',
-          '--input-type=module',
-          '-e',
-          source,
-        ],
-        { encoding: 'utf8', timeout: 35000, stdio: ['ignore', 'pipe', 'pipe'] },
-      ),
-    );
+    return JSON.parse(systemApiScript(source));
   } catch {
     throw new Error('No se completó la ingesta del productor sintético de sistema.');
   }

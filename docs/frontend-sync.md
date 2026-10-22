@@ -1,6 +1,6 @@
 # Sincronización de Angular
 
-La [issue #28](https://github.com/ngarayc/Nexo/issues/28) conecta Angular al [snapshot](queries.md) y al [stream SSE](realtime.md) protegidos. La pantalla muestra conexión, última base confirmada y totales de vehículos/alertas. [Flota e historial](dashboard.md) incorporan después su presentación. Lista de alertas, reproductor y CR-01 conservan sus incrementos; no se atribuyen a esta coordinación.
+La [issue #28](https://github.com/ngarayc/Nexo/issues/28) conecta Angular al [snapshot](queries.md) y al [stream SSE](realtime.md) protegidos. La pantalla muestra conexión, última base confirmada y totales de vehículos/alertas. [Flota, historial y alertas](dashboard.md) presentan las colecciones mantenidas por esa coordinación. El reproductor E3 y el filtro CR-01 conservan sus incrementos.
 
 ## Responsabilidades y reglas compartidas
 
@@ -47,4 +47,8 @@ Las pruebas controlan mensajes durante snapshot/consulta, respuestas de otra sel
 
 [Angular Signals](https://angular.dev/guide/signals) aporta señales de solo lectura y derivaciones calculadas. Nexo añade fachadas propietarias, vistas inmutables y coordinación de ciclo de vida. [HTML EventSource](https://html.spec.whatwg.org/multipage/server-sent-events.html#the-eventsource-interface) define eventos tipados, estados y close; snapshot, generaciones, presupuesto y backoff son decisiones propias de Nexo. Las funciones puras compartidas evitan divergencia de reglas entre servidor y navegador.
 
-El coste es descargar colecciones completas al recuperar y mantener índices en memoria. computed difiere ordenaciones hasta que un consumidor las consulta tras cambios. Los límites de captura no limitan el historial durable o tamaño total del snapshot; HTTP materializa respuestas completas. No se acredita capacidad productiva para miles de vehículos. Dos navegadores con vistas completas y recuperación integral conservan su comprobación posterior de E2.
+El coste es descargar colecciones completas al recuperar y mantener índices en memoria. computed difiere ordenaciones hasta que un consumidor las consulta tras cambios. Los límites de captura no limitan el historial durable o tamaño total del snapshot; HTTP materializa respuestas completas. No se acredita capacidad productiva para miles de vehículos.
+
+La [issue #35](https://github.com/ngarayc/Nexo/issues/35) añade recorridos con dos contextos independientes. Observan EventSource nativo sin sustituir respuestas: comparan los 43 UUID, los resultados oficiales, las ocho proyecciones y los veinte eventos del historial. Las carreras retienen respuestas de snapshot/historial obtenidas de la API real mientras llegan commits por SSE; seleccionar B cancela la consulta anterior de A. Las pruebas unitarias complementan ese caso entregando respuestas antiguas incluso si ignoran la cancelación.
+
+El corte individual usa un intermediario HTTP de prueba, solo en loopback y para el SSE de un cliente: conserva las tramas reales y destruye sus sockets. El otro cliente continúa directamente por NGINX. Una falla SQL de marcado de outbox degrada ambas conexiones mientras la ingesta sigue admitiendo; retirar el trigger permite recuperar la vista desde persistencia. Ninguno de estos controles se incorpora al producto. [Verificación](verification.md) distingue los resultados ejecutados y sus candidatos.

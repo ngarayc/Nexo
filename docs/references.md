@@ -71,3 +71,7 @@ La selección de variantes usa [las imágenes oficiales de Node](https://github.
 ## Distribución SSE
 
 [HTML SSE](https://html.spec.whatwg.org/multipage/server-sent-events.html) define framing y EventSource; Nexo añade esquema versionado, generación y recuperación por snapshot. [Node HTTP](https://nodejs.org/docs/latest-v24.x/api/http.html#responsewritechunk-encoding-callback) sustenta el tratamiento de write=false, drain y callbacks; la cola acotada, plazos y cierre son propios y se verifican también con TCP real. [NGINX buffering](https://nginx.org/en/docs/http/ngx_http_proxy_module.html#proxy_buffering) fundamenta la ruta incremental sin caché/compresión. [Tiempo real](realtime.md) relaciona adaptación, archivos, costes y límites: distribución local no equivale a recepción del navegador.
+
+## Sincronización comprobada en navegador
+
+[Playwright Route](https://playwright.dev/docs/api/class-route) permite retener una respuesta real mediante fetch/fulfill o continuar una petición hacia otra URL HTTP. Las pruebas de carreras conservan el cuerpo obtenido de la API mientras provocan una ingesta real. El corte individual redirige solo el SSE de ese cliente a un intermediario de loopback que destruye sockets y transmite las tramas sin modificarlas. Esta herramienta de prueba es propia; no constituye una función del producto o una garantía de la emulación offline. [Sincronización](frontend-sync.md) y [verificación](verification.md) relacionan los casos y resultados.

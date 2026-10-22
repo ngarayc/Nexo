@@ -26,6 +26,10 @@ La prueba local contra la API real validó el commit de plantillas y su issue #2
 
 Los reportes publicables solo contienen versión de formato, job, SHA, ejecución, intento, nombres de controles, resultado y métricas de pruebas. Campos adicionales se rechazan. No se publican respuestas de aplicación, logs crudos, cookies, hashes, entornos o trazas.
 
+El runner de navegador crea un stack sintético nuevo por cada archivo de su inventario. Así, el fixture oficial parte de una base vacía sin borrar los datos de otro escenario o de la aplicación habitual. Conserva el mismo job system y los cinco artefactos permitidos. Valida cada reporte contra su archivo y suma únicamente casos aprobados; un fallo de prueba, reporte o limpieza impide emitir el resumen satisfactorio.
+
+Los diagnósticos de cada invocación permanecen en `reports/raw/system/<identificador>/`; `latest.json` indica los archivos y estados de la última invocación. Repetir no elimina los diagnósticos anteriores. Esa carpeta sigue excluida de Git y de los uploads: el reporte publicable de system contiene solo los metadatos y métricas permitidos.
+
 El adaptador de reportes Vitest contrasta cada archivo del inventario con el resultado real, exige casos ejecutados y totales consistentes. Una suite vacía, un archivo omitido o casos pendientes/todo/fallidos bloquean. El inventario debe derivarse de los archivos que corresponden al runner; borrar pruebas requiere revisión del diff y no queda justificado por una ejecución verde.
 
 ## Evidencia y límites
