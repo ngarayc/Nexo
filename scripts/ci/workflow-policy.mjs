@@ -17,7 +17,7 @@ function checkSteps(steps) {
   }
 }
 
-export function validateWorkflows(ci, review, setup) {
+export function validateWorkflows(ci, review, setup, expanded) {
   if (!readOnly(ci.permissions) || !readOnly(review.permissions))
     throw new Error('Permisos de workflow no limitados a lectura.');
   if (
@@ -81,4 +81,62 @@ export function validateWorkflows(ci, review, setup) {
     throw new Error('Artefactos o condiciones inesperadas en revisión/preparación.');
   checkSteps(human.steps);
   checkSteps(setup.runs?.steps);
+  validateExpandedWorkflow(expanded);
+}
+
+export function validateExpandedWorkflow(workflow) {
+  if (
+    !workflow ||
+    !readOnly(workflow.permissions) ||
+    !same(Object.keys(workflow.on ?? {}), ['workflow_dispatch']) ||
+    !same(Object.keys(workflow.on.workflow_dispatch?.inputs ?? {}), ['source', 'stage']) ||
+    !same(Object.keys(workflow.jobs ?? {}), ['expanded'])
+  )
+    throw new Error('Workflow ampliado ausente, disparador o permisos inválidos.');
+  const inputs = workflow.on.workflow_dispatch.inputs;
+  if (
+    inputs.source.required !== true ||
+    inputs.source.type !== 'string' ||
+    inputs.stage.required !== true ||
+    inputs.stage.type !== 'choice' ||
+    !same(inputs.stage.options, ['rehearsal', 'final'])
+  )
+    throw new Error('Candidatura o etapa ampliada no explícita.');
+  const job = workflow.jobs.expanded;
+  if (
+    job.if !== undefined ||
+    job['continue-on-error'] ||
+    (job.permissions && !readOnly(job.permissions)) ||
+    job.env?.NEXO_CANDIDATE !== '${{ inputs.source }}' ||
+    job.env?.NEXO_STAGE !== '${{ inputs.stage }}'
+  )
+    throw new Error('El recorrido ampliado no puede omitirse ni pedir escritura.');
+  checkSteps(job.steps);
+  if (
+    job.steps.some((step) => step.if !== undefined) ||
+    job.steps[0].run !== '[[ "$NEXO_CANDIDATE" =~ ^[0-9a-f]{40}$ ]]'
+  )
+    throw new Error('Falta validación de SHA previa o hay pasos condicionales.');
+  const checkout = job.steps.filter((step) => step.uses?.startsWith('actions/checkout@'));
+  if (
+    checkout.length !== 1 ||
+    checkout[0].with?.ref !== '${{ inputs.source }}' ||
+    checkout[0].with?.['fetch-depth'] !== 0 ||
+    checkout[0].with?.['persist-credentials'] !== false
+  )
+    throw new Error('Checkout ampliado no fijado a la candidatura.');
+  if (
+    !job.steps.some(
+      (step) => step.run === 'node scripts/ci/run-expanded.mjs "$NEXO_CANDIDATE" "$NEXO_STAGE"',
+    )
+  )
+    throw new Error('El recorrido ampliado no recibe el candidato explícito.');
+  const uploads = job.steps.filter((step) => step.uses?.startsWith('actions/upload-artifact@'));
+  if (
+    uploads.length !== 1 ||
+    uploads[0].with?.path !== 'reports/expanded/manifest.json' ||
+    uploads[0].with?.['if-no-files-found'] !== 'error' ||
+    uploads[0].with?.['retention-days'] !== 7
+  )
+    throw new Error('Solo se publica el manifiesto ampliado validado.');
 }

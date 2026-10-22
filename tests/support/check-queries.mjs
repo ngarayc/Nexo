@@ -197,8 +197,12 @@ async function snapshotRows() {
 }
 const cases = {
   async volume() {
+    const requested = process.env.NEXO_QUERY_VOLUME_EVENTS ?? '10000';
+    assert.ok(['10000', '100000'].includes(requested), 'Carga de prueba no admitida.');
+    const eventCount = Number(requested);
+    const expectedAlerts = (eventCount * 2) / 5;
     const runId = randomUUID();
-    const sources = Array.from({ length: 10000 }, (_, n) =>
+    const sources = Array.from({ length: eventCount }, (_, n) =>
       event({
         eventId: `volume-${runId}-${String(n).padStart(5, '0')}`,
         vehicleId: `VOLUME-${String(n % 100).padStart(3, '0')}`,
@@ -294,7 +298,7 @@ const cases = {
         [1000, 0, 0],
         [0, 1000, 0],
       ]) {
-        for (let index = 0; index < 10000; index += 2000) {
+        for (let index = 0; index < eventCount; index += 2000) {
           const results = await Promise.all([
             submit(sources.slice(index, index + 1000)),
             submit(sources.slice(index + 1000, index + 2000)),
@@ -309,7 +313,7 @@ const cases = {
           assert.deepEqual(
             currentEffects,
             firstEffects,
-            'Repetir los 10000 eventos no añade efectos de dominio.',
+            'Repetir todos los eventos no añade efectos de dominio.',
           );
         else firstEffects = currentEffects;
       }
@@ -328,7 +332,7 @@ const cases = {
     const summary = { OFF: 0, MOVING: 0, STOPPED: 0 };
     for (const current of fleet.items) {
       const number = Number(current.vehicleId.slice(-3));
-      const expected = sources[9900 + number];
+      const expected = sources[eventCount - 100 + number];
       assert.equal(current.eventId, expected.eventId);
       const status = !expected.ignitionOn ? 'OFF' : expected.speedKph > 0 ? 'MOVING' : 'STOPPED';
       assert.equal(current.status, status);
@@ -336,10 +340,10 @@ const cases = {
     }
     assert.deepEqual(fleet.summary, summary);
     const alerts = await get('/api/alerts');
-    assert.equal(alerts.total, 4000);
-    assert.equal(new Set(alerts.items.map((a) => a.eventId)).size, 4000);
+    assert.equal(alerts.total, expectedAlerts);
+    assert.equal(new Set(alerts.items.map((a) => a.eventId)).size, expectedAlerts);
     const selected = await history('VOLUME-000');
-    assert.equal(selected.total, 100);
+    assert.equal(selected.total, eventCount / 100);
     assert.deepEqual(
       selected.items.map((e) => e.eventId),
       sources.filter((_, n) => n % 100 === 0).map((e) => e.eventId),
@@ -355,22 +359,22 @@ const cases = {
       (SELECT count(*)::int FROM outbox_messages WHERE type='alert.created') AS alert_messages`)
     ).rows[0];
     assert.deepEqual(counts, {
-      events: 10000,
+      events: eventCount,
       vehicles: 100,
-      alerts: 4000,
-      batches: 20,
-      items: 20000,
-      accepted_messages: 10000,
-      alert_messages: 4000,
+      alerts: expectedAlerts,
+      batches: eventCount / 500,
+      items: eventCount * 2,
+      accepted_messages: eventCount,
+      alert_messages: expectedAlerts,
     });
-    assert.equal(new Set(receipts).size, 20);
+    assert.equal(new Set(receipts).size, eventCount / 500);
     const plan = (
       await runtime.query(
         'EXPLAIN (ANALYZE,BUFFERS,FORMAT JSON) SELECT event_key FROM telemetry_events WHERE vehicle_key=$1 ORDER BY observed_epoch_second,observed_fraction COLLATE "C",event_key',
         [Buffer.from(encodeIdentity('VOLUME-000'))],
       )
     ).rows[0]['QUERY PLAN'][0];
-    assert.equal(plan.Plan['Actual Rows'], 100);
+    assert.equal(plan.Plan['Actual Rows'], eventCount / 100);
     const nodes = [];
     const visit = (node) => {
       nodes.push({
@@ -382,16 +386,17 @@ const cases = {
     };
     visit(plan.Plan);
     globalThis.nexoVolumeMetrics = {
-      events: 10000,
+      events: eventCount,
       vehicles: 100,
-      alerts: 4000,
-      batches: 20,
-      positions: 20000,
+      alerts: expectedAlerts,
+      batches: eventCount / 500,
+      positions: eventCount * 2,
       elapsedMilliseconds: Date.now() - started,
       peakRuntimeConnections: stats.total,
       peakWrites: stats.writes,
       peakQueries: stats.queries,
       peakQueueAndListener: stats.queue,
+      peakOutbox: stats.outbox,
       queryPlan: {
         planningMilliseconds: plan['Planning Time'],
         executionMilliseconds: plan['Execution Time'],

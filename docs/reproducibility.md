@@ -70,3 +70,7 @@ WEB_PORT=8081 docker compose --project-name "$NEXO_VERIFY_PROJECT" --env-file .e
 ```
 
 No ejecutar limpieza global ni reutilizar este comando sobre el proyecto habitual. Cada incremento conserva controles remotos y revisión humana de su candidato a main; una copia limpia no los sustituye. La integración procesa ambos oráculos y 10.000 eventos ordinarios en sus propios stacks; navegador comprueba además dos clientes con tiempo real, carreras y recuperación. La [guía E3](demo-guide.md) concreta reset y reproductor controlable con dos clientes; la copia limpia del SHA final conserva su comprobación propia. [Verificación](verification.md) identifica los SHAs efectivamente ejecutados; este procedimiento no afirma que una versión posterior ya haya pasado ese recorrido.
+
+## Exportación del SHA en la comprobación ampliada
+
+La [validación ampliada](expanded-validation.md) implementa otra modalidad de fuente limpia: entrega git archive del SHA explícito a los builds Docker, sin archivos no registrados o configuración privada. Verifica instalación/construcción por lockfile, revisión/IDs de imágenes, arranque/login, persistencia y reset sobre recursos propios. No se presenta como una clonación ejecutada. El procedimiento manual anterior sigue disponible para el evaluador; el manifiesto identifica la modalidad y candidato realmente comprobados.

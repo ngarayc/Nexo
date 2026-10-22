@@ -10,7 +10,7 @@ El agente contrastó la solicitud con los requisitos y el flujo de bootstrap. En
 
 Se prepararon externamente el cuerpo de la issue E0-I01, reglas, tres procedimientos y archivos candidatos de NestJS/Angular. La issue [#1](https://github.com/ngarayc/Nexo/issues/1) se publicó antes de incorporar los archivos al repositorio. Se resolvió el lockfile y se ejecutaron instalación limpia, calidad, compilación, 13 pruebas y arranque HTTP de las dos aplicaciones.
 
-Esta preparación no constituye los dos ciclos funcionales requeridos. EP-03 dispone de revisión humana real en su registro; CR-01 parte de su base estable y tiene especificación, implementación y comparación de API propias. La selección visual y revisión humana del candidato CR-01 conservan su estado separado.
+Esta preparación no constituye los dos ciclos funcionales requeridos. EP-03 dispone de revisión humana real en su registro; CR-01 parte de su base estable y tiene especificación, implementación y comparación de API propias. La selección visual y aceptación integral CR-01 se incorporaron después de comparar las propuestas. Su [registro](agent-cycles/CR-01.md) acredita la revisión humana efectiva posterior por PR68 y sus checks; la aprobación de E3 no se reutiliza para ese cambio.
 
 ## Registro de cada ciclo
 

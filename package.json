@@ -31,7 +31,8 @@
     "test:integration": "node scripts/ci/run-node-tests.mjs integration",
     "test:ci-controls": "node scripts/ci/run-node-tests.mjs ci-controls",
     "test:e2e": "node scripts/ci/run-system.mjs",
-    "schema:check": "node scripts/check-schema.mjs"
+    "schema:check": "node scripts/check-schema.mjs",
+    "test:expanded": "node scripts/ci/run-expanded.mjs"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

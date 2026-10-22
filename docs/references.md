@@ -20,7 +20,7 @@ Los requisitos suministrados se conservan en [requirements](requirements/common-
 | [Skills](https://learn.chatgpt.com/docs/build-skills)                             | Formato y descubrimiento; mantener `skills/` y enlaces relativos no demuestra por sí solo uso real                                 |
 | [Seguridad de Codex](https://learn.chatgpt.com/docs/enterprise/security-cookbook) | Proteger credenciales y comprobar controles efectivos; una regla escrita o un filtro de variables no acreditan una barrera técnica |
 
-La investigación de telemetría, colas, recuperación y cartografía se incorporará a la documentación pública junto al comportamiento realmente implementado: fuente, adaptación, motivo, coste, archivos y prueba observada. El catálogo privado de planeación no forma parte del repositorio.
+Las páginas de persistencia, ingesta, recuperación, tiempo real y cartografía relacionan las fuentes primarias con su adaptación, motivo, coste, archivos y pruebas observadas. El gráfico documenta también sus aproximaciones y alternativa accesible. Estas prácticas son decisiones de Nexo aplicadas al contrato; los resultados de bibliotecas o plataformas externas no se presentan como evidencia propia.
 
 ## Identidad, tiempo y evidencia — E1-I01
 
@@ -97,3 +97,9 @@ La [corrección musl #43](security.md) consulta el registro oficial [Alpine3.24]
 ## Reset local acotado
 
 La [identidad de volúmenes Compose](https://docs.docker.com/reference/compose-file/volumes/), la [semántica de down](https://docs.docker.com/reference/cli/docker/compose/down/), el [borrado de un volumen](https://docs.docker.com/reference/cli/docker/volume/rm/) y la [inspección de contexto](https://docs.docker.com/reference/cli/docker/context/inspect/) sustentan el [reset](demo-reset.md). Nexo añade etiqueta sintética, rechazo de consumidores ajenos, archivos privados con checksum y reanudación por manifiesto. No usa down --volumes, force o prune; una interrupción no acredita éxito ni autoriza borrar un reemplazo.
+
+## Candidatura ampliada y fuente limpia
+
+[git archive](https://git-scm.com/docs/git-archive) aporta exportación de un árbol/commit y [el contexto tar de Docker](https://docs.docker.com/build/concepts/context/#local-tarballs) permite construir desde esa exportación por stdin. Nexo añade validación del SHA/checkout, etiquetas de revisión, comparación de IDs e inventarios escaneados, y arranque/persistencia/reset sobre recursos sintéticos propios. El manifiesto declara git-archive; no afirma que se haya ejecutado una clonación nueva.
+
+[Playwright: motores y dependencias](https://playwright.dev/docs/browsers#install-system-dependencies) relaciona la versión de la herramienta con sus binarios y las bibliotecas de Linux. Nexo fija la versión, comprueba lanzamiento/DOM y el motor de cada caso, y rechaza resultados vacíos, omitidos o de otro proyecto. El workflow instala las dependencias en su runner; las suites usan tiles sintéticos, sin afirmar disponibilidad del proveedor. [Validación ampliada](expanded-validation.md) relaciona archivos, reglas de publicación y límites.

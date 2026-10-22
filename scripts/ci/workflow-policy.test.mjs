@@ -8,6 +8,7 @@ const files = [
   '.github/workflows/ci.yml',
   '.github/workflows/main-review.yml',
   '.github/actions/setup-project/action.yml',
+  '.github/workflows/expanded.yml',
 ];
 const documents = () => files.map((file) => parse(readFileSync(file, 'utf8')));
 
@@ -68,5 +69,35 @@ test('revisión de main no puede emitirse en pushes ni convertirse en skip', () 
     const docs = documents();
     mutate(docs[1]);
     assert.throws(() => validateWorkflows(...docs));
+  }
+});
+
+test('ampliado rechaza fuente móvil, pasos omitidos, escritura, uploads crudos y SHA sin guardia', () => {
+  for (const mutate of [
+    (workflow) => {
+      workflow.on.push = {};
+    },
+    (workflow) => {
+      workflow.permissions.contents = 'write';
+    },
+    (workflow) => {
+      workflow.jobs.expanded.steps[0].run = 'true';
+    },
+    (workflow) => {
+      workflow.jobs.expanded.steps[1].with.ref = 'main';
+    },
+    (workflow) => {
+      workflow.jobs.expanded.steps[2].if = false;
+    },
+    (workflow) => {
+      workflow.jobs.expanded.steps.at(-1).with.path = 'reports/**';
+    },
+    (workflow) => {
+      workflow.jobs.expanded['continue-on-error'] = true;
+    },
+  ]) {
+    const documents = files.map((file) => parse(readFileSync(file, 'utf8')));
+    mutate(documents[3]);
+    assert.throws(() => validateWorkflows(...documents));
   }
 });

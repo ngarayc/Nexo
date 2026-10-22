@@ -87,3 +87,9 @@ La preparación instala npm y el lockfile con `--no-audit` para concentrar la co
 ## Compatibilidad de puntuación de Refs — #62
 
 La [issue #62](https://github.com/ngarayc/Nexo/issues/62) corrige la compatibilidad del trailer publicado en db75242: `Refs #57, #59.`. [CI propio de PR61,39828497893](https://github.com/ngarayc/Nexo/actions/runs/39828497893) rechazó ese punto final conforme a la gramática anterior, después de pasar calidad de fuentes; los jobs funcionales dependientes no se ejecutaron. La corrección admite solo ese signo opcional final y mantiene extracción de números, identidad real de cada issue, rechazo de PR/repositorio ajeno y reglas de contexto/promoción. No hay excepción por commit, exclusión de historia, cambio de workflows o reducción de controles. El historial y el intento fallido se conservan; el candidato nuevo requiere CI propio completo.
+
+## Recorrido ampliado de cierre — #77
+
+El [workflow ampliado](../.github/workflows/expanded.yml) es manual y recibe SHA y etapa explícitos. Conserva permisos de lectura, actions fijadas, validación del SHA antes del checkout y un único upload por lista cerrada. El runner vuelve a comprobar checkout/ejecución y el main vigente para cierre final. [El procedimiento](expanded-validation.md) detalla exportación limpia, imágenes escaneadas/probadas, carga100.000, Firefox/WebKit y manifiesto saneado. El CI ordinario conserva sus seis jobs y cinco artefactos; este workflow no omite sus controles ni concede revisión humana.
+
+Las negativas de workflow rechazan referencia móvil, guardia ausente, pasos omitidos, escritura y upload amplio. Las del manifiesto rechazan otro candidato/intento/fixture/imagen, contenido crudo en niveles anidados, ensayo local presentado como final, carga menor, exceso de conexiones, reset pendiente o resultados de navegador incompletos. El cierre real requiere los resultados del SHA final y no la existencia de estos archivos.

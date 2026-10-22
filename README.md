@@ -6,7 +6,7 @@ Telemetría sintética de flotas con NestJS, Angular y PostgreSQL. El nombre exp
 
 E3 incorpora el [diario persistente](docs/replay-journal.md) y el [verificador de datos](docs/replay-verification.md), con fuentes originales, preparación, comparación e informes históricos. El [motor HTTP compartido](docs/replay-emitter.md) conserva cuerpos originales, una sola petición, controles protegidos e incertidumbre sin reenvíos. El [panel flotante](docs/replay-panel.md) permite iniciar, pausar, reanudar, reiniciar y finalizar desde Flota/Alertas; muestra progreso, inspector e informes mediante el mismo SSE. El [reset local](docs/demo-reset.md) conserva evidencia externa y recrea exclusivamente el volumen sintético identificado. La [guía de demostración](docs/demo-guide.md) une reset, dos clientes y ambos replays; [verificación](docs/verification.md) conserva resultados y promociones de cada candidato.
 
-E5 incorpora filtros compartidos de búsqueda/estado y un [mapa de últimas posiciones](docs/cartography.md) con Leaflet, selección del mismo historial y proveedor revisado. La tabla y los datos en vivo siguen disponibles ante un fallo cartográfico. El detalle muestra la trayectoria de observaciones y comparte selección por evento con la tabla y las alertas. El [gráfico de velocidad observada](docs/speed-chart.md) conserva las mismas muestras y selección, con referencia80 km/h y alternativa accesible en el historial. La aceptación integral E5 y el cierre de entrega continúan pendientes.
+E5 incorpora filtros compartidos de búsqueda/estado y un [mapa de últimas posiciones](docs/cartography.md) con Leaflet, selección del mismo historial y proveedor revisado. La tabla y los datos en vivo siguen disponibles ante un fallo cartográfico. El detalle muestra la trayectoria de observaciones y comparte selección por evento con la tabla y las alertas. El [gráfico de velocidad observada](docs/speed-chart.md) conserva las mismas muestras y selección, con referencia80 km/h y alternativa accesible en el historial. El recorrido local ordinario de E5 pasó y la presentación temporal se verificó además en Firefox/WebKit; CI, promoción/revisión del candidato y cierre de entrega conservan evidencia propia.
 
 ## Arranque
 
@@ -65,6 +65,7 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 
 - [Arquitectura](docs/architecture.md).
 - [Trazabilidad y alcance comprobado](docs/traceability.md).
+- [Retrospectiva: decisiones, correcciones y límites](RETROSPECTIVA.md).
 - [Persistencia exacta y migraciones](docs/persistence.md).
 - [Admisión durable y contratos HTTP](docs/ingestion.md).
 - [Clasificación y efectos transaccionales](docs/classification.md).
@@ -83,6 +84,7 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 - [Emisor HTTP, temporización e intenciones](docs/replay-emitter.md).
 - [API y contrato OpenAPI versionado](docs/api.md).
 - [Comprobación desde copia limpia](docs/reproducibility.md).
+- [Validación ampliada y candidatura final](docs/expanded-validation.md).
 - [Reglas de dominio y GPS](docs/domain.md).
 - [Seguridad](docs/security.md).
 - [Acceso local](docs/access.md).
@@ -93,6 +95,8 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 - [Rúbrica suministrada](docs/requirements/CRITERIOS-EVALUACION.md).
 - [Backlog suministrado](docs/requirements/backlog.md).
 
-## Entrega pendiente
+## Entrega
 
-La demostración, vídeo accesible, resultados completos y tag `entrega-final` corresponden al cierre del proyecto. El total estimado de horas lo confirmará el autor; no se inferirá del historial o las herramientas.
+**Dedicación estimada por el autor para el alcance entregado: 25 horas.** Es una estimación confirmada por el autor.
+
+El paquete definitivo se publicará en [la release entrega-final](https://github.com/ngarayc/Nexo/releases/tag/entrega-final), con video MP4 y manifiesto del candidato verificado. El destino está previsto; su publicación y acceso permanecen pendientes. Antes del cierre se audita la implementación contra la planeación y todas las obligaciones, se consolidan/corrigen los hallazgos y se presenta el candidato final a revisión del autor. El libreto y la grabación se preparan sobre el resultado corregido; ningún enlace previsto acredita todavía entrega publicada.

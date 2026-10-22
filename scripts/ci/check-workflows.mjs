@@ -6,6 +6,7 @@ const files = [
   '.github/workflows/ci.yml',
   '.github/workflows/main-review.yml',
   '.github/actions/setup-project/action.yml',
+  '.github/workflows/expanded.yml',
 ];
 validateWorkflows(
   ...(await Promise.all(files.map(async (file) => parse(await readFile(file, 'utf8'))))),
