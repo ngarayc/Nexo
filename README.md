@@ -59,6 +59,7 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 - [Clasificación y efectos transaccionales](docs/classification.md).
 - [Recuperación, backoff y agotamiento](docs/recovery.md).
 - [Consultas, historial JSON y snapshot](docs/queries.md).
+- [API y contrato OpenAPI versionado](docs/api.md).
 - [Comprobación desde copia limpia](docs/reproducibility.md).
 - [Reglas de dominio y GPS](docs/domain.md).
 - [Seguridad](docs/security.md).
