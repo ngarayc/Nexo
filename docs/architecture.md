@@ -12,7 +12,7 @@ La primera migración crea `users`; la segunda incorpora las seis tablas de [per
 
 La tercera migración permite los cierres técnicos tempranos especificados, sin modificar tablas o datos existentes. [Recuperación](recovery.md) describe códigos cerrados, presupuesto durable y prueba de upgrade.
 
-La cuarta migración añade el [diario del reproductor](replay-journal.md): ejecución/escenario e intentos en dos tablas, con transición/revisión, resultados inmutables y recuperación sin envíos. El adaptador no llama al receptor ni está todavía compuesto como motor HTTP; los controles y su verificador conservan sus incrementos.
+La cuarta migración añade el [diario del reproductor](replay-journal.md): ejecución/escenario e intentos en dos tablas, con transición/revisión, resultados inmutables y recuperación sin envíos. El [verificador](replay-verification.md) separa fuentes originales, lectura coherente de PostgreSQL/cola y comparación con oráculos. Ninguno envía HTTP ni está todavía compuesto como motor/control público.
 
 ## Dirección aceptada
 

@@ -26,6 +26,8 @@ COPY --from=build --chown=node:node /app/apps/api/migrations ./apps/api/migratio
 COPY --from=build --chown=node:node /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build --chown=node:node /app/packages/contracts/package.json ./packages/contracts/package.json
 COPY --from=build --chown=node:node /app/packages/contracts/dist ./packages/contracts/dist
+COPY --from=toolchain --chown=node:node /app/package-lock.json ./package-lock.json
+COPY --chown=node:node fixtures/events.jsonl fixtures/expected_sample.json fixtures/expected_detailed.json ./fixtures/
 COPY --chown=node:node infra/api-entrypoint.sh ./api-entrypoint.sh
 USER node
 EXPOSE 3000

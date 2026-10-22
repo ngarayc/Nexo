@@ -1,5 +1,19 @@
 # Verificación
 
+## Preparación y comparación del replay — E3-I02
+
+La [issue #40](https://github.com/ngarayc/Nexo/issues/40) incorpora el [verificador](replay-verification.md) sobre el diario #38. La calidad completa pasó con340pruebasAPI y70Angular; los31controles del pipeline permanecen aprobados. Fuentes originales y esquema/snapshots se conservaron, sin omisiones o exclusiones nuevas.
+
+La regresión inicial pasó102casos de integración y13Chromium. La revisión añadió después el cotejo de la identidad del intento y del evento referenciado por cada recibo. La imagen API final `sha256:b51dcff7583547a6000f6bfa05fc723b04c040df64dcc7ab247a532ae33a5205`, reconstruida con ese ajuste, volvió a pasar los9casos PostgreSQL del verificador y los13recorridos Chromium. No se atribuye la ejecución anterior de102casos a esa imagen posterior: el CI del candidato reconstruye el inventario completo desde su checkout e identifica sus propios resultados/imágenes.
+
+Los casos nuevos comprueban fuentes empaquetadas, código identificado, preparación con jobs preparados/activos, dos conjuntos controlados20/2/2→0/22/2, contenido/identidades, historial, estados, alertas,43mensajes, recibos ajenos, lectura concurrente, inventario incompleto e indisponibilidad. El escenario de identidad errónea ingresa el dato incorrecto desde el principio; no desactiva la inmutabilidad SQL. La carrera confirma un recibo/job durante la lectura: ambos quedan fuera del primer snapshot y aparecen en el siguiente.
+
+Estos estados controlados usan recepción/clasificación y diario reales, pero no el futuro emisor HTTP. La publicación se marca sintéticamente para comparar datos: no acredita SSE emitido, pausa/reanudación o dos clientes renderizados por el motor. Informe y comparación conservan ese alcance. Los recorridos de navegador existentes conservan su propia evidencia E2.
+
+La imagen terminó su escaneo Alpine/Node sin hallazgos HIGH/CRITICAL reportados y npm audit informó0vulnerabilidades. El feed de Trivy emitió un aviso de detalles ausentes para CVE-2026-107891, también al consultar su repositorio primario; se conserva esta limitación sin afirmar un estado o severidad para ese identificador y sin añadir exclusiones. Los checks/artefactos del candidato mantienen su validación independiente y los límites de la [política de CI](ci-controls.md).
+
+La [PR #41](https://github.com/ngarayc/Nexo/pull/41) reúne diario y verificador. Sus checks y evidencia remota deben atribuirse a cada SHA efectivo; aprobación del plan, pruebas locales y QA del agente no sustituyen revisión humana de main. Motor, contratos públicos de control, panel, reset e integración final continúan pendientes E3.
+
 ## Diario del reproductor — E3-I01
 
 La [issue #38](https://github.com/ngarayc/Nexo/issues/38) pasó calidad, **290 pruebas API, 70 Angular, 93 de integración y 13 Chromium**, sin omisiones. La imagen API reconstruida y utilizada por esos recorridos pasó Trivy sin altos/críticos; web conserva su código/imagen revisados. Las cuatro fuentes mantienen sus hashes. Este incremento incorpora el diario; no acredita todavía motor, controles HTTP, verificador oficial, panel o reset.

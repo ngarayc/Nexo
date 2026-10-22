@@ -79,3 +79,7 @@ La selección de variantes usa [las imágenes oficiales de Node](https://github.
 ## Diario del emisor
 
 [Restricciones PostgreSQL18](https://www.postgresql.org/docs/18/ddl-constraints.html), [triggers de restricción diferidos](https://www.postgresql.org/docs/18/sql-createtrigger.html) y [bloqueos asesores transaccionales](https://www.postgresql.org/docs/18/explicit-locking.html#ADVISORY-LOCKS) sustentan la protección al COMMIT y las altas concurrentes del [diario](replay-journal.md). Nexo añade estados, prefijo confirmado, límite reservado y marcador de intención; las pruebas fuerzan un rollback entre respuesta/cursor y compiten desde dos coordinadores. Estas transacciones no incluyen el futuro HTTP del emisor y no reconstruyen una respuesta perdida.
+
+## Preparación y comparación del replay
+
+[Verificador](replay-verification.md) aplica el aislamiento [REPEATABLE READ de PostgreSQL18](https://www.postgresql.org/docs/18/transaction-iso.html#XACT-REPEATABLE-READ) y las APIs públicas de [jobs](https://pgboss.io/api/jobs) y [adaptadores pg-boss](https://pgboss.io/api/adapters). El inventario usa la misma transacción que los recibos/dominio; no depende de estadísticas en caché ni confunde queued con active. Fuentes originales, expectativas, límites de lectura y conservación histórica son decisiones de Nexo. La integración concurrente verifica visibilidad conjunta de una recepción y su job; no acredita el motor HTTP o la evidencia visual todavía pendientes.

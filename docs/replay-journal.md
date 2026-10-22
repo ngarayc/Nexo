@@ -1,6 +1,6 @@
 # Diario durable del reproductor
 
-La [issue #38](https://github.com/ngarayc/Nexo/issues/38) incorpora persistencia y operaciones del diario del emisor simulado. Este incremento todavía no ofrece motor HTTP, controles de replay, panel o reset; tampoco ejecuta la verificación contra los oráculos. Esas capacidades se incorporan después. El receptor conserva su cola y procesamiento independientes.
+La [issue #38](https://github.com/ngarayc/Nexo/issues/38) incorpora persistencia y operaciones del diario del emisor simulado. El [verificador #40](replay-verification.md) añade su comparación con los oráculos. Todavía no se ofrece motor HTTP, controles de replay, panel o reset. El receptor conserva su cola y procesamiento independientes.
 
 ## Datos y relaciones
 
@@ -22,7 +22,7 @@ La migración 0003 añade únicamente replay_runs y replay_attempts: nueve tabla
 | Última intención       | commandId, instancia, revisión de control esperada y documento normalizado ≤4 KiB; permite consultar el cambio durable tras una respuesta incierta |
 | replay_attempts        | FK a ejecución, línea 1–24, índice de lote 0, ingestionId único, identidad original del evento y desenlace confirmado o incierto                   |
 
-scenarioId referencia la primera ejecución y previousRunId una ejecución anterior del mismo escenario/fixture. Solo existe un recorrido activo y un segundo oficial por escenario. Declarar la segunda etapa exige una primera completada/conforme; la verificación real de condiciones del receptor pertenece al siguiente incremento.
+scenarioId referencia la primera ejecución y previousRunId una ejecución anterior del mismo escenario/fixture. Solo existe un recorrido activo y un segundo oficial por escenario. Declarar la segunda etapa exige una primera completada/conforme; el verificador añade la lectura real de las condiciones del receptor antes de comenzar.
 
 ingestionId se registra **antes** de enviar HTTP y puede no tener todavía recibo. Su relación con ingestion_batches es una correlación, sin FK inmediata. Un rechazo tampoco exige telemetry_events. La identidad del evento usa la misma representación binaria exacta del núcleo; NUL/sustitutos no se reparan al leer el diario.
 
