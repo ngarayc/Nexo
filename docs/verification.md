@@ -1,5 +1,9 @@
 # Verificación de Nexo
 
+## Control de fronteras después de construir — #65
+
+El primer cierre local E4 pasó formato, lint y tipos, pero se detuvo en fronteras por10 ciclos entre bundles generados de un build anterior. Se conservó el fallo. La exclusión de salidas conocidas conserva las cinco reglas y pasó con268 módulos/965 dependencias de fuentes, junto con seis regresiones del analizador real. Los primeros cinco casos negativos del comprobador propio suponían que la salida JSON retornaba un código distinto de cero; se corrigieron para comprobar las violaciones estructuradas que efectivamente produce. No se modificaron reglas para aprobarlos. Los controles locales restantes del cierre continúan sin repetir las suites ya aprobadas.
+
 ## Interfaz de CR-01 — E4-I03 / #60
 
 Pasaron tipos web y25 pruebas focalizadas en tres archivos: modelo de filtro, página y monitor. Una corrección de fixture dio un eventId distinto a la entidad de reemplazo; sus cuatro pruebas de página se repitieron y pasaron, sin alterar código de aplicación u oráculos.

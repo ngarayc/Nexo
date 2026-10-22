@@ -27,6 +27,7 @@ module.exports = {
     },
   ],
   options: {
+    exclude: { path: '^(?:apps/(?:api|web)/dist/|packages/contracts/dist/|apps/web/\\.angular/)' },
     doNotFollow: { path: 'node_modules' },
     tsPreCompilationDeps: true,
     enhancedResolveOptions: { extensions: ['.ts', '.js', '.mjs', '.json'] },

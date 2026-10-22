@@ -1,5 +1,11 @@
 # Controles de integración
 
+## Fronteras sobre fuentes
+
+`npm run boundaries` inspecciona aplicaciones y contratos con las mismas cinco reglas de ciclos y dependencias prohibidas. Excluye únicamente los directorios `dist` de los tres workspaces y la caché `apps/web/.angular`. [#65](https://github.com/ngarayc/Nexo/issues/65) corrige el falso positivo del cierre E4: un build previo dejaba bundles cíclicos dentro del inventario. No se eliminan builds para obtener verde ni se excluyen carpetas homónimas dentro de `src`.
+
+Seis controles ejecutan el analizador real sobre fixtures temporales: mantienen fuentes no vacías, ignoran salidas conocidas y rechazan ciclos de fuentes, web→servidor, servidor→web, contratos→aplicaciones y contratos→Node. Revisan las violaciones estructuradas del reporte JSON; la ejecución ordinaria sigue usando la salida de errores y su código de fallo.
+
 ## Preparación verificable de Chromium
 
 La [issue #48](https://github.com/ngarayc/Nexo/issues/48) separa la descarga del navegador fijado de la instalación de dependencias del sistema. Se descarga el headless shell que ya utiliza la configuración Chromium sin channel; después un proceso acotado debe abrir ese navegador, navegar y comprobar contenido real del DOM. Una validación nativa deshabilitada bloquea el probe.
