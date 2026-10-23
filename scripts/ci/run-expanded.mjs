@@ -8,6 +8,7 @@ import { run } from 'node:test';
 import { inspect } from 'node:util';
 import { firefox, webkit } from '@playwright/test';
 import { testStack } from '../../tests/support/stack.mjs';
+import { browserStack } from '../../tests/support/browser-stack.mjs';
 import { validateImageScan, validatePlaywrightReport } from './results.mjs';
 import {
   expandedBrowsers,
@@ -189,7 +190,7 @@ for (const name of expandedBrowsers) {
   }
   const results = [];
   for (const file of files) {
-    const stack = testStack({ webPort: 8081 });
+    const stack = browserStack(file);
     const output = directory + '/' + name + '-' + file + '.json';
     try {
       mkdirSync(dirname(output), { recursive: true });
