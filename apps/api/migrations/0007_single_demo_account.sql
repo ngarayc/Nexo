@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "users_single_account" ON "users" USING btree ((true));

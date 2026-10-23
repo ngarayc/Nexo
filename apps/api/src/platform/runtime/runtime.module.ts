@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Injectable, Module } from '@nestjs/common';
+import { DemoMaintenance } from './demo-maintenance.js';
 
 @Injectable()
 export class RuntimeInstance {
@@ -46,7 +47,7 @@ export class CommittedChanges {
 }
 
 @Module({
-  providers: [RuntimeInstance, RuntimeHealth, CommittedChanges],
-  exports: [RuntimeInstance, RuntimeHealth, CommittedChanges],
+  providers: [RuntimeInstance, RuntimeHealth, CommittedChanges, DemoMaintenance],
+  exports: [RuntimeInstance, RuntimeHealth, CommittedChanges, DemoMaintenance],
 })
 export class RuntimeModule {}

@@ -34,6 +34,7 @@ function setup(items: readonly VehicleView[] = [vehicle]) {
   const renderer = {
     sync: vi.fn(),
     fit: vi.fn(),
+    fitGeofence: vi.fn(),
     focusVehicle: vi.fn(),
     retryTiles: vi.fn(),
     destroy: vi.fn(),
@@ -100,4 +101,25 @@ it('latitud polar mantiene dato original y comunica el límite visual de la proy
   await fixture.whenStable();
   expect(root.textContent).toContain('superan el alcance visual');
   expect(renderer.sync.mock.calls[0]![0][0].latitude).toBe(90);
+});
+it('clasifica la colección visible y centra la zona solo bajo una acción explícita', async () => {
+  const { fixture, root, renderer } = setup();
+  await fixture.whenStable();
+  expect(fixture.componentInstance.geofenceSummary()).toEqual({
+    inside: 0,
+    outside: 1,
+    unknown: 0,
+  });
+  fixture.componentRef.setInput('items', [{ ...vehicle, latitude: 14.612, longitude: -90.538 }]);
+  await fixture.whenStable();
+  expect(fixture.componentInstance.geofenceSummary()).toEqual({
+    inside: 1,
+    outside: 0,
+    unknown: 0,
+  });
+  expect(renderer.fitGeofence).not.toHaveBeenCalled();
+  [...root.querySelectorAll('button')]
+    .find((b) => b.textContent?.includes('Ver geocerca'))!
+    .click();
+  expect(renderer.fitGeofence).toHaveBeenCalledTimes(1);
 });

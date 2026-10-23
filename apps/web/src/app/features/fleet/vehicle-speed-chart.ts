@@ -60,16 +60,40 @@ import type { SpeedChartRenderer } from './adapters/speed-chart-renderer';
       min-width: 0;
       margin-block: 1.5rem;
     }
+    section {
+      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fbfcff;
+    }
+    h3 {
+      font-size: 15px;
+      margin: 0 0 8px;
+    }
+    p {
+      color: #65758b;
+      font-size: 12px;
+      line-height: 1.7;
+    }
     .chart {
       position: relative;
       height: 22rem;
       width: 100%;
     }
+    @media (max-width: 600px) {
+      section {
+        padding: 12px;
+      }
+      .chart {
+        height: 18rem;
+      }
+    }
     canvas {
       display: block;
     }
     .selected-sample {
-      background: #f5f8f8;
+      background: #eef3fb;
+      border-radius: 10px;
       padding: 0.75rem;
     }
   `,

@@ -169,7 +169,8 @@ it('el resumen interactivo conserva conteos globales, selección y foco ante act
   const stopped = [...root.querySelectorAll<HTMLButtonElement>('fieldset button')].find((button) =>
     button.textContent?.includes('Detenidos'),
   )!;
-  expect(stopped.textContent).toContain('(1)');
+  expect(stopped.getAttribute('aria-label')).toBe('Detenidos (1)');
+  expect(stopped.querySelector('strong')?.textContent).toBe('1');
   stopped.focus();
   stopped.click();
   await fixture.whenStable();

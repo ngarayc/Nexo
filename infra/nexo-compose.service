@@ -1,0 +1,17 @@
+[Unit]
+Description=Nexo Docker Compose from the last healthy release
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+RequiresMountsFor=/var/lib/nexo-data
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/python3 /usr/local/lib/nexo-deploy.py boot up
+ExecStop=/usr/bin/python3 /usr/local/lib/nexo-deploy.py boot stop
+TimeoutStartSec=300
+TimeoutStopSec=120
+
+[Install]
+WantedBy=multi-user.target

@@ -40,6 +40,8 @@ services:
       INGEST_MAX_EVENTS_PER_BATCH: ${INGEST_MAX_EVENTS_PER_BATCH:-1000}
       INGEST_MAX_BODY_BYTES: ${INGEST_MAX_BODY_BYTES:-2097152}
       DEMO_ENABLED: ${DEMO_ENABLED:?Falta DEMO_ENABLED}
+      DEMO_USERNAME: ${DEMO_USERNAME:-}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-}
     depends_on:
       db:
         condition: service_healthy

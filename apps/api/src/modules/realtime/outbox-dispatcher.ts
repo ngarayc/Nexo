@@ -21,6 +21,16 @@ export class OutboxDispatcher implements OnApplicationBootstrap, OnModuleDestroy
   private pending: Promise<void> | undefined;
   private queued = false;
   private stopped = false;
+  private paused = false;
+
+  async pause(): Promise<void> {
+    this.paused = true;
+    await this.pending;
+  }
+  resume(): void {
+    this.paused = false;
+    this.wake();
+  }
 
   constructor(
     database: DatabaseService,
@@ -57,16 +67,16 @@ export class OutboxDispatcher implements OnApplicationBootstrap, OnModuleDestroy
     // ingesta/diagnóstico escuchen mientras se recupera un backlog anterior.
   }
   private wake(): void {
-    if (this.stopped) return;
+    if (this.stopped || this.paused) return;
     this.queued = true;
     if (this.pending) return;
     this.pending = this.run().finally(() => {
       this.pending = undefined;
-      if (this.queued && !this.stopped) this.wake();
+      if (this.queued && !this.stopped && !this.paused) this.wake();
     });
   }
   private async run(): Promise<void> {
-    while (!this.stopped) {
+    while (!this.stopped && !this.paused) {
       this.queued = false;
       let more: boolean;
       try {

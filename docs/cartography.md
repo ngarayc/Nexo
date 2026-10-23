@@ -1,5 +1,7 @@
 # Mapa de últimas posiciones
 
+La [geocerca fija de demostración](geofence.md) añade una zona compartida por ambos mapas, clasificación Dentro/Fuera y cambios observados del historial. Conserva colecciones, selección y oráculos; no genera alertas persistidas.
+
 La [issue #67](https://github.com/ngarayc/Nexo/issues/67) incorpora Leaflet 1.9.4 como adaptador de presentación. `FleetFacade.visibleItems` alimenta tanto tabla como marcadores; búsqueda y estado se combinan con AND. El mapa no consulta telemetría, no mantiene otra colección de dominio y no abre una conexión SSE. La [sincronización existente](frontend-sync.md) conserva el último estado y el [historial](dashboard.md) conserva todas las observaciones aceptadas. La imagen web distribuye el archivo `3rdpartylicenses.txt` generado por Angular, incluidos los avisos BSD de Leaflet, junto a los assets.
 
 ## Posiciones e interacción
@@ -9,6 +11,8 @@ Cada marcador conserva la identidad original del vehículo y recibe `[latitude, 
 La primera colección no vacía ajusta el encuadre a sus posiciones, con zoom inicial máximo 16. No se usa la zona horaria como centro geográfico. Una colección vacía muestra un mensaje y carece de marcadores inventados. Las actualizaciones posteriores conservan los elementos existentes por ID y el encuadre; un tardío no reemplaza la última posición. Ver flota visible permite ajustar el conjunto actual expresamente.
 
 Seleccionar una fila o marcador abre el mismo detalle y centra su marcador si está visible. Enter y espacio activan los marcadores y la tabla sigue ofreciendo todas las acciones por teclado. Filtrar puede ocultar el marcador sin cerrar el detalle; su aviso permite limpiar los filtros. Al desaparecer un marcador enfocado, el foco vuelve a la región del mapa. El componente destruye mapa, listeners y observador de tamaño al salir, también al cerrar sesión.
+
+Ambos mapas desactivan el [zoom por rueda](https://leafletjs.com/reference.html#map-scrollwheelzoom): desplazar la página sobre ellos no cambia el encuadre. Los controles Acercar/Alejar conservan el zoom explícito. La capa usa [noWrap](https://leafletjs.com/reference.html#gridlayer-nowrap) y los [límites del mundo](https://leafletjs.com/reference.html#map-maxbounds), de modo que al alejar solo aparece una copia del mundo, con margen vacío si el contenedor es más ancho. Estos límites son de presentación y no cambian las coordenadas de dominio. Los tooltips tienen ancho horizontal acotado al viewport; cada mapa crea su propio contexto de capas para que sus panes no tapen el reproductor flotante.
 
 La proyección Web Mercator tiene un alcance visual menor que el rango de latitud admitido por el contrato. Si una posición lo supera, aparece un aviso y se conservan sus valores originales; no se rechaza o modifica la telemetría. No se calculan rutas, distancias, velocidades, geocodificación o movimiento interpolado.
 

@@ -234,7 +234,7 @@ export class VerifyOfficialReplay {
 
   // Solo habilita otro recorrido exploratorio tras un cierre conocido. No
   // compara el dominio como un primer/segundo replay ni acredita el par oficial.
-  async prepareContinuation(runId: string): Promise<ReplayReport> {
+  async prepareContinuation(runId: string, afterClosure = false): Promise<ReplayReport> {
     try {
       const facts = await this.evidence.read(runId),
         checks = new Checks();
@@ -251,19 +251,21 @@ export class VerifyOfficialReplay {
       );
       checks.add(
         'scenario-open',
-        'Escenario disponible para recorrido exploratorio',
+        afterClosure
+          ? 'Escenario cerrado conservado para exploración'
+          : 'Escenario disponible para recorrido exploratorio',
         'replay_runs',
         {
           stage: 'first',
-          verification: 'pending',
-          closedAt: null,
+          closedAtPresent: afterClosure,
+          verificationFinal: afterClosure,
           fixtureSha256: this.fixture.fixtureSha256,
         },
         root
           ? {
               stage: root.stage,
-              verification: root.scenarioVerification,
-              closedAt: root.scenarioClosedAt,
+              closedAtPresent: root.scenarioClosedAt !== null,
+              verificationFinal: root.scenarioVerification !== 'pending',
               fixtureSha256: root.fixtureSha256,
             }
           : null,

@@ -115,6 +115,23 @@ test('Refs admite un único punto final sin aceptar referencias parciales o punt
     assert.throws(() => issueReferences(message));
 });
 
+test('repetir Refs en una lista conserva todas las issues y la gramática completa', () => {
+  assert.deepEqual(issueReferences('Refs #95, Refs #96, Refs #97'), [95, 96, 97]);
+  assert.deepEqual(issueReferences('Refs #2, #3, Refs #2.'), [2, 3]);
+  for (const message of [
+    'Refs #2, Refs #0',
+    'Refs #2, Refs #-1',
+    'Refs #2, Refs #03',
+    'Refs #2, Refs #3 extra',
+    'Refs #2, Closes #3',
+    'Refs #2,Refs #3',
+    'Refs #2., Refs #3',
+    'Refs #2, Refs #3..',
+    'Refs #2, Refs #9007199254740992',
+  ])
+    assert.throws(() => issueReferences(message));
+});
+
 test('un número de PR, una issue ajena o inexistente no sirve de trazabilidad', () => {
   const issue = {
     number: 2,

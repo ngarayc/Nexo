@@ -1,3 +1,5 @@
+import { Icon } from '../../platform/presentation/icon';
+import { ActionTooltip } from '../../platform/presentation/action-tooltip';
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import type { AlertView } from '@nexo/contracts';
 import { IdentityText, identityPreview } from '../../platform/presentation/identity-text';
@@ -5,7 +7,7 @@ import { formatTime } from '../../platform/presentation/format-time';
 
 @Component({
   selector: 'nexo-alerts-table',
-  imports: [IdentityText],
+  imports: [IdentityText, Icon, ActionTooltip],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
@@ -36,11 +38,13 @@ import { formatTime } from '../../platform/presentation/format-time';
               <td>{{ alert.speedKph }}</td>
               <td>
                 <button
+                  class="icon-button"
+                  [nexoTooltip]="'Ver evento ' + preview(alert.eventId)"
                   type="button"
                   (click)="selectEvent.emit(alert)"
                   [attr.aria-label]="'Ver evento ' + preview(alert.eventId)"
                 >
-                  Ver evento
+                  <nexo-icon name="arrow" /><span class="sr-only">Ver evento</span>
                 </button>
               </td>
             </tr>

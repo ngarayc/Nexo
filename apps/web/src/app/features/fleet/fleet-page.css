@@ -2,46 +2,128 @@
   display: block;
   min-width: 0;
 }
-.search {
+section {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow);
+}
+.section-heading {
   display: flex;
-  flex-wrap: wrap;
+  justify-content: space-between;
   align-items: center;
-  gap: 0.75rem;
+  margin-bottom: 22px;
+}
+.section-heading h2 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 650;
+}
+.section-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: #687991;
+  margin: 0 0 6px;
+}
+.section-mark {
+  color: #8fa7cd;
+  background: #f4f7fc;
+  border: 1px solid #edf1f7;
+  padding: 11px;
+  border-radius: 12px;
+}
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  flex-wrap: wrap;
+  gap: 20px;
 }
 .state-filters {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 8px;
   border: 0;
   padding: 0;
-  margin-block: 1rem;
-}
-.state-filters button[aria-pressed='true'] {
-  background: #0c5b54;
-  border-color: #0c5b54;
-  color: white;
-}
-input {
-  flex: 1 1 12rem;
+  margin: 0;
   min-width: 0;
-  padding: 0.7rem;
-  border: 1px solid #79938f;
-  border-radius: 0.35rem;
-  font: inherit;
 }
-button {
-  padding: 0.7rem 1rem;
-  cursor: pointer;
+legend {
+  font-size: 11px;
+  font-weight: 500;
+  color: #65758c;
+  padding: 0 0 9px;
+}
+.state-filter {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 10px;
+  min-width: 69px;
+  min-height: 43px;
+  color: #8695aa;
+  padding: 9px 13px;
+}
+.state-filter strong {
+  font-size: 15px;
+  color: #566b88;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.state-filter[aria-pressed='true'] {
+  background: #edf3ff;
+  color: #2463eb;
+  border-color: #bcd0fb;
+}
+.state-filter[aria-pressed='true'] strong {
+  color: #2463eb;
+}
+.search {
+  flex: 0 1 320px;
+  min-width: 200px;
+}
+.search label {
+  display: block;
+  font-size: 11px;
+  color: #65758c;
+  margin: 0 0 9px;
+}
+.search-control {
+  position: relative;
+}
+.search-control > nexo-icon {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  color: #a0acc0;
+  width: 18px;
+  height: 18px;
+}
+.search input {
+  width: 100%;
+  padding: 10px 46px 10px 39px;
+  font-size: 12px;
+  background: #fcfdff;
+}
+.search .icon-button {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  width: 36px;
+  height: 36px;
 }
 .summary {
-  color: #526970;
-  font-size: 0.875rem;
-  line-height: 1.6;
+  color: #66758b;
+  font-size: 11px;
+  line-height: 1.7;
+  margin: 17px 0;
 }
 .history {
-  margin-block: 2rem;
-  padding-block: 1rem;
-  border-block-start: 2px solid #13766d;
+  margin-top: 24px;
+  scroll-margin-top: 80px;
 }
 .history-heading {
   display: flex;
@@ -49,4 +131,49 @@ button {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
+}
+.history-heading h2 {
+  font-size: 21px;
+  margin: 0;
+}
+.history > nexo-identity {
+  display: block;
+  margin-top: 8px;
+  color: #7388a8;
+}
+.history > p {
+  color: #75859c;
+  font-size: 12px;
+}
+@media (max-width: 600px) {
+  section {
+    padding: 16px 12px;
+    border-radius: 13px;
+  }
+  .toolbar {
+    gap: 16px;
+  }
+  .search {
+    flex-basis: 100%;
+  }
+  .state-filters {
+    width: 100%;
+    gap: 7px;
+  }
+  .state-filter {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 9px;
+    gap: 8px;
+  }
+  .state-filter nexo-icon {
+    width: 16px;
+    height: 16px;
+  }
+  .summary {
+    font-size: 10px;
+  }
+  .section-heading {
+    margin-bottom: 18px;
+  }
 }

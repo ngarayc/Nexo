@@ -81,7 +81,7 @@ export function validateExpandedManifest(report, { source, files, fixtures, imag
   exact(report.environment, ['os', 'arch', 'node', 'npm', 'docker', 'compose', 'playwright']);
   assert.equal(report.environment.os, 'linux');
   assert.equal(report.environment.arch, 'x64');
-  assert.equal(report.environment.node, '24.22.0');
+  assert.equal(report.environment.node, '24.22.1');
   assert.equal(report.environment.npm, '12.2.0');
   assert.equal(report.environment.playwright, '1.64.1');
   assert.match(report.environment.docker, version);

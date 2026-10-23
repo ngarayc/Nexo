@@ -1,4 +1,4 @@
-FROM node:24.22.0-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS toolchain
+FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS toolchain
 WORKDIR /app
 RUN apk add --no-cache --upgrade musl=1.2.6-r3 musl-utils=1.2.6-r3 \
     && npm install --global npm@12.2.0
@@ -17,7 +17,7 @@ RUN npm run build --workspace @nexo/api
 FROM toolchain AS production-dependencies
 RUN npm ci --no-audit --omit=dev --workspace @nexo/api --include-workspace-root=false
 
-FROM node:24.22.0-alpine@sha256:44fce696f38ba8c987c4db89954051000bbd05ffd8d8659ba15ed4a8602e937f AS runtime
+FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS runtime
 ENV NODE_ENV=production
 RUN apk add --no-cache --upgrade musl=1.2.6-r3 musl-utils=1.2.6-r3 \
     && rm -rf /usr/local/lib/node_modules/npm /opt/yarn* /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/yarn /usr/local/bin/yarnpkg

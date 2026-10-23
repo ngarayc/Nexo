@@ -1,10 +1,12 @@
+import { Icon } from '../../platform/presentation/icon';
+import { ActionTooltip } from '../../platform/presentation/action-tooltip';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AccessFacade } from './access-facade';
 
 @Component({
   selector: 'nexo-login-page',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, Icon, ActionTooltip],
   templateUrl: './login-page.html',
   styleUrl: './login-page.css',
   changeDetection: ChangeDetectionStrategy.OnPush,

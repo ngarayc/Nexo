@@ -12,7 +12,7 @@ cd nexo-check
 git rev-parse HEAD
 ```
 
-Node 24.22.0/npm 12.2.0 se necesitan para el reset local y para comprobar fuentes fuera de las imágenes. La construcción de API/web usa sus herramientas dentro de Docker. Si la PR o el manifiesto identifica otro SHA, seleccionarlo antes de generar configuración; el tag entrega-final identifica la entrega cuando esté publicado. Registrar y contrastar el SHA realmente comprobado, además del nombre de la rama.
+Node 24.22.1/npm 12.2.0 se necesitan para el reset local y para comprobar fuentes fuera de las imágenes. La construcción de API/web usa sus herramientas dentro de Docker. Si la PR o el manifiesto identifica otro SHA, seleccionarlo antes de generar configuración; el tag entrega-final identifica la entrega cuando esté publicado. Registrar y contrastar el SHA realmente comprobado, además del nombre de la rama.
 
 Desde la raíz de esa copia, generar una configuración nueva. No copiar `.env.local` de otra instalación:
 

@@ -40,11 +40,8 @@ export class IngestionController {
     try {
       const batch = readBatch(source, this.ingress.limits);
       admissionStarted = true;
-      const result = await this.ingest.execute(
-        ingestionId,
-        batch,
-        context.deadline,
-        context.signal,
+      const result = await this.ingress.run(request, () =>
+        this.ingest.execute(ingestionId, batch, context.deadline, context.signal),
       );
       if (result.state === 'unavailable')
         throw ingestionProblem('INGESTION_STATUS_UNAVAILABLE', context.requestId, {

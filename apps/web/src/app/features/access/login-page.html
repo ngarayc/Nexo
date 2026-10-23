@@ -1,29 +1,77 @@
 <main aria-labelledby="page-title">
-  <p class="eyebrow">TELEMETRÍA DE FLOTAS</p>
-  <h1 id="page-title">Nexo</h1>
-  <p>Inicia sesión para acceder al panel.</p>
-  @if (access.notice()) {
-  <p role="status">{{ access.notice() }}</p>
-  }
-  <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="access.pending()">
-    <label for="username">Usuario</label>
-    <input id="username" type="text" autocomplete="username" formControlName="username" required />
-    <label for="password">Contraseña</label>
-    <input
-      id="password"
-      type="password"
-      autocomplete="current-password"
-      formControlName="password"
-      required
-    />
-    <button type="submit" [disabled]="form.invalid || access.pending()">
-      {{ access.pending() ? 'Ingresando…' : 'Ingresar' }}
-    </button>
-  </form>
-  @if (access.error()) {
-  <p role="alert">{{ access.error() }}</p>
-  }
-  <p class="demo-hint">
-    Demo local: usuario <strong>demo</strong> y contraseña <strong>demo</strong>.
-  </p>
+  <section class="welcome" aria-label="Nexo, telemetría de flotas">
+    <div class="login-brand">
+      <span class="logo"><nexo-icon name="nexo" /></span>
+      <h1 id="page-title">Nexo<span aria-hidden="true"></span></h1>
+    </div>
+    <div class="welcome-copy">
+      <p class="eyebrow">TELEMETRÍA DE FLOTAS</p>
+      <h2>Cada señal.<br />Una perspectiva.</h2>
+      <p>Vehículos, información y supervisión conectados en un mismo lugar.</p>
+    </div>
+    <div class="network" aria-hidden="true">
+      <svg viewBox="0 0 500 180" fill="none">
+        <path
+          d="M-20 130H110L170 65H300L350 120H520M35 200V110L130 20H260L330 90H470"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-dasharray="5 7"
+        />
+        <circle cx="170" cy="65" r="8" fill="currentColor" />
+        <circle cx="350" cy="120" r="8" fill="currentColor" />
+        <circle cx="130" cy="20" r="5" fill="currentColor" />
+        <circle cx="330" cy="90" r="5" fill="currentColor" /></svg
+      ><span class="network-badge"><nexo-icon name="activity" /> Supervisión en tiempo real</span>
+    </div>
+    <p class="welcome-footer"><span class="status-dot"></span> Información que conecta.</p>
+  </section>
+  <section class="sign-in" aria-labelledby="login-title">
+    <div class="access-mark"><nexo-icon name="shield" /></div>
+    <p class="eyebrow">TU CENTRO DE OPERACIONES</p>
+    <h2 id="login-title">Bienvenido a bordo.</h2>
+    <p class="intro">Inicia sesión para acceder al panel.</p>
+    @if (access.notice()) {
+    <p role="status" class="notice">{{ access.notice() }}</p>
+    }
+    <form [formGroup]="form" (ngSubmit)="submit()" [attr.aria-busy]="access.pending()">
+      <label for="username">Usuario</label>
+      <input
+        id="username"
+        type="text"
+        autocomplete="username"
+        placeholder="Tu usuario"
+        formControlName="username"
+        required
+      />
+      <label for="password">Contraseña</label>
+      <input
+        id="password"
+        type="password"
+        autocomplete="current-password"
+        placeholder="Tu contraseña"
+        formControlName="password"
+        required
+      />
+      <div class="form-action">
+        <span>{{ access.pending() ? 'Comprobando acceso…' : 'Todo listo para conectar.' }}</span>
+        <button
+          class="icon-button is-primary submit"
+          type="submit"
+          [disabled]="form.invalid || access.pending()"
+          [nexoTooltip]="access.pending() ? 'Ingresando…' : 'Ingresar'"
+        >
+          <nexo-icon name="arrow" />
+        </button>
+      </div>
+    </form>
+    @if (access.error()) {
+    <p role="alert" class="notice error">{{ access.error() }}</p>
+    }
+    <div class="demo-hint">
+      <nexo-icon name="shield" />
+      <p>
+        Acceso protegido<br /><span>Utiliza las credenciales entregadas por el administrador.</span>
+      </p>
+    </div>
+  </section>
 </main>

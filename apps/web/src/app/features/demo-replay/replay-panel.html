@@ -1,14 +1,27 @@
-<aside class="replay-panel" aria-label="Reproductor de la demo">
-  <button
-    class="toggle"
-    type="button"
-    [attr.aria-expanded]="!minimized()"
-    aria-controls="replay-body"
-    (click)="minimized.set(!minimized())"
-  >
-    Reproductor · {{ state(replay.view()?.run?.state) }}
-    <span aria-hidden="true">{{ minimized() ? '＋' : '−' }}</span>
-  </button>
+<aside class="replay-panel" [class.minimized]="minimized()" aria-label="Reproductor de la demo">
+  <header class="player-header">
+    @if (!minimized()) {
+    <div class="player-brand">
+      <span class="player-emblem"><nexo-icon name="play" /></span>
+      <div>
+        <h2>Reproductor</h2>
+        <p>Simulador HTTP · 24 eventos</p>
+      </div>
+    </div>
+    }
+    <button
+      class="icon-button toggle"
+      type="button"
+      [attr.aria-expanded]="!minimized()"
+      aria-controls="replay-body"
+      (click)="minimized.set(!minimized())"
+      [nexoTooltip]="'Reproductor · ' + state(replay.view()?.run?.state)"
+    >
+      <nexo-icon [name]="minimized() ? 'play' : 'close'" /><span class="sr-only"
+        >Reproductor · {{ state(replay.view()?.run?.state) }}</span
+      >
+    </button>
+  </header>
   @if (!minimized()) {
   <div id="replay-body" class="body">
     <p class="intro">
@@ -24,9 +37,24 @@
     } @if (replay.notice()) {
     <p role="status" aria-live="polite">{{ replay.notice() }}</p>
     }
-    <button type="button" (click)="replay.refresh()">Recuperar control</button>
+    <button
+      class="icon-button"
+      nexoTooltip="Recuperar control"
+      type="button"
+      (click)="replay.refresh()"
+    >
+      <nexo-icon name="refresh" /><span class="sr-only">Recuperar control</span>
+    </button>
     @if (replay.pending()) {
-    <button type="button" (click)="replay.checkReceipt()">Consultar orden pendiente</button> }
+    <button
+      class="icon-button"
+      nexoTooltip="Consultar orden pendiente"
+      type="button"
+      (click)="replay.checkReceipt()"
+    >
+      <nexo-icon name="clock" /><span class="sr-only">Consultar orden pendiente</span>
+    </button>
+    }
     <div class="tabs" role="tablist" aria-label="Vistas del reproductor">
       <button
         id="replay-control-tab"
@@ -37,8 +65,10 @@
         [attr.aria-selected]="tab() === 'control'"
         [attr.tabindex]="tab() === 'control' ? 0 : -1"
         (click)="tab.set('control')"
+        class="icon-button"
+        nexoTooltip="Control"
       >
-        Control
+        <nexo-icon name="play" /><span class="sr-only">Control</span>
       </button>
       <button
         id="replay-deliveries-tab"
@@ -49,8 +79,10 @@
         [attr.aria-selected]="tab() === 'deliveries'"
         [attr.tabindex]="tab() === 'deliveries' ? 0 : -1"
         (click)="tab.set('deliveries')"
+        class="icon-button"
+        nexoTooltip="Envíos"
       >
-        Envíos
+        <nexo-icon name="list" /><span class="sr-only">Envíos</span>
       </button>
       <button
         id="replay-verification-tab"
@@ -61,8 +93,10 @@
         [attr.aria-selected]="tab() === 'verification'"
         [attr.tabindex]="tab() === 'verification' ? 0 : -1"
         (click)="tab.set('verification')"
+        class="icon-button"
+        nexoTooltip="Informe"
       >
-        Verificación
+        <nexo-icon name="shield" /><span class="sr-only">Informe</span>
       </button>
     </div>
     @if (tab() === 'control') {
@@ -70,7 +104,25 @@
       <h2>Recorrido actual</h2>
       @if (replay.view(); as view) {
       <p data-testid="replay-state">{{ state(view.run?.state) }}</p>
-      @if (view.run; as run) {
+      @if (view.scenario?.closedAt) {
+      <div class="scenario-closed">
+        <nexo-icon name="check" />
+        <div>
+          <strong>Verificación guardada</strong>
+          <p>
+            Reinicia para explorar los mismos datos. Los informes y el resultado oficial se
+            conservan.
+          </p>
+          <details>
+            <summary>Repetir una primera pasada oficial</summary>
+            <p>
+              Detén la reproducción y usa la papelera «Limpiar demostración». Se borrarán también
+              los informes, sin respaldo.
+            </p>
+          </details>
+        </div>
+      </div>
+      } @if (view.run; as run) {
       <p>{{ stage(run.stage) }}</p>
       <label for="replay-progress"
         >Resultados confirmados: {{ run.progress.classified }} de 24</label
@@ -116,7 +168,9 @@
       @if (run.closeCode) {
       <p>{{ replay.reason(run.closeCode) }} <code>{{ run.closeCode }}</code></p>
       } } @else {
-      <p>Inicia con una base local preparada para comprobar el primer recorrido oficial.</p>
+      <p>
+        Inicia con una base de demostración preparada para comprobar el primer recorrido oficial.
+      </p>
       } @if (view.blockedReason) {
       <p class="warning">
         El servidor está recuperando o confirmando su diario. Espera y recupera el control.
@@ -139,13 +193,7 @@
       <p id="replay-interval-help">
         Entre 100 y 5.000; se aplica al iniciar, reiniciar o reanudar. Predeterminado: 750.
       </p>
-      <div class="actions">
-        @for (item of actions; track item.action) {
-        <button type="button" [disabled]="!replay.can(item.action)" (click)="act(item.action)">
-          {{ item.label }}
-        </button>
-        }
-      </div>
+
       <p class="scope">
         Minimizar, navegar o cerrar sesión no detiene una reproducción ya autorizada.
       </p>
@@ -155,7 +203,14 @@
     </section>
     } @else {
     <div class="history">
-      <button type="button" (click)="replay.loadHistory()">Cargar historial</button>
+      <button
+        class="icon-button"
+        nexoTooltip="Cargar historial"
+        type="button"
+        (click)="replay.loadHistory()"
+      >
+        <nexo-icon name="history" /><span class="sr-only">Cargar historial</span>
+      </button>
       <label for="replay-selection">Ejecución a inspeccionar</label>
       <select
         id="replay-selection"
@@ -171,8 +226,13 @@
         }
       </select>
       @if (replay.historyCursor()) {
-      <button type="button" (click)="replay.loadHistory(true)">
-        Mostrar ejecuciones anteriores
+      <button
+        class="icon-button"
+        nexoTooltip="Mostrar ejecuciones anteriores"
+        type="button"
+        (click)="replay.loadHistory(true)"
+      >
+        <nexo-icon name="list" /><span class="sr-only">Mostrar ejecuciones anteriores</span>
       </button>
       } @if (replay.selectedRunId()) {
       <p>
@@ -237,61 +297,186 @@
     </section>
     } @else {
     <section id="replay-verification" role="tabpanel" aria-labelledby="replay-verification-tab">
-      <h2>Verificación de datos y recorridos</h2>
+      <h2>Tu informe de la demostración</h2>
       @if (replay.detail(); as detail) {
-      <p>
-        Resultado del recorrido:
-        <strong>{{ verification(detail.run.verification) }}</strong>.
-      </p>
-      <p>
-        Resultado del escenario: <strong>{{ verification(detail.scenario.verification) }}</strong>.
-      </p>
-      @if (detail.inspection.currentState === 'changed') {
+      <p class="intro">Aquí puedes ver qué pasó y si el resultado fue el esperado.</p>
+      @if (detail.run.verification === 'pending') {
       <p class="warning">
-        El estado actual cambió desde el informe conservado. Su resultado histórico permanece
-        intacto.
+        Todavía estamos comprobando el resultado. Espera a que termine la reproducción y recupera el
+        control si no se actualiza.
+      </p>
+      } @if (detail.inspection.currentState === 'changed') {
+      <p class="warning">
+        Este informe muestra un resultado guardado. Los datos actuales cambiaron después; el informe
+        no se recalcula ni se modifica.
       </p>
       } @if (detail.inspection.currentState === 'unavailable') {
       <p class="warning">
-        No se pudo contrastar el estado actual. El informe conserva su alcance original.
+        No pudimos comparar este informe con los datos actuales. El resultado guardado se conserva.
       </p>
       } } @if (!replay.preparation() && !replay.detail()) {
-      <p>No hay un informe conservado todavía.</p>
+      <div class="report-empty">
+        <nexo-icon name="shield" />
+        <h3>Aún no hay un informe</h3>
+        <p>
+          Inicia una reproducción. Al terminar, verás aquí su resultado y las comprobaciones
+          realizadas.
+        </p>
+      </div>
       } @for (report of [replay.preparation(), replay.detail()?.run?.verification !== 'pending' ?
       replay.detail()?.inspection?.report : null, replay.detail()?.scenario?.report]; track $index)
-      { @if (report) {
-      <article class="report">
-        <h3>
-          {{ $index === 0 ? 'Preparación' : $index === 1 ? 'Informe individual conservado' : 'Cierre
-          del escenario' }}: {{ verification(report.result) }}
-        </h3>
-        <p>Comprobación: {{ formatTime(report.observedAt ?? report.attemptedAt) }}</p>
-        <ul class="checks">
-          @for (item of report.checks; track item.key) {
-          <li>
-            <strong>{{ item.label }} — {{ check(item.state) }}</strong>
-            <p>Esperado: {{ value(item.expected) }}. Observado: {{ value(item.observed) }}.</p>
-            <details>
-              <summary>Fuente y valores exactos</summary>
-              <p>{{ item.source }}</p>
-              <h4>Esperado</h4>
-              <pre>{{ exact(item.expected) }}</pre>
-              <h4>Observado</h4>
-              <pre>{{ exact(item.observed) }}</pre>
-            </details>
-          </li>
-          }
-        </ul>
+      { @if (report) { @let summary = summarize(report);
+      <article
+        class="report report-summary"
+        [class.report-ok]="report.result === 'conformant'"
+        [class.report-review]="report.result !== 'conformant'"
+      >
+        <span class="report-kind"
+          >{{ $index === 0 ? 'Antes de empezar' : $index === 1 ? 'Resultado de esta pasada' :
+          'Resultado de las dos pasadas' }}</span
+        >
+        <div class="report-heading">
+          <nexo-icon [name]="report.result === 'conformant' ? 'check' : 'alert'" />
+          <h3>
+            {{ $index === 2 && report.result === 'conformant' ? 'Las dos pasadas coinciden' :
+            summary.title }}
+          </h3>
+        </div>
+        <p>{{ summary.description }}</p>
+        <p class="report-expectation">{{ summary.expectation }}</p>
+        @if (report.phase !== 'preparation') {
+        <p class="report-explanation">
+          Un duplicado ya estaba guardado y no se vuelve a insertar. Los 2 rechazos forman parte de
+          los datos de prueba; por sí solos no significan un fallo.
+        </p>
+        }
+        <p class="report-check-count">
+          {{ summary.matches }} de {{ summary.total }} comprobaciones coinciden.
+        </p>
+        @if (summary.attention.length) {
+        <div class="report-attention">
+          <h4>Puntos que requieren atención</h4>
+          <ul>
+            @for (item of summary.attention; track $index) {
+            <li><strong>{{ item.label }}</strong><span>{{ item.explanation }}</span></li>
+            }
+          </ul>
+        </div>
+        }
+        <div class="report-next">
+          <strong>Siguiente paso</strong>
+          <p>
+            {{ $index === 2 && replay.detail()?.scenario?.closedAt ? "El resultado de las dos
+            pasadas ya está guardado. Puedes consultarlo aquí o limpiar la demostración para empezar
+            de nuevo." : summary.nextStep }}
+          </p>
+        </div>
+        <p class="report-date">
+          Comprobado el {{ formatTime(report.observedAt ?? report.attemptedAt) }}
+        </p>
+        <details class="report-technical">
+          <summary>Detalles técnicos</summary>
+          <p>Resultado del recorrido: {{ verification(replay.detail()?.run?.verification) }}.</p>
+          <p>
+            Resultado del escenario: {{ verification(replay.detail()?.scenario?.verification) }}.
+          </p>
+          <h4>
+            {{ $index === 0 ? 'Preparación' : $index === 1 ? 'Informe individual conservado' :
+            'Cierre del escenario' }}: {{ verification(report.result) }}
+          </h4>
+          <ul class="checks">
+            @for (item of report.checks; track item.key) {
+            <li>
+              <strong>{{ item.label }} — {{ check(item.state) }}</strong>
+              <p>Esperado: {{ value(item.expected) }}. Observado: {{ value(item.observed) }}.</p>
+              <details>
+                <summary>Fuente y valores exactos</summary>
+                <p>{{ item.source }}</p>
+                <h4>Esperado</h4>
+                <pre>{{ exact(item.expected) }}</pre>
+                <h4>Observado</h4>
+                <pre>{{ exact(item.observed) }}</pre>
+              </details>
+            </li>
+            }
+          </ul>
+        </details>
       </article>
       } } @empty {
       <p>No hay un informe conservado todavía.</p>
       }
       <p class="scope">
-        Recorrido completado y resultado conforme son comprobaciones diferentes. La evidencia visual
-        y CI se verifican por separado.
+        Terminar los envíos no garantiza que todos los resultados sean correctos: por eso los
+        comprobamos. Este informe revisa datos y reproducciones; las pruebas de la interfaz y del
+        código se verifican por separado.
       </p>
     </section>
     } }
   </div>
-  }
+  @if (tab() === 'control' && replay.view()) {
+  <div class="actions" role="group" aria-label="Controles de reproducción">
+    @for (item of actions; track item.action) {
+    <button
+      class="icon-button"
+      [class.is-primary]="item.action === 'start' || item.action === 'resume' || (item.action === 'restart' && !!replay.view()?.scenario?.closedAt)"
+      type="button"
+      [disabled]="!replay.can(item.action)"
+      (click)="act(item.action)"
+      [nexoTooltip]="actionLabel(item.action, item.label)"
+    >
+      <nexo-icon [name]="item.icon" /><span class="sr-only"
+        >{{ actionLabel(item.action, item.label) }}</span
+      >
+    </button>
+    }
+    <button
+      class="icon-button danger-action"
+      type="button"
+      [disabled]="!replay.canReset()"
+      (click)="requestReset()"
+      nexoTooltip="Limpiar demostración"
+    >
+      <nexo-icon name="trash" /><span class="sr-only">Limpiar demostración</span>
+    </button>
+  </div>
+  } }
 </aside>
+<dialog
+  #resetDialog
+  class="reset-dialog"
+  aria-labelledby="reset-title"
+  aria-describedby="reset-description"
+>
+  <div class="reset-dialog-heading">
+    <nexo-icon name="trash" />
+    <h2 id="reset-title">Limpiar demostración</h2>
+  </div>
+  <p id="reset-description">
+    Se borrarán todos los eventos, vehículos, alertas, recibos y el historial de reproducciones e
+    informes. No se creará un respaldo.
+  </p>
+  <p>
+    Tu usuario y contraseña se conservan. Después podrás iniciar desde cero. Esta acción no se puede
+    deshacer.
+  </p>
+  <div class="reset-dialog-actions">
+    <button
+      class="icon-button"
+      type="button"
+      (click)="cancelReset()"
+      nexoTooltip="Cancelar limpieza"
+      autofocus
+    >
+      <nexo-icon name="close" /><span class="sr-only">Cancelar limpieza</span>
+    </button>
+    <button
+      class="icon-button danger-action"
+      type="button"
+      (click)="confirmReset()"
+      [disabled]="!replay.canReset()"
+      nexoTooltip="Confirmar limpieza definitiva"
+    >
+      <nexo-icon name="trash" /><span class="sr-only">Confirmar limpieza definitiva</span>
+    </button>
+  </div>
+</dialog>

@@ -52,6 +52,9 @@ function setup() {
     history: signal([]),
     historyCursor: signal(null),
     can: vi.fn((action: string) => !stale() && view().allowedActions.includes(action as 'pause')),
+    canReset: vi.fn(() => false),
+    resetting: signal(false),
+    reset: vi.fn(async () => {}),
     execute: vi.fn(async () => {}),
     refresh: vi.fn(),
     checkReceipt: vi.fn(),
@@ -184,11 +187,11 @@ it('verificación muestra diferencias y valores como texto con hora Bogotá24h',
   expect(root.textContent).toContain(marker);
   expect(root.querySelector('img')).toBeNull();
   expect(root.textContent).toContain('13:00:00');
-  expect(root.textContent).toContain('estado actual cambió');
+  expect(root.textContent).toContain('datos actuales cambiaron');
   detail.update((value) =>
     value ? { ...value, run: { ...value.run, verification: 'pending' } } : null,
   );
   await fixture.whenStable();
-  expect(root.textContent).toContain('Resultado del recorrido: Pendiente');
+  expect(root.textContent).toContain('Todavía estamos comprobando el resultado');
   expect(root.textContent).not.toContain('Informe individual conservado');
 });

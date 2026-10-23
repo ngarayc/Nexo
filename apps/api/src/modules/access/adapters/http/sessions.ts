@@ -22,6 +22,7 @@ export class Sessions implements OnModuleDestroy {
   };
 
   constructor(@Inject(ACCESS_CONFIG) private readonly config: AccessConfig) {
+    this.cookie.secure = config.origin.startsWith('https://');
     this.store = new BoundedSessionStore(config.maximumSessions);
     this.middleware = session({
       name: 'nexo.sid',
@@ -29,6 +30,9 @@ export class Sessions implements OnModuleDestroy {
       store: this.store,
       resave: false,
       saveUninitialized: false,
+      // En HTTPS, el proxy privado fija X-Forwarded-Proto; API no publica puertos.
+      // No habilita confianza global de IP/Host en Express.
+      proxy: this.cookie.secure,
       rolling: false,
       cookie: { ...this.cookie, maxAge: config.sessionMilliseconds },
     });
@@ -59,7 +63,7 @@ export class Sessions implements OnModuleDestroy {
     if (!this.csrf.isRequestValid(request)) throw accessError('INVALID_CSRF_TOKEN');
   }
 
-  async create(request: Request, user: { id: string; username: 'demo' }): Promise<void> {
+  async create(request: Request, user: { id: string; username: 'demo' | 'Demo' }): Promise<void> {
     await new Promise<void>((resolve, reject) =>
       request.session.regenerate((error) => (error ? reject(error) : resolve())),
     );

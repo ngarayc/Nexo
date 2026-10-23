@@ -1,6 +1,6 @@
 # Acceso local
 
-Una sola cuenta, **demo / demo**, sin roles, perfiles ni registro. PostgreSQL conserva su UUID y hash Argon2id; el login verifica ese hash mediante la biblioteca. Un nombre desconocido pasa por un hash de coste equivalente. No se concede acceso comparando la contraseña con un literal.
+Una sola cuenta, sin roles, perfiles ni registro. El perfil local original conserva **demo / demo** si no se configuran credenciales privadas. El [perfil HTTPS](cloud-deployment.md) exige `Demo` y contraseña privada de entorno; el seed no sobrescribe una cuenta existente. PostgreSQL conserva su UUID y hash Argon2id; el login verifica ese hash mediante la biblioteca. Un nombre desconocido pasa por un hash de coste equivalente. No se concede acceso comparando la contraseña con un literal.
 
 ## Contratos
 
@@ -17,7 +17,7 @@ El login acepta como máximo 4 KiB y cadenas de 1–64 bytes UTF-8 para usuario 
 
 ## Sesión absoluta y capacidad
 
-`nexo.sid` usa HttpOnly, SameSite=Strict y Path=/, sin Domain. El perfil soportado es HTTP local y no marca Secure: no se presenta como transporte cifrado ni como configuración de producción. El origen canónico es `http://localhost:8080`; el stack de navegador configura explícitamente `http://localhost:8081`.
+`nexo.sid` usa HttpOnly, SameSite=Strict y Path=/, sin Domain. HTTP local no marca Secure; HTTPS sí lo exige y utiliza el proxy privado documentado. El origen local canónico es `http://localhost:8080`; el stack de navegador configura explícitamente `http://localhost:8081`. En cloud se valida un único origen HTTPS sin ruta, credenciales, query o fragmento.
 
 Cada login correcto regenera el SID, revoca el anterior y guarda el estado antes de responder. La duración es de **cuatro horas absolutas**. Actividad, GET, `touch` y respuestas tardías no extienden el plazo. La autorización verifica vencimiento y reserva viva en cada uso, además de la limpieza de 60 segundos.
 

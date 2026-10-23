@@ -4,6 +4,8 @@
 
 Solo web publica loopback mediante Compose. Acceso verifica Argon2id contra PostgreSQL, sesiones absolutas, origen/CSRF, capacidad, cuotas y políticas explícitas de rutas; su contrato y límites están en [acceso](access.md). La ingesta comprueba API key antes del parser; [SSE](realtime.md) requiere sesión, origen válido si existe, cuota, cupos y reautorización por envío, con cierre por revocación/vencimiento. No hay telemetría ficticia para simular esas capacidades.
 
+El [perfil cloud](cloud-deployment.md) agrega HTTPS y una cuenta con contraseña privada; solo publica el gateway. Aplica cinco intentos globales de login por minuto y dos verificaciones Argon2 concurrentes, sin depender de un CAPTCHA externo. El perfil local conserva su límite de diez intentos/minuto. El frontend ya no muestra credenciales de acceso. Las credenciales configuradas permanecen fuera de Git, de las imágenes y del entorno HTTP posterior al bootstrap.
+
 Las credenciales de GitHub se utilizan mediante las herramientas de autenticación y no forman parte del repositorio, del frontend o de las imágenes. `.gitignore` excluye entornos reales, dependencias, builds y reportes. Los artefactos publicables se seleccionan y comprueban mediante una lista cerrada y un marcador sintético excluido, según [CI](ci-controls.md); trazas, HAR, cookies y logs crudos no se suben por defecto.
 
 ## Dependencias
@@ -36,6 +38,24 @@ Gitleaks 8.30.1 escaneó la selección de archivos del primer commit sin hallazg
 
 Trivy 0.76.0 detectó hallazgos altos/críticos en las bases Debian iniciales: 68 coincidencias en API, 64 en web y 99 en PostgreSQL. Son coincidencias de paquete/aviso, no CVE únicas. Esos resultados bloquearon el candidato; la auditoría npm sin hallazgos no cubre los paquetes del sistema.
 
-Las imágenes finales usan bases oficiales Alpine fijadas por digest y conservan Node 24.22.0, NGINX 1.30.6 y PostgreSQL 18.6. La API elimina npm/yarn del runtime, donde solo necesita Node y dependencias de aplicación. La web instala los parches fijados libexpat 2.9.0-r0 y libx11 1.8.14-r0. PostgreSQL comienza directamente como su usuario, con el directorio de datos preparado en la imagen; se retira el helper Go antiguo que ya no necesita para abandonar root. No se modifica el entrypoint oficial.
+Las imágenes finales usan bases oficiales Alpine fijadas por digest y conservan Node 24.22.1, NGINX 1.30.6 y PostgreSQL 18.6. La API elimina npm/yarn del runtime, donde solo necesita Node y dependencias de aplicación. La web instala los parches fijados libexpat 2.9.0-r0 y libx11 1.8.14-r0. PostgreSQL comienza directamente como su usuario, con el directorio de datos preparado en la imagen; se retira el helper Go antiguo que ya no necesita para abandonar root. No se modifica el entrypoint oficial.
 
 Las tres imágenes construidas pasaron Trivy sin hallazgos altos/críticos y las 12 pruebas de integración volvieron a pasar sobre estas variantes, incluido el módulo nativo Argon2 y persistencia tras recreación. No se habilitó `ignore-unfixed`, se redujo la severidad requerida ni se agregaron exclusiones. El resultado pertenece a esas imágenes y la base de avisos consultada; se repite al construir el candidato de CI.
+
+## Limpieza explícita en modo demo
+
+La [limpieza del panel](replay-panel.md#limpiar-demostracion) comparte sesión, origen, CSRF y cuota con el control del reproductor. La confirmación indica que borra datos e informes sin respaldo. El bootstrap habilita una función SQL de alcance fijo solamente con DEMO_ENABLED=true, revoca PUBLIC y concede EXECUTE a nexo_app en la misma transacción. Al deshabilitar el modo demo se retira la función. No permite elegir tablas, introducir SQL ni modificar la cuenta o migraciones; la API no hereda credenciales administrativas.
+
+La función usa un search_path seguro y nombres cualificados, conforme a [las precauciones de PostgreSQL para SECURITY DEFINER](https://www.postgresql.org/docs/18/sql-createfunction.html#SQL-CREATEFUNCTION-SECURITY). Un [bloqueo asesor transaccional](https://www.postgresql.org/docs/18/explicit-locking.html#ADVISORY-LOCKS) exclusivo serializa el borrado con las escrituras compartidas. El usuario SQL de la aplicación sigue siendo una frontera técnica privada, no una identidad humana; en este perfil todos los clientes autenticados usan la única cuenta de demostración y pueden confirmar la limpieza.
+
+## Actualización de Brotli y Node
+
+La [issue #100](https://github.com/ngarayc/Nexo/issues/100) resuelve el bloqueo del escaneo de la imagen web por CVE-2026-111497, HIGH, en brotli-libs 1.2.0-r1. Una base Trivy recién descargada reprodujo el hallazgo que no mostraba la caché local anterior. Se fija brotli-libs 1.2.1-r0 en web, PostgreSQL y gateway, que incluyen la biblioteca, sin excepciones ni reducción de severidad. [Alpine registra esa versión como corrección](https://secdb.alpinelinux.org/v3.24/main.json); [Brotli publicó la actualización](https://github.com/google/brotli/releases/tag/v1.2.1).
+
+Node incorpora su propia copia de Brotli: actualizar el APK no corrige ese binario. API y etapas de build pasan también a Node 24.22.1, publicación de seguridad que corrige ese CVE y otros avisos altos de DNS/TLS. Se actualizan .nvmrc, engines, lockfile, política de evidencia ampliada y los tres FROM por digest; npm continúa en 12.2.0. CI construye y escanea también el gateway, con inventarios de Alpine y Go, dentro del artefacto system existente. [Aviso y correcciones oficiales de Node 24.22.1](https://nodejs.org/en/blog/release/v24.22.1). Las verificaciones y escaneos nuevos pertenecen al candidato corregido; los resultados anteriores no lo acreditan.
+
+## Corrección de body-parser — #103
+
+El audit remoto detectó HIGH en body-parser 2.3.0 por [GHSA-27r3-jxmh-p828](https://github.com/expressjs/body-parser/security/advisories/GHSA-27r3-jxmh-p828), publicado en la base de avisos durante la preparación de esta entrega. Se resolvió a 2.4.0 en el lockfile, versión corregida por el [mantenedor](https://github.com/expressjs/body-parser/releases/tag/v2.4.0) y compatible con el rango de Express. Solo cambió ese paquete instalado; no se añadieron overrides, excepciones o cambios de framework.
+
+Nexo ya inicia Nest con bodyParser deshabilitado y su lectura JSON acotada rechaza compresión. Eso limita la exposición de la ruta descrita por el aviso, pero no sustituye actualizar la dependencia ni permite omitir el gate. La corrección mantiene validación, límites, origen/CSRF y autenticación; [#103](https://github.com/ngarayc/Nexo/issues/103) identifica el cambio y [verificación](verification.md) registra los controles focalizados.

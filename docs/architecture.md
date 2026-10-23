@@ -16,6 +16,8 @@ La cuarta migración añade el [diario del reproductor](replay-journal.md): ejec
 
 La quinta migración, [0004](../apps/api/migrations/0004_identity_materialization.sql), corrige el coste de validar identidades extensas comprimidas. Conserva datos, semántica y nueve tablas propias; [persistencia](persistence.md) documenta su prueba de actualización y restricciones.
 
+La sexta migración, [0005](../apps/api/migrations/0005_exploratory_after_closure.sql), permite recorridos exploratorios tras un cierre conservado. Añade una marca interna calculada por SQL y mantiene inmutables los informes y las condiciones del par oficial; [diario](replay-journal.md) describe sus límites.
+
 El núcleo compartido concentra DTO, identidad y representación/comparación temporal puras en packages/contracts, con uso real en ambas aplicaciones. Se mantuvo una biblioteca coherente en lugar de crear otro paquete sin consumidor independiente. Sus fronteras impiden dependencias de aplicaciones, frameworks o Node. Las reglas autoritativas de aceptación y las transacciones pertenecen al backend; la validación de transporte Angular comprueba consistencia de las vistas. [CI](ci-controls.md) describe las restricciones de módulos y presentación que se ejecutan sobre el código.
 
 ## Dirección aceptada

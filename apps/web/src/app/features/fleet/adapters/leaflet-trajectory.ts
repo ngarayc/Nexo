@@ -6,6 +6,7 @@ import type { TilePhase } from '../../../platform/maps/leaflet-map-surface';
 import { formatIdentity, identityPreview } from '../../../platform/presentation/identity-text';
 import { formatTime } from '../../../platform/presentation/format-time';
 import type { TrajectoryFactory, TrajectoryRenderer } from './trajectory-renderer';
+import { addGeofenceLayer, fitGeofence } from './geofence-layer';
 
 function label(event: EventView): string {
   return `${formatTime(event.observedAt)} · ${event.speedKph} km/h`;
@@ -36,6 +37,7 @@ class LeafletTrajectory implements TrajectoryRenderer {
     tiles: (phase: TilePhase) => void,
   ) {
     this.surface = new LeafletMapSurface(host, provider, tiles);
+    addGeofenceLayer(this.surface.map);
   }
   sync(vehicleId: string, events: readonly EventView[], selected: string | null): void {
     if (this.vehicleId !== vehicleId) {
@@ -107,6 +109,7 @@ class LeafletTrajectory implements TrajectoryRenderer {
       if (this.line) this.line.setLatLngs(points);
       else
         this.line = L.polyline(points, {
+          className: 'nexo-trajectory-line',
           color: '#13766d',
           weight: 3,
           smoothFactor: 0,
@@ -130,6 +133,9 @@ class LeafletTrajectory implements TrajectoryRenderer {
         animate: false,
       },
     );
+  }
+  fitGeofence(): void {
+    fitGeofence(this.surface.map);
   }
   focusEvent(eventId: string): void {
     const entry = this.markers.get(eventId);
