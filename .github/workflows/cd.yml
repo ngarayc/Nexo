@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   actions: read
+  pull-requests: read
 concurrency:
   group: nexo-azure-main
   cancel-in-progress: false
@@ -41,6 +42,7 @@ jobs:
     permissions:
       contents: read
       actions: read
+      pull-requests: read
       id-token: write
     environment:
       name: azure-demo

@@ -145,6 +145,12 @@ test('workflow real protege OIDC, verifica antes del login, fija SHA y serializa
       w.permissions.contents = 'write';
     },
     (w) => {
+      delete w.permissions['pull-requests'];
+    },
+    (w) => {
+      delete w.jobs.deploy.permissions['pull-requests'];
+    },
+    (w) => {
       w.concurrency['cancel-in-progress'] = true;
     },
     (w) => {

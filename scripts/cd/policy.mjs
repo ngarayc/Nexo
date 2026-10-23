@@ -99,6 +99,7 @@ export function validateCdWorkflow(workflow) {
   assert.deepEqual(workflow.permissions, {
     contents: 'read',
     actions: 'read',
+    'pull-requests': 'read',
   });
   assert.deepEqual(workflow.concurrency, { group: 'nexo-azure-main', 'cancel-in-progress': false });
   assert.deepEqual(Object.keys(workflow.jobs), ['verify', 'deploy']);
@@ -129,7 +130,12 @@ export function validateCdWorkflow(workflow) {
   assert.equal(job['runs-on'], 'ubuntu-24.04');
   assert.equal(job['timeout-minutes'], 45);
   assert.equal(job['continue-on-error'], undefined);
-  assert.deepEqual(job.permissions, { contents: 'read', actions: 'read', 'id-token': 'write' });
+  assert.deepEqual(job.permissions, {
+    contents: 'read',
+    actions: 'read',
+    'pull-requests': 'read',
+    'id-token': 'write',
+  });
   assert.equal(job.env.NEXO_REQUIRE_CURRENT, 'true');
   const steps = job.steps;
   assert.equal(steps.length, 5);
