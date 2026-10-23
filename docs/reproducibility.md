@@ -7,12 +7,12 @@ Comprobar el commit declarado mediante clonación nueva, configuración nueva y 
 Clonar la rama candidata, registrar `git rev-parse HEAD` como SHA comprobado y conservar ese checkout durante todo el recorrido. Requisitos: Git, Docker Engine/Compose, Bash y OpenSSL.
 
 ```sh
-git clone --branch development https://github.com/ngarayc/Nexo.git nexo-check
+git clone --branch main https://github.com/ngarayc/Nexo.git nexo-check
 cd nexo-check
 git rev-parse HEAD
 ```
 
-Node 24.22.0/npm 12.2.0 se necesitan únicamente para comprobar fuentes fuera de las imágenes.
+Node 24.22.0/npm 12.2.0 se necesitan para el reset local y para comprobar fuentes fuera de las imágenes. La construcción de API/web usa sus herramientas dentro de Docker. Si la PR o el manifiesto identifica otro SHA, seleccionarlo antes de generar configuración; el tag entrega-final identifica la entrega cuando esté publicado. Registrar y contrastar el SHA realmente comprobado, además del nombre de la rama.
 
 Desde la raíz de esa copia, generar una configuración nueva. No copiar `.env.local` de otra instalación:
 

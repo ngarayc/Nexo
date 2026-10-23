@@ -1,6 +1,6 @@
 # Clasificación transaccional — E1-I03
 
-La [issue #17](https://github.com/ngarayc/Nexo/issues/17) conecta el consumidor de la cola con la clasificación de cada posición. El contrato y los oráculos suministrados siguen siendo la autoridad. El consumidor no depende de que el productor siga conectado y la espera HTTP no controla su avance. El dashboard conserva su incremento propio y [tiempo real](realtime.md) describe el despacho SSE; [recuperación](recovery.md) documenta el tratamiento de fallos de E1-I04.
+La [issue #17](https://github.com/ngarayc/Nexo/issues/17) conecta el consumidor de la cola con la clasificación de cada posición. El contrato y los oráculos suministrados siguen siendo la autoridad. El consumidor no depende de que el productor siga conectado y la espera HTTP no controla su avance. El [dashboard](dashboard.md) consume estos datos y [tiempo real](realtime.md) describe el despacho SSE; [recuperación](recovery.md) documenta el tratamiento de fallos de E1-I04.
 
 ## Fronteras y validación
 

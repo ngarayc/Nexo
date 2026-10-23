@@ -41,7 +41,7 @@ No se añade DDL. El conteo global todavía requiere contar alertas; el índice 
 
 ## Snapshot y recursos
 
-El snapshot contiene `vehicles` con el sobre de flota completo y `alerts` con el sobre global de alertas. `schemaVersion: 1` identifica el protocolo y `instanceId` es el UUID de la instancia API, provisto por RuntimeModule. El [stream](realtime.md) comparte esa identidad. Se captura antes de iniciar la lectura; una transición concurrente puede devolver la generación anterior, que el cliente debe descartar frente a ready nuevo. Reinicio o recuperación de degradación renuevan la generación; la coordinación Angular conserva su incremento propio.
+El snapshot contiene `vehicles` con el sobre de flota completo y `alerts` con el sobre global de alertas. `schemaVersion: 1` identifica el protocolo y `instanceId` identifica la época de sincronización de RuntimeInstance, provista por RuntimeModule; es distinta de la instancia de control del reproductor. El [stream](realtime.md) comparte esa identidad. Se captura antes de iniciar la lectura; una transición concurrente puede devolver la generación anterior, que el cliente debe descartar frente a ready nuevo. Reinicio o recuperación de degradación renuevan la generación; la [coordinación Angular](frontend-sync.md) descarta respuestas de otra época y recupera su base.
 
 `PostgresReadModel.snapshot` reserva un cliente, abre `REPEATABLE READ READ ONLY`, aplica transaction_timeout de diez segundos, lee flota y alertas y confirma antes de devolver el resultado. Así una ingesta confirmada entre ambas sentencias no añade solo su alerta a una flota anterior. El cliente se libera antes de serializar/transmitir HTTP; ante error se destruye para no devolver una transacción incierta al pool.
 

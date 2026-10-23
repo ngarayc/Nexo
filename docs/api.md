@@ -2,7 +2,7 @@
 
 La [issue #24](https://github.com/ngarayc/Nexo/issues/24) consolida el contrato del backend E1. La descripción [OpenAPI 3.1.1 versionada](openapi.json) enumera las operaciones actuales, incluido el transporte SSE de la [issue #26](https://github.com/ngarayc/Nexo/issues/26). Las pruebas HTTP, reglas de dominio y respuestas reales conservan la autoridad sobre su comportamiento; OpenAPI no sustituye la validación del servidor.
 
-Origen predeterminado: `http://localhost:8080`; prefijo: `/api`. Una copia de comprobación puede configurar otro puerto/origen. El perfil soportado es HTTP local con una instancia API. No habilita CORS ni ofrece transporte de producción. El [dashboard](dashboard.md) consume estas operaciones; el motor de demo tiene controles protegidos descritos abajo. CR-01 incorpora el filtro de alertas en API; la selección visual mantiene su incremento posterior.
+Origen predeterminado: `http://localhost:8080`; prefijo: `/api`. Una copia de comprobación puede configurar otro puerto/origen. El perfil soportado es HTTP local con una instancia API. No habilita CORS ni ofrece transporte de producción. El [dashboard](dashboard.md) consume estas operaciones; el motor de demo tiene controles protegidos descritos abajo. CR-01 incorpora el filtro de alertas en API; la selección Angular conserva filtros por cliente sobre la colección global sincronizada.
 
 ## Rutas y acceso
 
@@ -81,7 +81,7 @@ Historial usa identidad exacta y contiene todos los eventos aceptados por `(inst
 
 Alertas devuelve items, total visible y overallTotal global de la misma lectura, por instante/eventId descendente. Sin filtro conserva todas las alertas. CR-01 (#59) incorpora vehicleId opcional en GET: solo un string no vacío, identidad completa exacta, sensible a mayúsculas y espacios, sin normalizar ni buscar subcadenas. Vacío, repetido, array, objeto, parámetro ajeno o escape URI inválido da 400 INVALID_QUERY. Desconocido devuelve 200 con items vacío, total cero y overallTotal global. POST /api/queries/alerts exige objeto JSON con vehicleId string no vacío y comparte el caso de uso y la consulta; conserva acceso, parser, límites y equivalencia sobre datos estables del POST de historial. Los campos adicionales son inertes y los IDs largos/NUL/sustitutos escapados no reciben un máximo nuevo de dominio. El snapshot reúne vehicles y alerts con schemaVersion 1 e instanceId, de una misma transacción de lectura. Comparar generación con stream.ready; cambia al reiniciar API o recuperar degradación del dispatcher. Las colecciones son completas y no tienen paginación o truncamiento implícitos.
 
-Las vistas omiten extras arbitrarios y detalles internos. observedAt se serializa en UTC con Z y fracción exacta; no se limita a Date o nanosegundos. La presentación posterior usa español, America/Bogota y 24 horas. [Consultas](queries.md) describe campos, orden, cuotas, consistencia, planes y costes.
+Las vistas omiten extras arbitrarios y detalles internos. observedAt se serializa en UTC con Z y fracción exacta; no se limita a Date o nanosegundos. La presentación usa español, America/Bogota y 24 horas. [Consultas](queries.md) describe campos, orden, cuotas, consistencia, planes y costes.
 
 ## Actualizaciones en vivo
 

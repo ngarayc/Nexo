@@ -2,15 +2,17 @@
 
 Telemetría sintética de flotas con NestJS, Angular y PostgreSQL. El nombre expresa el vínculo entre vehículos, información y supervisión.
 
-**Estado:** base E0 con Docker, acceso demo por sesión y CI; E1 admite lotes HTTP, clasifica eventos y recupera fallos mediante cola durable, conservando identidad, tiempo y JSON exactos. Incluye proyección, alertas y outbox transaccionales, tres oportunidades por posición y reconciliación tras reinicio. Las consultas autenticadas exponen flota, historial, alertas y snapshot coherente. El stream SSE protegido publica cambios confirmados desde la outbox, con límites por conexión, heartbeat y recuperación de salud. Angular presenta flota, búsqueda, historial y alertas globales con hora24h de Bogotá; enlaza cada alerta con su observación y conserva conexión/totales al navegar. El reproductor compartido está incorporado en E3. CR-01 añade filtro exacto de alertas por API y selector visual, con cantidades visible/global, selección propia por cliente y reconexión conservada.
+La API admite lotes por HTTP y conserva su trabajo en una cola durable PostgreSQL. Valida cada posición, garantiza identidad persistente, resuelve duplicados/conflictos y confirma evento, último estado, alerta y outbox en una transacción. Los eventos tardíos permanecen en el historial y pueden generar alertas sin hacer retroceder la flota. [Arquitectura](docs/architecture.md) describe el monolito modular y sus límites.
 
-E3 incorpora el [diario persistente](docs/replay-journal.md) y el [verificador de datos](docs/replay-verification.md), con fuentes originales, preparación, comparación e informes históricos. El [motor HTTP compartido](docs/replay-emitter.md) conserva cuerpos originales, una sola petición, controles protegidos e incertidumbre sin reenvíos. El [panel flotante](docs/replay-panel.md) permite iniciar, pausar, reanudar, reiniciar y finalizar desde Flota/Alertas; muestra progreso, inspector e informes mediante el mismo SSE. El [reset local](docs/demo-reset.md) conserva evidencia externa y recrea exclusivamente el volumen sintético identificado. La [guía de demostración](docs/demo-guide.md) une reset, dos clientes y ambos replays; [verificación](docs/verification.md) conserva resultados y promociones de cada candidato.
+Angular muestra flota, búsqueda, estados, historial y alertas mediante snapshot y SSE compartido, con recuperación de conexión y sesión. CR-01 añade filtro exacto por vehículo con selección propia de cada cliente. Tabla, mapa, trayectoria y gráfico comparten selección por evento; el historial permite inspeccionar la fecha recibida y el UTC exacto. Los datos siguen disponibles ante un fallo cartográfico. [Dashboard](docs/dashboard.md), [cartografía](docs/cartography.md) y [velocidad](docs/speed-chart.md) explican comportamiento y accesibilidad.
 
-E5 incorpora filtros compartidos de búsqueda/estado y un [mapa de últimas posiciones](docs/cartography.md) con Leaflet, selección del mismo historial y proveedor revisado. La tabla y los datos en vivo siguen disponibles ante un fallo cartográfico. El detalle muestra la trayectoria de observaciones y comparte selección por evento con la tabla y las alertas. El [gráfico de velocidad observada](docs/speed-chart.md) conserva las mismas muestras y selección, con referencia80 km/h y alternativa accesible en el historial. El recorrido local ordinario de E5 pasó y la presentación temporal se verificó además en Firefox/WebKit; CI, promoción/revisión del candidato y cierre de entrega conservan evidencia propia.
+El [reproductor HTTP](docs/replay-emitter.md), controlado desde un [panel flotante](docs/replay-panel.md), envía progresivamente las 24 líneas originales con intervalo, inicio, pausa, reanudación y reinicio. Su [diario](docs/replay-journal.md) y [verificador](docs/replay-verification.md) conservan resultados e incertidumbre. La pausa actúa sobre nuevos envíos; el servidor sigue procesando lo admitido. La [guía](docs/demo-guide.md) demuestra 20/2/2 y 0/22/2 sin reset intermedio, con 20 eventos/8 vehículos/4 alertas. El [reset local](docs/demo-reset.md) identifica el volumen sintético y conserva evidencia antes de recrearlo.
+
+[Verificación](docs/verification.md) registra resultados y promociones por candidato; la [auditoría final](docs/final-audit.md) reúne hallazgos y correcciones. La validación del SHA definitivo y los artefactos de entrega conservan su evidencia propia.
 
 ## Arranque
 
-Requisitos: Docker Engine y Compose, Bash y OpenSSL. Desde la raíz, generar la configuración solo la primera vez:
+Requisitos: Git, Docker Engine y Compose, Bash y OpenSSL. El reset y las comprobaciones de fuentes requieren además Node.js 24.22.0 y npm 12.2.0 en el host; la construcción de API/web usa sus herramientas dentro de Docker. Desde la raíz, generar la configuración solo la primera vez:
 
 ```sh
 bash scripts/configure-local.sh
@@ -30,7 +32,7 @@ La detención conserva el volumen. Para descartar explícitamente la demo sinté
 
 ## Fuentes y comprobaciones
 
-Herramientas de desarrollo: **Node.js 24.22.0 y npm 12.2.0**, fijadas también en las imágenes de build y el lockfile.
+Herramientas para reset y desarrollo: **Node.js 24.22.0 y npm 12.2.0**, fijadas también en las imágenes de build y el lockfile.
 
 ```sh
 npm ci
@@ -59,13 +61,14 @@ Integración y navegador necesitan Docker e imágenes construidas mediante el ar
 
 Cada cambio requiere issue y commits con referencia real. Después del bootstrap revisado, las ramas permanentes son `development`, `test` y `main`. El agente publica y promueve por PR a test tras revisión QA y CI; las PR hacia main quedan abiertas para revisión del autor mientras continúa el desarrollo. Consultar [AGENTS.md](AGENTS.md), [gobierno](AGENT-GOVERNANCE.md) y [flujo de IA](docs/AI-WORKFLOW.md).
 
-Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de CI](https://github.com/ngarayc/Nexo/actions/runs/39552267643), promovido por [PR #7](https://github.com/ngarayc/Nexo/pull/7). Cada candidato nuevo repite los controles. Las [demostraciones negativas y recuperación](docs/control-demonstrations.md) están comprobadas; la revisión humana de main conserva su estado propio. Backend y dos aplicaciones Angular verifican20/2/2 y0/22/2 sin reset entre pasadas,20eventos/8vehículos/4alertas e identidades originales. El recorrido integral desde reset acredita los controles del reproductor y ambos replays mediante dos interfaces reales; el video de entrega sigue pendiente.
+Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de CI](https://github.com/ngarayc/Nexo/actions/runs/39552267643), promovido por [PR #7](https://github.com/ngarayc/Nexo/pull/7). Cada candidato nuevo repite los controles. Las [demostraciones negativas y recuperación](docs/control-demonstrations.md) están comprobadas; la revisión humana de main conserva su estado propio. Backend y dos sesiones independientes de Angular verifican 20/2/2 y 0/22/2 sin reset entre pasadas, 20 eventos/8 vehículos/4 alertas e identidades originales. El recorrido integral desde reset acredita los controles del reproductor y ambos replays mediante dos interfaces reales; el video y la evidencia definitivos se localizan mediante el apartado de entrega.
 
 ## Documentación
 
 - [Arquitectura](docs/architecture.md).
 - [Trazabilidad y alcance comprobado](docs/traceability.md).
-- [Retrospectiva: decisiones, correcciones y límites](RETROSPECTIVA.md).
+- [Auditoría final, hallazgos y correcciones](docs/final-audit.md).
+- [Retrospectiva: decisiones, correcciones y límites](docs/RETROSPECTIVA.md).
 - [Persistencia exacta y migraciones](docs/persistence.md).
 - [Admisión durable y contratos HTTP](docs/ingestion.md).
 - [Clasificación y efectos transaccionales](docs/classification.md).
@@ -99,4 +102,6 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 
 **Dedicación estimada por el autor para el alcance entregado: 25 horas.** Es una estimación confirmada por el autor.
 
-El paquete definitivo se publicará en [la release entrega-final](https://github.com/ngarayc/Nexo/releases/tag/entrega-final), con video MP4 y manifiesto del candidato verificado. El destino está previsto; su publicación y acceso permanecen pendientes. Antes del cierre se audita la implementación contra la planeación y todas las obligaciones, se consolidan/corrigen los hallazgos y se presenta el candidato final a revisión del autor. El libreto y la grabación se preparan sobre el resultado corregido; ningún enlace previsto acredita todavía entrega publicada.
+**Destino del paquete:** [release entrega-final](https://github.com/ngarayc/Nexo/releases/tag/entrega-final). La entrega está publicada únicamente cuando esa página ofrece el video MP4 y un manifiesto cuyos SHA y controles coinciden con el tag. Las ejecuciones de CI y el manifiesto externo determinan el estado de cada candidatura; el enlace previsto por sí solo no acredita publicación.
+
+La [auditoría y correcciones](docs/final-audit.md) contrasta implementación, planeación y obligaciones iniciales. La revisión del candidato corregido precede al cierre; el libreto y la grabación se preparan sobre ese resultado. La validación final ordinaria/ampliada y los artefactos corresponden al SHA de main identificado en el manifiesto.
