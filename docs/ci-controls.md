@@ -137,3 +137,5 @@ El mecanismo usa [ejecuciones e intentos de Actions](https://docs.github.com/en/
 ## Imágenes del perfil cloud
 
 El job system construye y escanea API, web, PostgreSQL y gateway. El gateway usa el Dockerfile y las dependencias Go fijadas; el control exige inventarios Alpine y Go, además de cero HIGH/CRITICAL y escaneo concluyente. Sigue publicándose únicamente el resumen system dentro de los cinco artefactos ordinarios; no se incorporan inventarios ni logs crudos a los artefactos públicos. La promoción de contenido idéntico reutiliza esta evidencia, sin repetir suites por rama. La actualización de Node/Brotli se sigue en la [issue #100](https://github.com/ngarayc/Nexo/issues/100).
+
+El workflow [CD Azure](cd.md) verifica de nuevo el manifiesto de main y los cinco artefactos antes de obtener identidad Azure. Está separado de CI y de la revisión humana de main; no emite ni sustituye ninguno de esos checks. Sus políticas negativas y pruebas de recuperación forman parte de ci-controls.

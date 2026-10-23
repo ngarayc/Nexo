@@ -112,6 +112,8 @@ La nube es un extra P1; conserva los requisitos mínimos del [contrato](requirem
 Consultar también [acceso](access.md), [seguridad](security.md) y
 [operación](operations.md).
 
+El [despliegue continuo](cd.md) automatiza la actualización desde main mediante OIDC y Run Command. Su servicio de arranque utiliza la última release saludable registrada; después de habilitarlo, administrar mediante ese operador para conservar la identidad de las imágenes.
+
 Referencias: [Docker en Ubuntu](https://docs.docker.com/engine/install/ubuntu/),
 [discos de datos de Azure](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/add-disk),
 [HTTPS automático de Caddy](https://caddyserver.com/docs/automatic-https).

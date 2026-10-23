@@ -105,3 +105,5 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 **Destino del paquete:** [release entrega-final](https://github.com/ngarayc/Nexo/releases/tag/entrega-final). La entrega está publicada únicamente cuando esa página ofrece un manifiesto cuyos SHA y controles coinciden con el tag. Las ejecuciones de CI y el manifiesto externo determinan el estado de cada candidatura; el enlace previsto por sí solo no acredita publicación.
 
 La [auditoría y correcciones](docs/final-audit.md) contrasta implementación, planeación y obligaciones iniciales. La revisión del candidato corregido precede al cierre. El manifiesto vincula el SHA probado en development con el SHA publicado en main mediante su árbol Git idéntico. Conserva los reportes ordinarios/ampliados y sus revisiones originales, sin volver a ejecutar las pruebas por promover una rama.
+
+El [despliegue continuo en Azure](docs/cd.md) usa Actions, identidad federada OIDC y Docker. Se activa desde main después de verificar su promoción; conserva la revisión humana de la PR y los datos persistentes.
