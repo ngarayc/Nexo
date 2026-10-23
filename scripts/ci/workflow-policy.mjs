@@ -17,6 +17,19 @@ function checkSteps(steps) {
   }
 }
 
+function checkPublicationStep(job, scope) {
+  const upload = job.steps.at(-1);
+  const proof = job.steps.at(-2);
+  if (
+    !upload?.uses?.startsWith('actions/upload-artifact@') ||
+    proof?.run !== `node scripts/ci/check-publication.mjs ${scope}` ||
+    proof.if !== undefined ||
+    proof['continue-on-error'] ||
+    proof.env !== undefined
+  )
+    throw new Error('Falta la comprobación de publicación inmediatamente antes del upload.');
+}
+
 export function validateWorkflows(ci, review, setup, expanded) {
   if (!readOnly(ci.permissions) || !readOnly(review.permissions))
     throw new Error('Permisos de workflow no limitados a lectura.');
@@ -57,6 +70,7 @@ export function validateWorkflows(ci, review, setup, expanded) {
         uploads[0].with?.['retention-days'] !== 7
       )
         throw new Error('La lista de artefactos publicables se alteró.');
+      checkPublicationStep(job, name);
     }
   }
   // El contexto de revisión jamás se emite como job omitido de un push a test.
@@ -139,4 +153,5 @@ export function validateExpandedWorkflow(workflow) {
     uploads[0].with?.['retention-days'] !== 7
   )
     throw new Error('Solo se publica el manifiesto ampliado validado.');
+  checkPublicationStep(job, 'expanded');
 }

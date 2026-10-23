@@ -25,6 +25,8 @@ jobs:
       - run: node scripts/ci/job.mjs quality
         env:
           GH_TOKEN: ${{ github.token }}
+      - name: Verificar publicación y exclusión
+        run: node scripts/ci/check-publication.mjs quality
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ci-quality-${{ github.run_id }}-${{ github.run_attempt }}
@@ -41,6 +43,8 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-project
       - run: node scripts/ci/job.mjs unit
+      - name: Verificar publicación y exclusión
+        run: node scripts/ci/check-publication.mjs unit
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ci-unit-${{ github.run_id }}-${{ github.run_attempt }}
@@ -57,6 +61,8 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-project
       - run: node scripts/ci/job.mjs integration
+      - name: Verificar publicación y exclusión
+        run: node scripts/ci/check-publication.mjs integration
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ci-integration-${{ github.run_id }}-${{ github.run_attempt }}
@@ -74,6 +80,8 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-project
       - run: node scripts/ci/job.mjs security-source
+      - name: Verificar publicación y exclusión
+        run: node scripts/ci/check-publication.mjs security-source
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ci-security-source-${{ github.run_id }}-${{ github.run_attempt }}
@@ -90,6 +98,8 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-project
       - run: node scripts/ci/job.mjs system
+      - name: Verificar publicación y exclusión
+        run: node scripts/ci/check-publication.mjs system
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ci-system-${{ github.run_id }}-${{ github.run_attempt }}

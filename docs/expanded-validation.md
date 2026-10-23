@@ -36,3 +36,5 @@ El workflow ampliado publica únicamente reports/expanded/manifest.json durante 
 JSON de Playwright, logs de procesos, escaneos crudos, archivos de reset y diagnósticos quedan en reports/raw, fuera del upload. No se publican trace, HAR, storageState, sesiones, claves, archivos de entorno o rutas personales. Solo métricas, versiones, hashes/IDs y resultados permitidos pueden incorporarse después al manifiesto de release.
 
 Este procedimiento describe las comprobaciones implementadas. [Verificación](verification.md), las ejecuciones y el manifiesto final identifican cuáles terminaron y sobre qué SHA; la existencia del script no declara aprobado el candidato final ni cerrada la entrega.
+
+Antes del upload ampliado se ejecuta también la [comprobación de publicación](ci-controls.md): adjunto sintético excluido, contenido sin marcador literal/escapado y revalidación del manifiesto contra checkout, ejecución, fixtures e IDs/revisiones actuales. Es un paso posterior al recorrido y anterior al único upload; no amplía sus archivos permitidos o sustituye la ejecución final sobre main.

@@ -512,3 +512,11 @@ Pasaron28 pruebas de evento, cuatro de mensajes y tres de trama almacenada; diez
 El recorrido ISO ampliado pasó en WebKit, Chromium y Firefox: original con coma/forma básica/offset y veinte cifras, orden exacto aunque las etiquetas de segundos coincidan, inspección por teclado/toque a360px y una observación tardía adicional recibida por SSE con el historial abierto. Verificó los originales recuperados por HTTP, UTC completos y latest sin retroceso. PostgreSQL/NGINX/API/Angular fueron reales; no hubo errores de página o casos omitidos.
 
 La comprobación focalizada del consumidor/HTTP volvió a acreditar20/2/2 y0/22/2, identidades/latest/alertas y43 efectos sin reset. Las nuevas imágenes API/web se construyeron y completaron Trivy con inventarios e IDs contrastados, sin HIGH/CRITICAL; DB no cambió. OpenAPI pasó el esquema oficial3.1 conservado y coincide con17 operaciones/33 esquemas; los cuatro fixtures siguen intactos. Esto acredita el incremento probado, no la ejecución completa de una candidatura final posterior.
+
+## Exclusión demostrable de adjuntos — #86
+
+La [corrección #86](https://github.com/ngarayc/Nexo/issues/86) prepara un adjunto sintético excluido antes de cada publicación y comprueba el contenido seleccionado. El agregado revisa también los cinco archivos realmente descargados. La política de workflows impide retirar, condicionar o desplazar esa comprobación y conserva los uploads exactos de cinco JSON ordinarios y un manifiesto ampliado.
+
+Pasaron once comprobaciones focalizadas de publicación/workflows: fixture físico con marcador excluido, contenido contaminado literal/escapado, nombres/rutas/adjuntos indebidos, archivos ausentes, contexto de CLI ajeno y modificación/omisión del paso previo. La CLI rechaza el contexto distinto con un diagnóstico fijo que no propaga datos crudos. Lint y validación de los workflows actuales pasaron. El verificador externo de descargas comprueba contenido y puede exigir además el paso real satisfactorio de GitHub.
+
+Esta verificación local no se presenta como upload remoto ejecutado. Los resultados del candidato remoto, sus archivos descargados y la publicación ampliada mantienen su comprobación propia antes de promover o cerrar la entrega.

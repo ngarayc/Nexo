@@ -38,6 +38,8 @@ jobs:
         run: npx --no-install playwright install --with-deps firefox webkit
       - name: Comprobar candidatura completa
         run: node scripts/ci/run-expanded.mjs "$NEXO_CANDIDATE" "$NEXO_STAGE"
+      - name: Verificar publicación y exclusión
+        run: node scripts/ci/check-publication.mjs expanded
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: expanded-${{ github.run_id }}-${{ github.run_attempt }}

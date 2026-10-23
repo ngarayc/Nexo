@@ -107,3 +107,11 @@ La versión anterior reescribía el SSE a otro origen. En WebKit, CSP bloqueaba 
 Las nuevas reglas de capas se aplican al código de producción; los fixtures unitarios pueden inspeccionar proveedores privados de otro módulo para comprobar su integración HTTP/DI. Ciclos y las cinco reglas anteriores siguen analizando también las pruebas. No se excluyen dependencias compiladas alcanzadas desde una fuente. Al añadir una funcionalidad o superficie pública, su colaboración debe quedar explícita en la configuración y sus regresiones.
 
 Las negativas ejecutan el grafo y también el comando con el reporter efectivo de CI: detectar una violación en JSON por sí solo no acredita bloqueo por código de salida. Los controles positivos conservan imports públicos y colaboración legítima. [Verificación](verification.md) registra las pruebas ejecutadas.
+
+## Comprobación inmediatamente anterior al upload
+
+[La corrección #86](https://github.com/ngarayc/Nexo/issues/86) añade un paso explícito antes de cada upload ordinario y ampliado. Prepara en reports/raw un storageState.synthetic.json con un marcador ficticio, comprueba que existe y selecciona únicamente el JSON permitido. Rechaza archivos adicionales, rutas alternativas y el marcador, incluso escrito con escapes JSON. El paso vuelve a comprobar el contexto y el esquema cerrado del reporte; el ampliado contrasta además fixtures, inventario y las imágenes/revisiones actuales.
+
+El control de workflows exige ese paso sin condición ni tolerancia de errores, inmediatamente antes del upload final. Permanecen cinco artefactos ordinarios y un manifiesto ampliado separado; el adjunto sintético y los diagnósticos no se publican. ci-required vuelve a revisar el conjunto real descargado y la ausencia del marcador antes de validar resultados/candidato/intento. La revisión externa de descargas conserva las mismas comprobaciones y acredita por separado si el paso previo terminó efectivamente en GitHub.
+
+Las negativas locales comprueban el mecanismo; su existencia no acredita que una ejecución remota posterior lo haya completado. [Verificación](verification.md) y las ejecuciones identifican ese estado. No se usa una credencial real o una filtración para demostrar el control.
