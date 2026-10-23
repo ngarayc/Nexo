@@ -69,7 +69,9 @@ test('iconos accesibles, tooltips horizontales, mapas sin rueda ni repetición y
     const trajectory = page.getByRole('region', { name: 'Mapa de trayectoria', exact: true });
     await wheelLeavesZoom(page, trajectory);
     await singleWorld(page, trajectory);
-    await trajectory.scrollIntoViewIfNeeded();
+    // La prueba de capas necesita una superposición real con el panel fijo.
+    // Solo hacerlo visible deja el mapa arriba en algunas métricas de fuente.
+    await trajectory.evaluate((map) => map.scrollIntoView({ block: 'end', behavior: 'instant' }));
     await page.getByRole('button', { name: /^Reproductor ·/ }).click();
     const panel = page.getByRole('complementary', { name: 'Reproductor de la demo', exact: true });
     await expect(panel).toBeVisible();
