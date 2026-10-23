@@ -109,6 +109,7 @@ class LeafletTrajectory implements TrajectoryRenderer {
       if (this.line) this.line.setLatLngs(points);
       else
         this.line = L.polyline(points, {
+          className: 'nexo-trajectory-line',
           color: '#13766d',
           weight: 3,
           smoothFactor: 0,

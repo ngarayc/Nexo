@@ -28,7 +28,10 @@ test('trayectoria e historial comparten selección con alertas y conservan ambos
       const vehicle = index === 0 ? 'VEH-001' : 'VEH-005';
       await page.getByRole('button', { name: 'Ver historial de ' + vehicle, exact: true }).click();
       await expect(trajectory(page).locator('.nexo-trajectory-marker')).toHaveCount(3);
-      await expect(trajectory(page).locator('.leaflet-overlay-pane path')).toHaveCount(1);
+      await expect(trajectory(page).locator('path.nexo-geofence')).toHaveCount(1);
+      await expect(
+        trajectory(page).locator('.leaflet-overlay-pane path.nexo-trajectory-line'),
+      ).toHaveCount(1);
       const rows = page.locator('nexo-vehicle-history tbody tr');
       expect(
         await rows.evaluateAll((items) => items.map((item) => item.getAttribute('data-event-id'))),

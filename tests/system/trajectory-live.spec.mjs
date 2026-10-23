@@ -44,7 +44,10 @@ test('muestras coincidentes y tiempo subnanosegundo conservan geometría, selecc
   expect(produceSystemEvents([p])).toEqual({ accepted: 1, duplicates: 0, rejected: 0 });
   await page.getByRole('button', { name: 'Ver historial de ' + a, exact: true }).click();
   await expect(trajectory(page).locator('.nexo-trajectory-marker')).toHaveCount(1);
-  await expect(trajectory(page).locator('.leaflet-overlay-pane path')).toHaveCount(0);
+  await expect(trajectory(page).locator('path.nexo-geofence')).toHaveCount(1);
+  await expect(
+    trajectory(page).locator('.leaflet-overlay-pane path.nexo-trajectory-line'),
+  ).toHaveCount(0);
   expect(produceSystemEvents([q, r])).toEqual({ accepted: 2, duplicates: 0, rejected: 0 });
   await expect(trajectory(page).locator('.nexo-trajectory-marker')).toHaveCount(3);
   expect(await rowIds(page)).toEqual([p.eventId, q.eventId, r.eventId]);
@@ -55,7 +58,7 @@ test('muestras coincidentes y tiempo subnanosegundo conservan geometría, selecc
   const selected = await point(page, q.eventId).elementHandle();
   const pane = trajectory(page).locator('.leaflet-map-pane');
   const camera = await pane.evaluate((element) => element.style.transform);
-  const line = trajectory(page).locator('.leaflet-overlay-pane path');
+  const line = trajectory(page).locator('.leaflet-overlay-pane path.nexo-trajectory-line');
   const previousPath = await line.getAttribute('d');
   await page.getByLabel('Buscar vehículo', { exact: true }).focus();
   expect(produceSystemEvents([late])).toEqual({ accepted: 1, duplicates: 0, rejected: 0 });
@@ -128,7 +131,9 @@ test('muestras coincidentes y tiempo subnanosegundo conservan geometría, selecc
     await expect(page.locator('nexo-vehicle-history tbody tr')).toHaveCount(1);
     expect(await rowIds(page)).toEqual([prefix + '-b']);
     await expect(trajectory(page).locator('.nexo-trajectory-marker')).toHaveCount(1);
-    await expect(trajectory(page).locator('.leaflet-overlay-pane path')).toHaveCount(0);
+    await expect(
+      trajectory(page).locator('.leaflet-overlay-pane path.nexo-trajectory-line'),
+    ).toHaveCount(0);
     expect(
       await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     ).toBe(true);
