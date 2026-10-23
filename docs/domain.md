@@ -31,3 +31,5 @@ Los GET exigidos se conservan. Las consultas JSON complementarias de historial y
 Primera reproducción ordenada: 20 aceptados, 2 duplicados y 2 rechazados. Segunda sin reset: 0 aceptados, 22 duplicados y 2 rechazados. Permanecen 20 eventos, 8 vehículos y 4 alertas con las identidades de los oráculos.
 
 No se mezclan datos adversariales o de carga con esta demostración. Los controles del reproductor actúan sobre el emisor; no pausan vehículos reales, recepción o procesamiento ya admitido.
+
+El metadato de salida observedAtOriginal conserva la escritura recibida del campo observado; observedAt sigue siendo el UTC canónico exacto. El detalle permite consultar ambos sin depender del hover. Un extra de entrada con ese nombre no sustituye el original autoritativo ni cambia los siete campos obligatorios. La compatibilidad con mensajes históricos sin el metadato se explica en [API](api.md).

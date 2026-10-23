@@ -5,7 +5,9 @@ import {
   vehicleState,
   isOverspeed,
   changeFrame,
+  observedInstantUtc,
 } from '../../../telemetry/public.js';
+import { readObservedInstant } from '@nexo/contracts';
 import type { ChangeMessage } from '../../../telemetry/public.js';
 import type { PendingMessage } from '../../application/dispatch.js';
 
@@ -52,10 +54,15 @@ export function storedFrame(metadata: PendingMessage, payload: string): string {
       : metadata.type === 'alert.created'
         ? ['type']
         : [];
-  if (!keys(data, [...eventKeys, ...extra])) throw invalid();
+  const originalKeys = Object.hasOwn(data, 'observedAtOriginal') ? ['observedAtOriginal'] : [];
+  if (!keys(data, [...eventKeys, ...extra, ...originalKeys])) throw invalid();
   const validated = validateEvent(OriginalJson.parse(JSON.stringify(data)));
   if (!validated.valid) throw invalid();
   const event = eventView(validated.event);
+  if (originalKeys.length) {
+    const original = readObservedInstant(data['observedAtOriginal']);
+    if (!original || observedInstantUtc(original) !== event.observedAt) throw invalid();
+  }
   if (
     message['eventId'] !== event.eventId ||
     message['vehicleId'] !== event.vehicleId ||

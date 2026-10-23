@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto';
 import { signIn } from '../support/browser-session.mjs';
 import { produceSystemEvents } from '../support/system-producer.mjs';
 
+test.use({ hasTouch: true });
+
 test('ISO con coma, forma básica y offset conserva orden exacto y se presenta sin errores en tabla, historial y mapas', async ({
   page,
 }) => {
@@ -69,10 +71,48 @@ test('ISO con coma, forma básica y offset conserva orden exacto y se presenta s
   await expect(page.locator('nexo-vehicle-trajectory .observation')).toContainText('81 km/h');
   const response = await page.request.get('/api/vehicles/' + id + '/events');
   expect(response.status()).toBe(200);
-  expect((await response.json()).items.map((event) => event.observedAt)).toEqual([
+  const history = await response.json();
+  expect(history.items.map((event) => event.observedAt)).toEqual([
     '2026-01-01T05:00:01.5Z',
     '2026-01-01T05:00:01.75Z',
     '2026-01-01T05:00:01.99999999999999999991Z',
   ]);
+  expect(history.items.map((event) => event.observedAtOriginal)).toEqual(
+    events.map((event) => event.observedAt),
+  );
+  const precision = page.getByRole('region', { name: 'Fecha de la observación seleccionada' });
+  const summary = precision.locator('summary');
+  await summary.focus();
+  await summary.press('Enter');
+  await expect(precision.locator('details')).toHaveAttribute('open', '');
+  await expect(precision.getByTestId('observation-original-time')).toHaveText(events[1].observedAt);
+  await expect(precision.getByTestId('observation-utc-time')).toHaveText('2026-01-01T05:00:01.75Z');
+  await page
+    .getByRole('button', { name: 'Seleccionar observación ' + id + '-c', exact: true })
+    .click();
+  await expect(precision.getByTestId('observation-original-time')).toHaveText(events[2].observedAt);
+  await expect(precision.getByTestId('observation-utc-time')).toHaveText(
+    '2026-01-01T05:00:01.99999999999999999991Z',
+  );
+  const live = {
+    ...events[0],
+    eventId: id + '-d',
+    observedAt: '2026-01-01T06:00:01.8888888888888888888+01:00',
+  };
+  expect(produceSystemEvents([live])).toEqual({ accepted: 1, duplicates: 0, rejected: 0 });
+  await expect(rows).toHaveCount(4);
+  await page.setViewportSize({ width: 360, height: 740 });
+  await page
+    .getByRole('button', { name: 'Seleccionar observación ' + id + '-d', exact: true })
+    .tap();
+  await expect(precision.getByTestId('observation-original-time')).toHaveText(live.observedAt);
+  await expect(precision.getByTestId('observation-utc-time')).toHaveText(
+    '2026-01-01T05:00:01.8888888888888888888Z',
+  );
+  await summary.tap();
+  await expect(precision.locator('details')).not.toHaveAttribute('open');
+  await summary.tap();
+  await expect(precision.locator('details')).toHaveAttribute('open', '');
+  await expect(row).toHaveAttribute('data-event-id', id + '-c');
   expect(errors).toEqual([]);
 });

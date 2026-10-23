@@ -1174,6 +1174,12 @@
           },
           "ignitionOn": {
             "type": "boolean"
+          },
+          "observedAtOriginal": {
+            "type": "string",
+            "minLength": 1,
+            "readOnly": true,
+            "description": "Metadato de salida: cadena observedAt recibida al aceptar el evento, conservada sin reconstruirla desde UTC. Representa el mismo instante exacto. Las consultas actuales y notificaciones nuevas lo incluyen; puede faltar en notificaciones históricas conservadas anteriores."
           }
         },
         "additionalProperties": false
@@ -1226,6 +1232,12 @@
           "status": {
             "type": "string",
             "enum": ["OFF", "MOVING", "STOPPED"]
+          },
+          "observedAtOriginal": {
+            "type": "string",
+            "minLength": 1,
+            "readOnly": true,
+            "description": "Metadato de salida: cadena observedAt recibida al aceptar el evento, conservada sin reconstruirla desde UTC. Representa el mismo instante exacto. Las consultas actuales y notificaciones nuevas lo incluyen; puede faltar en notificaciones históricas conservadas anteriores."
           }
         },
         "additionalProperties": false
@@ -1273,6 +1285,12 @@
           "speedKph": {
             "type": "number",
             "minimum": 0
+          },
+          "observedAtOriginal": {
+            "type": "string",
+            "minLength": 1,
+            "readOnly": true,
+            "description": "Metadato de salida: cadena observedAt recibida al aceptar el evento, conservada sin reconstruirla desde UTC. Representa el mismo instante exacto. Las consultas actuales y notificaciones nuevas lo incluyen; puede faltar en notificaciones históricas conservadas anteriores."
           }
         },
         "additionalProperties": false

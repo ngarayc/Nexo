@@ -129,3 +129,9 @@ Al cambiar rutas o respuestas, actualizar OpenAPI, esta página y las pruebas pe
 [Contrato de control](replay-emitter.md) y [OpenAPI](openapi.json) describen GET /api/demo/replay y POST /api/demo/replay/commands. GET ofrece control actual o selectores excluyentes de ejecución/historial/recibo; POST admite intención durable con sesión, origen, CSRF, cuota de 60/min y JSON de 4 KiB. Un 202 no equivale a resolución completada. COMMIT desconocido 503 conserva incertidumbre y exige consultar el estado/recibo; no autoriza reenvío automático. Modo demo deshabilitado404 antes del parser.
 
 La misma SSE publica demo.replay.updated con vista completa y dos revisiones; la época del stream no sustituye la instancia estable del control. La pausa no cancela cola del receptor. El informe de escenario y los individuales se conservan separados. Estos endpoints no aceptan destino/fixture/clave del navegador ni ofrecen borrado. El panel y reset seguro mantienen sus incrementos propios.
+
+## Fecha original y precisión en las vistas
+
+[La corrección #85](https://github.com/ngarayc/Nexo/issues/85) añade observedAtOriginal como metadato de salida de eventos, vehículos y alertas. Contiene la cadena observedAt que realmente se aceptó, leída del valor conservado en PostgreSQL o del evento confirmado; no se reconstruye desde UTC ni se toma de un extra enviado por el cliente. observedAt sigue siendo UTC canónico y conserva toda la fracción. Los siete campos obligatorios de entrada y la igualdad de eventos/recibos no cambian.
+
+Las consultas actuales y notificaciones nuevas incluyen el metadato. Puede faltar en notificaciones históricas conservadas anteriores; sus bytes/identidad no se reescriben. Backend y Angular validan que, si está presente, represente exactamente el mismo instante. El detalle distingue esa ausencia y permite inspeccionar siempre el UTC exacto. No se crea otro endpoint o migración. [OpenAPI](openapi.json) describe la propiedad opcional de salida.

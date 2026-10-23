@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { expect, it } from 'vitest';
 import { VehicleHistory } from './vehicle-history';
+import type { EventView } from '@nexo/contracts';
 
 it('identifica y enfoca la observaci처n seleccionada por ID sin depender de posici처n o CSS', async () => {
   const fixture = TestBed.createComponent(VehicleHistory);
@@ -51,4 +52,37 @@ it('la acci처n nativa emite el ID original y expresa la selecci처n sin usar el �
   fixture.componentRef.setInput('highlighted', id);
   await fixture.whenStable();
   expect(button.getAttribute('aria-pressed')).toBe('true');
+});
+
+it('la selecci처n expone original y UTC completos, sin usar la etiqueta visual para identificar el evento', async () => {
+  const fixture = TestBed.createComponent(VehicleHistory);
+  const base = { vehicleId: 'V', latitude: 4, longitude: -74, speedKph: 0, ignitionOn: true };
+  const events: readonly EventView[] = [
+    {
+      ...base,
+      eventId: 'a',
+      observedAt: '2026-01-01T05:00:00.1234567890001Z',
+      observedAtOriginal: '2026-01-01T00:00:00.123456789000100-05:00',
+    },
+    { ...base, eventId: 'b', observedAt: '2026-01-01T05:00:00.1234567890002Z' },
+  ];
+  fixture.componentRef.setInput('items', events);
+  fixture.componentRef.setInput('highlighted', 'a');
+  await fixture.whenStable();
+  const root: HTMLElement = fixture.nativeElement;
+  expect(root.querySelector('summary')?.textContent).toBe('Inspeccionar fecha exacta');
+  expect(root.querySelector('[data-testid="observation-original-time"]')?.textContent).toBe(
+    events[0]!.observedAtOriginal,
+  );
+  expect(root.querySelector('[data-testid="observation-utc-time"]')?.textContent).toBe(
+    events[0]!.observedAt,
+  );
+  fixture.componentRef.setInput('highlighted', 'b');
+  await fixture.whenStable();
+  expect(root.querySelector('[data-testid="observation-utc-time"]')?.textContent).toBe(
+    events[1]!.observedAt,
+  );
+  expect(root.querySelector('[data-testid="observation-original-time"]')?.textContent).toBe(
+    'No disponible en esta notificaci처n hist처rica.',
+  );
 });

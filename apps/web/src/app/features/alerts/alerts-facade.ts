@@ -38,6 +38,9 @@ export class AlertsFacade {
       eventId: data.eventId,
       vehicleId: data.vehicleId,
       observedAt: data.observedAt,
+      ...(data.observedAtOriginal !== undefined
+        ? { observedAtOriginal: data.observedAtOriginal }
+        : {}),
       latitude: data.latitude,
       longitude: data.longitude,
       speedKph: data.speedKph,

@@ -8,6 +8,7 @@ type EventRow = {
   vehicle_key: Buffer;
   observed_epoch_second: string;
   observed_fraction: string;
+  observed_at_original: string;
   latitude: number;
   longitude: number;
   speed_kph: number;
@@ -17,7 +18,7 @@ type FilteredAlertRow = { overall_total: string } & {
   [Key in keyof EventRow]: EventRow[Key] | null;
 };
 const columns =
-  'e.event_key,e.vehicle_key,e.observed_epoch_second::text,e.observed_fraction,e.latitude,e.longitude,e.speed_kph,e.ignition_on';
+  'e.event_key,e.vehicle_key,e.observed_epoch_second::text,e.observed_fraction,e.observed_at_original,e.latitude,e.longitude,e.speed_kph,e.ignition_on';
 const fleetSql = `SELECT ${columns} FROM vehicle_latest v JOIN telemetry_events e ON e.event_pk=v.event_pk ORDER BY v.vehicle_key`;
 const alertsSql = `SELECT ${columns} FROM alerts a JOIN telemetry_events e ON e.event_pk=a.event_pk ORDER BY e.observed_epoch_second DESC,e.observed_fraction COLLATE "C" DESC,e.event_key DESC`;
 const filteredAlertsSql = `SELECT ${columns},totals.overall_total
@@ -34,6 +35,7 @@ function eventView(row: EventRow): EventView {
       epochSecond: BigInt(row.observed_epoch_second),
       fraction: row.observed_fraction,
     }),
+    observedAtOriginal: row.observed_at_original,
     latitude: row.latitude,
     longitude: row.longitude,
     speedKph: row.speed_kph,
@@ -47,6 +49,7 @@ function alertView(row: EventRow): AlertView {
     eventId: event.eventId,
     vehicleId: event.vehicleId,
     observedAt: event.observedAt,
+    observedAtOriginal: row.observed_at_original,
     speedKph: event.speedKph,
     latitude: event.latitude,
     longitude: event.longitude,

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   readSnapshot,
+  readEvent,
   readHistory,
   readDomainFrame,
   readStreamControl,
@@ -195,6 +196,52 @@ describe('frontera de datos públicos de telemetría', () => {
           summary: { MOVING: 2, OFF: 0, STOPPED: 0 },
         },
       }),
+    ).toThrow(TelemetryProtocolError);
+  });
+
+  it('metadato original conserva la escritura recibida en historial, snapshot y stream', () => {
+    const original = '2025-12-31T19:00:00.123456789000100-05:00';
+    const view = { ...event, observedAtOriginal: original };
+    expect(
+      readHistory({ vehicleId: event.vehicleId, items: [view], total: 1 }, event.vehicleId).items[0]
+        ?.observedAtOriginal,
+    ).toBe(original);
+    const base = snapshot();
+    const parsed = readSnapshot({
+      ...base,
+      vehicles: {
+        ...base.vehicles,
+        items: [{ ...base.vehicles.items[0], observedAtOriginal: original }],
+      },
+      alerts: {
+        ...base.alerts,
+        items: [{ ...base.alerts.items[0], observedAtOriginal: original }],
+      },
+    });
+    expect(parsed.vehicles.items[0]?.observedAtOriginal).toBe(original);
+    expect(parsed.alerts.items[0]?.observedAtOriginal).toBe(original);
+    const frame = {
+      schemaVersion: 1,
+      messageId,
+      type: 'telemetry.accepted',
+      eventId: event.eventId,
+      vehicleId: event.vehicleId,
+      observedAt: event.observedAt,
+      data: view,
+    };
+    expect(
+      readDomainFrame(frame.type, messageId, JSON.stringify(frame)).change.data.observedAtOriginal,
+    ).toBe(original);
+    expect(readEvent(event).observedAtOriginal).toBeUndefined();
+  });
+
+  it('rechaza original inválido o de otro instante y conserva el cierre de campos', () => {
+    for (const original of [null, 1, 'invalid', '2026-01-01T00:00:00.1234567890002Z'])
+      expect(() => readEvent({ ...event, observedAtOriginal: original })).toThrow(
+        TelemetryProtocolError,
+      );
+    expect(() =>
+      readEvent({ ...event, observedAtOriginal: event.observedAt, unexpected: true }),
     ).toThrow(TelemetryProtocolError);
   });
 });
