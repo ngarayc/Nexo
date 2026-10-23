@@ -364,14 +364,16 @@ const cases = {
     assert.equal(first.run.scenarioVerification, 'conformant');
     assert.equal(first.run.verificationDocument, originalReport);
     assert.notEqual(first.run.scenarioClosedAt, null);
-    await assert.rejects(
-      journal.create({
-        ...input(),
-        scenarioId: first.run.runId,
-        previousRunId: second.run.runId,
-        stage: 'exploratory',
-      }),
-    );
+    const closed = await journal.find(first.run.runId);
+    const exploratory = await journal.create({
+      ...input(),
+      scenarioId: first.run.runId,
+      previousRunId: second.run.runId,
+      stage: 'exploratory',
+    });
+    assert.equal(exploratory.run.stage, 'exploratory');
+    assert.equal(exploratory.run.previousRunId, second.run.runId);
+    assert.deepEqual(await journal.find(first.run.runId), closed);
     await zeroDomain(); // Solo prueba política del diario; no fue un replay real.
   },
   async concurrency() {

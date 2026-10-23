@@ -58,8 +58,7 @@ h1 {
   color: #fff;
   margin: 0;
 }
-h1::after {
-  content: '.';
+h1 span {
   color: #719eff;
 }
 .eyebrow {

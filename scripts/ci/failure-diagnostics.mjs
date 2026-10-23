@@ -39,3 +39,29 @@ export function browserFailureStage(report) {
   }
   return undefined;
 }
+
+// Solo números de línea del archivo de prueba conocido. Nunca texto del error,
+// rutas personales o datos de navegador; la clasificación no decide el gate.
+export function browserFailureLines(report, file) {
+  if (!/^[a-z0-9-]+\.spec\.mjs$/u.test(file)) return [];
+  const pending = [report],
+    visited = new Set(),
+    lines = new Set();
+  while (pending.length) {
+    const node = pending.pop();
+    if (!node || typeof node !== 'object' || visited.has(node)) continue;
+    visited.add(node);
+    const location = node.location;
+    if (
+      typeof location?.file === 'string' &&
+      location.file.split(/[\\/]/u).at(-1) === file &&
+      Number.isInteger(location.line) &&
+      location.line > 0 &&
+      location.line <= 20000
+    )
+      lines.add(location.line);
+    for (const key of ['suites', 'specs', 'tests', 'results', 'errors'])
+      if (Array.isArray(node[key])) pending.push(...node[key]);
+  }
+  return [...lines].sort((a, b) => a - b);
+}
