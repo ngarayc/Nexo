@@ -51,7 +51,7 @@ docker compose --env-file .env.local -f infra/compose.yaml up -d --wait
 
 ## Desarrollo y comprobación
 
-Para herramientas de fuentes usar Node.js 24.22.0 y npm 12.2.0:
+Para herramientas de fuentes usar Node.js 24.22.1 y npm 12.2.0:
 
 ```sh
 npm ci

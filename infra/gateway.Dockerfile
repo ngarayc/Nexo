@@ -8,6 +8,7 @@ RUN --mount=type=cache,target=/root/.cache/go-build \
     go build -mod=readonly -trimpath -ldflags="-s -w" -o /out/caddy .
 
 FROM caddy:2-alpine@sha256:eb4d35b7452d1ab6171fbdbe8d9275b2301dad6dad92115d91e19fb9b24d510f
+RUN apk add --no-cache --upgrade brotli-libs=1.2.1-r0
 # Conservar la base oficial y reemplazar el binario por el mismo Caddy con Go y
 # golang.org/x/net corregidos. Versiones y checksums en go.mod/go.sum.
 COPY --from=build /out/caddy /usr/bin/caddy

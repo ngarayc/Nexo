@@ -63,7 +63,7 @@ La contraseña y los cuatro secretos técnicos son valores privados. Preparar
 PostgreSQL con propietario UID/GID 70 y permisos 700; los directorios Caddy con
 UID/GID 1000. No formatear ni reemplazar un disco que ya contenga datos.
 
-Generar el proxy con Node 24.22.0, antes de iniciar la web:
+Generar el proxy con Node 24.22.1, antes de iniciar la web:
 
 ```sh
 node scripts/prepare-cloud-proxy.mjs /opt/nexo-private

@@ -12,7 +12,7 @@ El [reproductor HTTP](docs/replay-emitter.md), controlado desde un [panel flotan
 
 ## Arranque
 
-Requisitos: Git, Docker Engine y Compose, Bash y OpenSSL. El reset y las comprobaciones de fuentes requieren además Node.js 24.22.0 y npm 12.2.0 en el host; la construcción de API/web usa sus herramientas dentro de Docker. Desde la raíz, generar la configuración solo la primera vez:
+Requisitos: Git, Docker Engine y Compose, Bash y OpenSSL. El reset y las comprobaciones de fuentes requieren además Node.js 24.22.1 y npm 12.2.0 en el host; la construcción de API/web usa sus herramientas dentro de Docker. Desde la raíz, generar la configuración solo la primera vez:
 
 ```sh
 bash scripts/configure-local.sh
@@ -32,7 +32,7 @@ La detención conserva el volumen. Para descartar explícitamente la demo sinté
 
 ## Fuentes y comprobaciones
 
-Herramientas para reset y desarrollo: **Node.js 24.22.0 y npm 12.2.0**, fijadas también en las imágenes de build y el lockfile.
+Herramientas para reset y desarrollo: **Node.js 24.22.1 y npm 12.2.0**, fijadas también en las imágenes de build y el lockfile.
 
 ```sh
 npm ci

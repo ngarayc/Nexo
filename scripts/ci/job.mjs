@@ -96,8 +96,9 @@ if (job === 'quality') {
 } else if (job === 'system') {
   command('bash', ['scripts/configure-local.sh']);
   command('docker', ['compose', '--env-file', '.env.local', '-f', 'infra/compose.yaml', 'build']);
+  command('docker', ['build', '-f', 'infra/gateway.Dockerfile', '-t', 'nexo-gateway:local', '.']);
   command(process.execPath, ['scripts/ci/install-tools.mjs']);
-  for (const name of ['api', 'web', 'db']) {
+  for (const name of ['api', 'web', 'db', 'gateway']) {
     const scan = spawnSync(
       tools('trivy'),
       [
@@ -128,7 +129,15 @@ if (job === 'quality') {
       `${scan.stdout ?? ''}\n${scan.stderr ?? ''}`,
     );
     const report = await json(`reports/raw/image-${name}.json`);
-    validateImageScan(report, scan, name === 'api' ? ['alpine', 'node-pkg'] : ['alpine']);
+    validateImageScan(
+      report,
+      scan,
+      name === 'api'
+        ? ['alpine', 'node-pkg']
+        : name === 'gateway'
+          ? ['alpine', 'gobinary']
+          : ['alpine'],
+    );
     console.log(`Imagen ${name}: escaneo completo sin HIGH/CRITICAL.`);
   }
   passed('images');

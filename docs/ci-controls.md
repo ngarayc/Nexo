@@ -133,3 +133,7 @@ La promoción publica únicamente reports/promotion/manifest.json: candidato, á
 El perfil manual expanded llama al [workflow ampliado](../.github/workflows/expanded.yml) del mismo commit de development. Ejecuta únicamente ese recorrido, sin repetir el ordinario. Su manifiesto final identifica esa fuente realmente probada; la publicación posterior vincula el árbol promovido con ella, conservando SHA e identidad de las imágenes originales.
 
 El mecanismo usa [ejecuciones e intentos de Actions](https://docs.github.com/en/rest/actions/workflow-runs), [artefactos identificados y sus digests](https://docs.github.com/en/rest/actions/artifacts) y [workflows reutilizables del mismo repositorio](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows). La igualdad de árbol y los rechazos son controles propios de Nexo, descritos en la [issue #91](https://github.com/ngarayc/Nexo/issues/91).
+
+## Imágenes del perfil cloud
+
+El job system construye y escanea API, web, PostgreSQL y gateway. El gateway usa el Dockerfile y las dependencias Go fijadas; el control exige inventarios Alpine y Go, además de cero HIGH/CRITICAL y escaneo concluyente. Sigue publicándose únicamente el resumen system dentro de los cinco artefactos ordinarios; no se incorporan inventarios ni logs crudos a los artefactos públicos. La promoción de contenido idéntico reutiliza esta evidencia, sin repetir suites por rama. La actualización de Node/Brotli se sigue en la [issue #100](https://github.com/ngarayc/Nexo/issues/100).
