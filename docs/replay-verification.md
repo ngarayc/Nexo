@@ -38,7 +38,7 @@ También compara cada línea/resultado/motivo con su recibo, la identidad del in
 
 La segunda oficial requiere primera completa/conforme y vuelve a comprobar datos y contexto antes de comenzar. Su vínculo, escenario, fixture y conteos deben coincidir. Una ejecución parcial, exploratoria o tercera no recibe conformidad por reproducir tres números.
 
-Las huellas de software incluyen los bytes/rutas del backend y contratos compilados, migraciones, lockfile y versión Node realmente presentes. El perfil de configuración enumera únicamente destino de base, origen público, modo demo, escucha y límites efectivos de ingesta. No serializa process.env ni incorpora claves, contraseñas o hashes de credenciales. La instancia estable del futuro coordinador y el informe previo permiten comprobar el contexto; una ejecución sin informe cuyo origen no pueda recuperarse queda no comprobable.
+Las huellas de software incluyen los bytes/rutas del backend y contratos compilados, migraciones, lockfile y versión Node realmente presentes. El perfil de configuración enumera únicamente destino de base, origen público, modo demo, escucha y límites efectivos de ingesta. No serializa process.env ni incorpora claves, contraseñas o hashes de credenciales. La instancia estable del coordinador del motor y el informe previo permiten comprobar el contexto; una ejecución sin informe cuyo origen no pueda recuperarse queda no comprobable.
 
 ## Resultado e historia
 

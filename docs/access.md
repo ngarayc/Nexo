@@ -13,7 +13,7 @@ Una sola cuenta, **demo / demo**, sin roles, perfiles ni registro. PostgreSQL co
 
 Las respuestas de sesión contienen únicamente `user: { id, username }`, `expiresAt` ISO y `csrfToken`. No contienen SID, contraseña, hash, API key ni configuración. El SID firmado se transporta exclusivamente en la cookie. Falta de sesión y credenciales incorrectas devuelven 403 con códigos distintos; usuarios desconocidos y contraseñas incorrectas comparten respuesta genérica. JSON/formato inválido devuelve 400, cuerpo excesivo 413, frecuencia excedida 429 y fallo técnico/capacidad 503. No se exponen errores internos.
 
-El login acepta como máximo 4 KiB y cadenas de 1–64 bytes UTF-8 para usuario y 1–256 para contraseña. No convierte tipos, recorta ni trunca. Origen se comprueba antes de leer JSON; tamaño y formato preceden a cuota y hash. El parser global permanece deshabilitado para mantener esa precedencia en futuros contratos de ingesta.
+El login acepta como máximo 4 KiB y cadenas de 1–64 bytes UTF-8 para usuario y 1–256 para contraseña. No convierte tipos, recorta ni trunca. Origen se comprueba antes de leer JSON; tamaño y formato preceden a cuota y hash. El parser global permanece deshabilitado para mantener esa precedencia en los contratos de ingesta.
 
 ## Sesión absoluta y capacidad
 
