@@ -9,6 +9,7 @@ import { inspect } from 'node:util';
 import { firefox, webkit } from '@playwright/test';
 import { testStack } from '../../tests/support/stack.mjs';
 import { browserStack } from '../../tests/support/browser-stack.mjs';
+import { queryProbeSource } from '../../tests/support/query-probe.mjs';
 import { validateImageScan, validatePlaywrightReport } from './results.mjs';
 import {
   expandedBrowsers,
@@ -238,7 +239,7 @@ let load;
 const stack = testStack({ publishWeb: false });
 try {
   stack.compose('up', '-d', '--no-build', '--wait', 'db', 'api', 'web');
-  const sourceCode = readFileSync('tests/support/check-queries.mjs', 'utf8');
+  const sourceCode = queryProbeSource();
   const result = JSON.parse(
     command(
       'volume',
@@ -277,6 +278,7 @@ try {
       'peakQueries',
       'peakQueueAndListener',
       'peakOutbox',
+      'measurements',
     ].map((key) => [key, metrics[key]]),
   );
   load.repeatVerified = true;

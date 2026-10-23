@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { validateLoadMeasurements } from './load-measurements-policy.mjs';
 
 export const expandedBrowsers = Object.freeze(['firefox', 'webkit']);
 const sha = /^[a-f0-9]{40}$/u;
@@ -110,6 +111,7 @@ export function validateExpandedManifest(report, { source, files, fixtures, imag
     'peakQueries',
     'peakQueueAndListener',
     'peakOutbox',
+    'measurements',
   ]);
   for (const [key, expected] of Object.entries({
     events: 100000,
@@ -131,6 +133,7 @@ export function validateExpandedManifest(report, { source, files, fixtures, imag
       Number.isSafeInteger(report.load[key]) && report.load[key] >= 0 && report.load[key] <= limit,
     );
   assert.ok(report.load.peakRuntimeConnections > 0);
+  validateLoadMeasurements(report.load.measurements, 200);
   assert.ok(Array.isArray(files) && files.length > 0 && new Set(files).size === files.length);
   assert.ok(
     files.every((file) => /^(?:[a-z][a-z0-9-]*\/)*[a-z][a-z0-9-]*\.spec\.mjs$/u.test(file)),

@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createVolumeObservations } from './volume-observations.mjs';
 import { randomUUID } from 'node:crypto';
 import http from 'node:http';
 import { setInterval, clearInterval } from 'node:timers';
@@ -198,7 +199,7 @@ async function snapshotRows() {
 const cases = {
   async volume() {
     const requested = process.env.NEXO_QUERY_VOLUME_EVENTS ?? '10000';
-    assert.ok(['10000', '100000'].includes(requested), 'Carga de prueba no admitida.');
+    assert.ok(['2000', '10000', '100000'].includes(requested), 'Carga de prueba no admitida.');
     const eventCount = Number(requested);
     const expectedAlerts = (eventCount * 2) / 5;
     const runId = randomUUID();
@@ -212,6 +213,7 @@ const cases = {
       }),
     );
     const stats = { total: 0, writes: 0, queries: 0, queue: 0, outbox: 0 };
+    const observations = createVolumeObservations();
     let sampling,
       samplingFailure,
       stopped = false;
@@ -234,6 +236,7 @@ const cases = {
         assert.ok(n <= limit);
       }
       assert.ok(total <= 16, 'Los pools y listener del runtime respetan su presupuesto.');
+      await observations.sampleMemory();
     };
     const timer = setInterval(() => {
       if (sampling || stopped) return;
@@ -248,19 +251,31 @@ const cases = {
     const receipts = [];
     const submit = async (events) => {
       const id = randomUUID();
+      const submittedAt = observations.start();
       let result = await request('/api/events/batch', {
         body: { events },
         key: true,
         authenticated: false,
         headers: { 'Idempotency-Key': id },
+      }).catch((error) => {
+        observations.failedRequest();
+        throw error;
       });
+      observations.post(result.status, submittedAt);
       if (result.status === 503) {
         assert.equal(result.body.code, 'INGESTION_RESULT_PENDING');
         assert.equal(result.body.admission, 'admitted');
         const deadline = Date.now() + 90000;
         do {
           await pause(250);
-          result = await request(`/api/ingestions/${id}`, { key: true, authenticated: false });
+          observations.poll();
+          result = await request(`/api/ingestions/${id}`, {
+            key: true,
+            authenticated: false,
+          }).catch((error) => {
+            observations.failedRequest();
+            throw error;
+          });
           assert.equal(result.status, 200);
           if (result.body.complete) break;
           assert.deepEqual(result.body.failedIndexes, []);
@@ -269,6 +284,7 @@ const cases = {
       assert.equal(result.status, 200);
       assert.equal(result.body.complete, true);
       assert.equal(result.body.ingestionId, id);
+      observations.confirmed(submittedAt);
       receipts.push(id);
       return result.body;
     };
@@ -299,6 +315,7 @@ const cases = {
         [0, 1000, 0],
       ]) {
         for (let index = 0; index < eventCount; index += 2000) {
+          if (samplingFailure) throw samplingFailure;
           const results = await Promise.all([
             submit(sources.slice(index, index + 1000)),
             submit(sources.slice(index + 1000, index + 2000)),
@@ -385,6 +402,7 @@ const cases = {
       for (const child of node.Plans ?? []) visit(child);
     };
     visit(plan.Plan);
+    await observations.sampleMemory(true);
     globalThis.nexoVolumeMetrics = {
       events: eventCount,
       vehicles: 100,
@@ -397,6 +415,7 @@ const cases = {
       peakQueries: stats.queries,
       peakQueueAndListener: stats.queue,
       peakOutbox: stats.outbox,
+      measurements: observations.summary(eventCount / 500),
       queryPlan: {
         planningMilliseconds: plan['Planning Time'],
         executionMilliseconds: plan['Execution Time'],
@@ -537,19 +556,25 @@ const cases = {
         direct.items.map((e) => e.eventId),
         ids,
       );
-      for (const row of direct.items)
+      for (const row of direct.items) {
         assert.deepEqual(
           Object.keys(row).sort(),
           [
             'eventId',
             'vehicleId',
             'observedAt',
+            'observedAtOriginal',
             'latitude',
             'longitude',
             'speedKph',
             'ignitionOn',
           ].sort(),
         );
+        assert.equal(
+          row.observedAtOriginal,
+          events.find((event) => event.eventId === row.eventId).observedAt,
+        );
+      }
     }
     const unknown = { vehicleId: 'unknown', items: [], total: 0 };
     assert.deepEqual(await get('/api/vehicles/unknown/events'), unknown);
@@ -565,7 +590,20 @@ const cases = {
       assert.ok(alert.speedKph > 80);
       assert.deepEqual(
         Object.keys(alert).sort(),
-        ['type', 'eventId', 'vehicleId', 'observedAt', 'latitude', 'longitude', 'speedKph'].sort(),
+        [
+          'type',
+          'eventId',
+          'vehicleId',
+          'observedAt',
+          'observedAtOriginal',
+          'latitude',
+          'longitude',
+          'speedKph',
+        ].sort(),
+      );
+      assert.equal(
+        alert.observedAtOriginal,
+        events.find((event) => event.eventId === alert.eventId).observedAt,
       );
     }
     const snapshot = await get('/api/snapshot');

@@ -6,6 +6,7 @@ import {
   validateExpandedManifest,
 } from './expanded-policy.mjs';
 import { validatePlaywrightReport } from './results.mjs';
+import { measurementFixture } from './load-measurements-fixture.mjs';
 
 const source = 'a'.repeat(40),
   files = ['access.spec.mjs'];
@@ -48,6 +49,7 @@ const fixture = () => {
       peakQueries: 4,
       peakQueueAndListener: 5,
       peakOutbox: 1,
+      measurements: measurementFixture(),
     },
     browsers: ['firefox', 'webkit'].map((name) => ({
       name,
@@ -111,6 +113,9 @@ test('lista de publicación rechaza datos crudos en todos los niveles', () => {
       r.load.payload = {};
     },
     (r) => {
+      r.load.measurements.memory.cookie = 'SYNTHETIC_SESSION';
+    },
+    (r) => {
       r.cleanStart.trace = 'trace.zip';
     },
     (r) => {
@@ -129,6 +134,12 @@ test('no acredita ensayo local como cierre ni carga menor, exceso de conexiones 
     },
     (r) => {
       r.load.events = 10000;
+    },
+    (r) => {
+      r.load.measurements.post.samples = 20;
+    },
+    (r) => {
+      r.load.measurements.responses.requestFailures = 1;
     },
     (r) => {
       r.load.repeatVerified = false;
