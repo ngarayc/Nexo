@@ -1,6 +1,6 @@
 # Validación ampliada y candidatura final
 
-La [issue #77](https://github.com/ngarayc/Nexo/issues/77) incorpora un recorrido separado del CI ordinario. El [workflow manual](../.github/workflows/expanded.yml) exige un SHA completo y una etapa explícita: rehearsal para ensayos o final para el commit vigente de main. [El runner](../scripts/ci/run-expanded.mjs) comprueba checkout limpio, SHA y, en Actions, el SHA efectivo del workflow. Un ensayo local no se acredita como cierre final.
+La [issue #77](https://github.com/ngarayc/Nexo/issues/77) incorpora un recorrido separado del CI ordinario. El [workflow manual](../.github/workflows/expanded.yml) exige un SHA completo y una etapa explícita: rehearsal para ensayos o final para el candidato vigente de development. [El runner](../scripts/ci/run-expanded.mjs) comprueba checkout limpio, SHA y, en Actions, el SHA efectivo del workflow. Un ensayo local no se acredita como cierre final.
 
 ## Fuente, entorno e imágenes
 
@@ -27,7 +27,7 @@ En Linux deben estar presentes las bibliotecas nativas de esos motores. Playwrig
 
 El recorrido construye y etiqueta las tres imágenes nexo-*:local; ejecutarlo sin otro recorrido que esté usando esas etiquetas. No inicia el proyecto habitual. El informe anterior se retira al comenzar y solo se genera otro si termina todo satisfactoriamente. Ante un fallo, conservar el diagnóstico privado, corregir y repetir el alcance correspondiente antes de emitir otra candidatura.
 
-Para el cierre remoto, ejecutar el workflow desde main con source igual al SHA final y stage igual a final. La ejecución ampliada no sustituye los seis jobs/cinco artefactos del [CI ordinario](ci-controls.md), su revisión humana o la comprobación posterior al merge. Ambos resultados deben corresponder al SHA definitivo antes de publicar el tag/release. [La auditoría final #82](https://github.com/ngarayc/Nexo/issues/82) precede al congelamiento de esa entrega: revisar, consolidar, planear y corregir antes del PR final.
+Para el cierre remoto previo a promover, despachar CI en development con profile igual a expanded. La llamada local al workflow ampliado fija source al SHA del workflow y stage a final; no vuelve a ejecutar las suites ordinarias. El workflow ampliado también conserva despacho explícito para cuando esté disponible en la rama predeterminada. La ejecución ampliada no sustituye los seis jobs/cinco artefactos del [CI ordinario](ci-controls.md), su revisión humana o la verificación de equivalencia posterior al merge. Ambos resultados deben identificar la fuente realmente probada; los merges de promoción deben conservar exactamente ese árbol antes de publicar el tag/release. Los reportes e imágenes mantienen sus revisiones originales: el manifiesto de entrega vincula la fuente probada y el SHA final publicado, sin atribuirle otra ejecución. [La auditoría final #82](https://github.com/ngarayc/Nexo/issues/82) precede al congelamiento de esa entrega: revisar, consolidar, planear y corregir antes del PR final.
 
 ## Lista de publicación y límites
 
@@ -37,7 +37,7 @@ JSON de Playwright, logs de procesos, escaneos crudos, archivos de reset y diagn
 
 Este procedimiento describe las comprobaciones implementadas. [Verificación](verification.md), las ejecuciones y el manifiesto final identifican cuáles terminaron y sobre qué SHA; la existencia del script no declara aprobado el candidato final ni cerrada la entrega.
 
-Antes del upload ampliado se ejecuta también la [comprobación de publicación](ci-controls.md): adjunto sintético excluido, contenido sin marcador literal/escapado y revalidación del manifiesto contra checkout, ejecución, fixtures e IDs/revisiones actuales. Es un paso posterior al recorrido y anterior al único upload; no amplía sus archivos permitidos o sustituye la ejecución final sobre main.
+Antes del upload ampliado se ejecuta también la [comprobación de publicación](ci-controls.md): adjunto sintético excluido, contenido sin marcador literal/escapado y revalidación del manifiesto contra checkout, ejecución, fixtures e IDs/revisiones actuales. Es un paso posterior al recorrido y anterior al único upload; no amplía sus archivos permitidos o sustituye la ejecución final del candidato de development y la verificación de su promoción.
 
 ## Medición de carga y límites de interpretación
 

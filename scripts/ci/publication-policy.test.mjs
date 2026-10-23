@@ -22,6 +22,10 @@ test('listas de publicación conservan cinco informes ordinarios y un manifiesto
     'reports/ci/system.json',
   ]);
   assert.deepEqual(publicationPaths('expanded'), ['reports/expanded/manifest.json']);
+  assert.deepEqual(publicationPaths('promotion'), ['reports/promotion/manifest.json']);
+  assert.throws(() =>
+    validatePublication([entry('manifest.json'), entry('raw.json')], 'promotion'),
+  );
   for (const scope of ['main', '../quality', 'reports/**', '', undefined])
     assert.throws(() => publicationPaths(scope));
   assert.equal(validatePublication([entry('manifest.json')], 'expanded').size, 1);

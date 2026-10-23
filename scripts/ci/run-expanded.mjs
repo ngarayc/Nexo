@@ -32,6 +32,7 @@ if (execution.kind === 'github') {
   assert.equal(process.env.GITHUB_EVENT_NAME, 'workflow_dispatch');
   assert.equal(process.env.GITHUB_REPOSITORY, 'ngarayc/Nexo');
   assert.equal(process.env.GITHUB_SHA, source);
+  assert.equal(process.env.GITHUB_REF, 'refs/heads/development');
 }
 validateExpandedCandidate({
   source,
@@ -39,8 +40,10 @@ validateExpandedCandidate({
   head: git('rev-parse', 'HEAD'),
   workflowSha: execution.kind === 'github' ? process.env.GITHUB_SHA : undefined,
   nativeValidationDisabled: process.env.PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS,
-  main:
-    stage === 'final' ? git('ls-remote', 'origin', 'refs/heads/main').split(/\s/u)[0] : undefined,
+  development:
+    stage === 'final'
+      ? git('ls-remote', 'origin', 'refs/heads/development').split(/\s/u)[0]
+      : undefined,
 });
 assert.equal(git('status', '--porcelain'), '', 'Fuentes modificadas antes del recorrido ampliado.');
 const directory = resolve('reports/raw/expanded', randomUUID());
@@ -301,9 +304,9 @@ assert.equal(git('rev-parse', 'HEAD'), source);
 assert.equal(git('status', '--porcelain'), '');
 if (stage === 'final')
   assert.equal(
-    git('ls-remote', 'origin', 'refs/heads/main').split(/\s/u)[0],
+    git('ls-remote', 'origin', 'refs/heads/development').split(/\s/u)[0],
     source,
-    'Main cambió durante la validación ampliada.',
+    'Development cambió durante la validación ampliada.',
   );
 const report = {
   version: 1,

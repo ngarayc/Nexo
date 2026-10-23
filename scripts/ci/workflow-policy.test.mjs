@@ -130,3 +130,42 @@ test('ampliado rechaza fuente móvil, pasos omitidos, escritura, uploads crudos 
     assert.throws(() => validateWorkflows(...documents));
   }
 });
+
+test('la promoción no ejecuta suites y no puede suprimir su verificación o publicar adjuntos', () => {
+  for (const mutate of [
+    (ci) => {
+      delete ci.permissions.actions;
+    },
+    (ci) => {
+      ci.jobs.quality.if = "${{ github.event_name == 'push' }}";
+    },
+    (ci) => {
+      delete ci.jobs.quality.if;
+    },
+    (ci) => {
+      ci.jobs['ci-required'].steps.at(-2).if = false;
+    },
+    (ci) => {
+      ci.jobs['ci-required'].steps.at(-1).with.path = 'reports/**';
+    },
+    (ci) => {
+      delete ci.jobs['ci-required'].steps[2].if;
+    },
+    (ci) => {
+      ci.jobs.expanded.if = true;
+    },
+    (ci) => {
+      ci.jobs.expanded.with.source = 'main';
+    },
+    (ci) => {
+      ci.jobs.expanded.with.stage = 'rehearsal';
+    },
+    (ci) => {
+      ci.on.workflow_dispatch.inputs.profile.options.push('skip');
+    },
+  ]) {
+    const docs = documents();
+    mutate(docs[0]);
+    assert.throws(() => validateWorkflows(...docs));
+  }
+});

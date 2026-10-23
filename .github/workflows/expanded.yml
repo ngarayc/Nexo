@@ -7,11 +7,19 @@ on:
         required: true
         type: string
       stage:
-        description: Ensayo o cierre final de main
+        description: Ensayo o cierre final de development
         required: true
         default: rehearsal
         type: choice
         options: [rehearsal, final]
+  workflow_call:
+    inputs:
+      source:
+        required: true
+        type: string
+      stage:
+        required: true
+        type: string
 permissions:
   contents: read
 concurrency:

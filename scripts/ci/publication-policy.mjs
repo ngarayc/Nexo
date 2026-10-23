@@ -7,6 +7,7 @@ export const publicationSentinel = 'NEXO_SYNTHETIC_SESSION_DO_NOT_PUBLISH_V1';
 export function publicationPaths(scope) {
   if (requiredJobs.includes(scope)) return [`reports/ci/${scope}.json`];
   if (scope === 'gate') return requiredJobs.map((job) => `reports/ci/${job}.json`);
+  if (scope === 'promotion') return ['reports/promotion/manifest.json'];
   if (scope === 'expanded') return ['reports/expanded/manifest.json'];
   throw new Error('Ámbito de publicación desconocido.');
 }

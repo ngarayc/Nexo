@@ -60,14 +60,20 @@ const fixture = () => {
   };
   return { report, expected: { source, files, fixtures, images, execution } };
 };
-test('candidatura rechaza checkout distinto, referencia móvil, etapa desconocida y main ajeno', () => {
-  const baseline = { source, head: source, stage: 'final', main: source, workflowSha: source };
+test('candidatura rechaza checkout distinto, referencia móvil, etapa desconocida y development ajeno', () => {
+  const baseline = {
+    source,
+    head: source,
+    stage: 'final',
+    development: source,
+    workflowSha: source,
+  };
   validateExpandedCandidate(baseline);
   for (const changes of [
     { source: 'main' },
     { head: 'b'.repeat(40) },
     { stage: 'unknown' },
-    { main: 'c'.repeat(40) },
+    { development: 'c'.repeat(40) },
     { workflowSha: 'd'.repeat(40) },
     { nativeValidationDisabled: '1' },
   ])

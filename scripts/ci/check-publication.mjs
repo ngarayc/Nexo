@@ -1,6 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFile, readdir } from 'node:fs/promises';
+import { validateContext } from './policy.mjs';
+import { validatePromotionManifest } from './promotion-evidence.mjs';
 import { preparePublication } from './publication-policy.mjs';
 import { validateReport } from './results.mjs';
 import { validateExpandedManifest } from './expanded-policy.mjs';
@@ -19,7 +21,24 @@ try {
     runId: process.env.GITHUB_RUN_ID,
     attempt: process.env.GITHUB_RUN_ATTEMPT,
   };
-  if (scope === 'expanded') {
+  if (scope === 'promotion') {
+    const event = JSON.parse(await readFile(process.env.GITHUB_EVENT_PATH, 'utf8'));
+    const context = validateContext({
+      eventName: process.env.GITHUB_EVENT_NAME,
+      event,
+      repositoryName: process.env.GITHUB_REPOSITORY,
+      ref: process.env.GITHUB_REF,
+      sha: source,
+    });
+    validatePromotionManifest(reports.get('manifest.json'), {
+      candidate: source,
+      tree: execFileSync('git', ['rev-parse', 'HEAD^{tree}'], { encoding: 'utf8' }).trim(),
+      event: process.env.GITHUB_EVENT_NAME,
+      source: context.source,
+      target: context.target,
+      execution: { runId: execution.runId, attempt: execution.attempt },
+    });
+  } else if (scope === 'expanded') {
     const fixtures = {};
     for (const [key, path] of [
       ['events', 'events.jsonl'],

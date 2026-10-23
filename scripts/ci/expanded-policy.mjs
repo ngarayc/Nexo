@@ -16,7 +16,7 @@ export function validateExpandedCandidate({
   source,
   head,
   stage,
-  main,
+  development,
   workflowSha,
   nativeValidationDisabled,
 }) {
@@ -28,7 +28,8 @@ export function validateExpandedCandidate({
   assert.equal(head, source, 'Checkout distinto de la candidatura ampliada.');
   assert.ok(['rehearsal', 'final'].includes(stage));
   if (workflowSha !== undefined) assert.equal(workflowSha, source);
-  if (stage === 'final') assert.equal(main, source, 'El cierre final debe corresponder a main.');
+  if (stage === 'final')
+    assert.equal(development, source, 'El cierre final debe corresponder a development.');
 }
 
 export function validateExpandedBrowser(report, browser) {
