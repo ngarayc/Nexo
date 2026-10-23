@@ -9,7 +9,7 @@ export const routes: Routes = [
   {
     path: '',
     canActivate: [sessionGuard],
-    loadComponent: () => import('./platform/layout/app-shell').then((module) => module.AppShell),
+    loadComponent: () => import('./shell/app-shell').then((module) => module.AppShell),
     children: [
       {
         path: 'alerts',
