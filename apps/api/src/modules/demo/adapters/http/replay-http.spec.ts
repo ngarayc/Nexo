@@ -44,12 +44,16 @@ describe('frontera HTTP del control compartido', () => {
   const history = vi.fn(async () => ({ items: [], nextCursor: null }));
   const detail = vi.fn<DemoRuntime['detail']>(async () => undefined);
   const inspect = vi.fn<DemoRuntime['inspect']>();
+  const reset = vi.fn<DemoRuntime['reset']>(async () => ({ cleared: true }));
   async function start(demoEnabled = true) {
     const module = await Test.createTestingModule({
       imports: [AccessModule, DatabaseModule],
       controllers: [ReplayController],
       providers: [
-        { provide: DemoRuntime, useValue: { command, view, receipt, history, detail, inspect } },
+        {
+          provide: DemoRuntime,
+          useValue: { command, view, receipt, history, detail, inspect, reset },
+        },
         {
           provide: IngestionIngress,
           useValue: {
@@ -96,6 +100,32 @@ describe('frontera HTTP del control compartido', () => {
     expectedControlVersion: 0,
     runId: null,
     action: 'start',
+  });
+  it('limpiar exige modo demo, sesión, origen y CSRF antes de invocar el borrado', async () => {
+    const { client, login } = await start();
+    const payload = { instanceId, expectedControlVersion: 0, confirmation: 'CLEAR_DEMO' };
+    await client.post('/api/demo/replay/reset').set('Origin', origin).send(payload).expect(403);
+    const csrf = await login();
+    await client.post('/api/demo/replay/reset').set('Origin', origin).send(payload).expect(403);
+    await client
+      .post('/api/demo/replay/reset')
+      .set('Origin', 'https://other.example')
+      .set('X-CSRF-Token', csrf)
+      .send(payload)
+      .expect(403);
+    expect(reset).not.toHaveBeenCalled();
+    await client
+      .post('/api/demo/replay/reset')
+      .set('Origin', origin)
+      .set('X-CSRF-Token', csrf)
+      .send(payload)
+      .expect(200, { cleared: true });
+    expect(reset).toHaveBeenCalledExactlyOnceWith(payload);
+  });
+  it('la limpieza no existe fuera del modo demo', async () => {
+    const { client } = await start(false);
+    await client.post('/api/demo/replay/reset').set('Origin', origin).send({}).expect(404);
+    expect(reset).not.toHaveBeenCalled();
   });
   beforeEach(() => vi.clearAllMocks());
   afterEach(async () => {

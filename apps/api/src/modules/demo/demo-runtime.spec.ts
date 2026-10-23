@@ -4,7 +4,8 @@ import type { WriteDatabase } from '../../platform/database/write-database.js';
 import type { QueueConnection } from '../../platform/queue/connection.js';
 import type { RuntimeHealth, RuntimeInstance } from '../../platform/runtime/runtime.module.js';
 import type { Sessions } from '../access/public.js';
-import type { StreamConnections } from '../realtime/public.js';
+import type { StreamConnections, OutboxDispatcher } from '../realtime/public.js';
+import { DemoMaintenance } from '../../platform/runtime/demo-maintenance.js';
 import { DemoRuntime } from './demo-runtime.js';
 
 // Orquestación SSE con puertos sustituidos; las fronteras SQL/HTTP son integración.
@@ -14,6 +15,7 @@ const fakes = vi.hoisted(() => ({
   initialize: vi.fn(async () => {}),
   view: vi.fn<() => Promise<unknown>>(),
   close: vi.fn(),
+  idle: vi.fn(async () => {}),
   changed: undefined as undefined | (() => void),
   instances: [] as string[],
 }));
@@ -30,6 +32,7 @@ vi.mock('./application/replay-coordinator.js', () => ({
     readonly initialize = fakes.initialize;
     readonly view = fakes.view;
     readonly close = fakes.close;
+    readonly whenIdle = fakes.idle;
     constructor(
       _journal: unknown,
       _fixture: unknown,
@@ -62,23 +65,81 @@ describe('publicación compartida del control', () => {
     vi.unstubAllEnvs();
   });
   function setup(enabled = true, subscriberCount = 1) {
-    const connections = { subscriberCount, broadcast: vi.fn() };
-    const epoch = { id: 'stream-epoch-one' };
+    const connections = { subscriberCount, broadcast: vi.fn(), closeAll: vi.fn() };
+    const epoch = { id: 'stream-epoch-one', renew: vi.fn() };
+    const query = vi.fn(async () => ({}));
+    const write = { pool: { query }, controlSlots: { run: (fn: () => Promise<unknown>) => fn() } };
+    const outbox = { pause: vi.fn(async () => {}), resume: vi.fn() };
     const runtime = new DemoRuntime(
       {
         config: { pool: { host: 'db', port: 5432, database: 'nexo' } },
         migrationHash: 'c'.repeat(64),
       } as unknown as DatabaseService,
-      {} as WriteDatabase,
+      write as unknown as WriteDatabase,
       {} as QueueConnection,
       { healthy: true } as RuntimeHealth,
-      epoch as RuntimeInstance,
+      epoch as unknown as RuntimeInstance,
       connections as unknown as StreamConnections,
       { demoEnabled: enabled } as Sessions,
+      new DemoMaintenance(),
+      outbox as unknown as OutboxDispatcher,
     );
     runtimes.push(runtime);
-    return { runtime, connections, epoch };
+    return { runtime, connections, epoch, query, outbox };
   }
+  it('limpiar rechaza actividad o control antiguo antes de tocar SQL', async () => {
+    const { runtime, query } = setup();
+    await runtime.onModuleInit();
+    fakes.view.mockResolvedValue({
+      controlVersion: 1,
+      pendingAction: null,
+      run: { state: 'running' },
+    });
+    const input = {
+      instanceId: runtime.instanceId,
+      expectedControlVersion: 1,
+      confirmation: 'CLEAR_DEMO',
+    };
+    await expect(runtime.reset(input)).rejects.toThrow();
+    await expect(runtime.reset({ ...input, instanceId: 'obsolete' })).rejects.toThrow();
+    await expect(runtime.reset({ ...input, extra: true })).rejects.toThrow();
+    expect(query).not.toHaveBeenCalled();
+  });
+  it('pausa publicación, limpia una vez y cambia ambas generaciones; un reenvío antiguo no borra', async () => {
+    const { runtime, query, outbox, epoch, connections } = setup();
+    await runtime.onModuleInit();
+    fakes.view.mockResolvedValue({ controlVersion: 1, pendingAction: null, run: null });
+    const input = {
+      instanceId: runtime.instanceId,
+      expectedControlVersion: 1,
+      confirmation: 'CLEAR_DEMO',
+    };
+    await expect(runtime.reset(input)).resolves.toEqual({ cleared: true });
+    expect(outbox.pause).toHaveBeenCalledOnce();
+    expect(query).toHaveBeenCalledExactlyOnceWith('SELECT public.clear_demo_data()', []);
+    expect(runtime.instanceId).not.toBe(input.instanceId);
+    expect(epoch.renew).toHaveBeenCalledOnce();
+    expect(connections.closeAll).toHaveBeenCalledOnce();
+    expect(outbox.resume).toHaveBeenCalledOnce();
+    await expect(runtime.reset(input)).rejects.toThrow();
+    expect(query).toHaveBeenCalledTimes(1);
+  });
+  it('una respuesta SQL perdida invalida el token y recupera sin repetir la limpieza', async () => {
+    const { runtime, query, outbox } = setup();
+    await runtime.onModuleInit();
+    fakes.view.mockResolvedValue({ controlVersion: 1, pendingAction: null, run: null });
+    const input = {
+      instanceId: runtime.instanceId,
+      expectedControlVersion: 1,
+      confirmation: 'CLEAR_DEMO',
+    };
+    query.mockRejectedValueOnce(new Error('respuesta perdida'));
+    await expect(runtime.reset(input)).rejects.toThrow('respuesta perdida');
+    expect(runtime.instanceId).not.toBe(input.instanceId);
+    expect(outbox.resume).toHaveBeenCalledOnce();
+    await expect(runtime.reset(input)).rejects.toThrow();
+    expect(query).toHaveBeenCalledTimes(1);
+  });
   const frame = (revision: number) => ({
     instanceId: fakes.instances[0],
     viewRevision: revision,

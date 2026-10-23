@@ -84,7 +84,7 @@ if (job === 'quality') {
   ]);
   const configuration = await json('reports/raw/configuration.json');
   if (
-    configuration.Results?.length !== 3 ||
+    configuration.Results?.length !== 4 ||
     configuration.Results.some(
       (result) => !result.MisconfSummary?.Successes || result.MisconfSummary.Failures,
     )

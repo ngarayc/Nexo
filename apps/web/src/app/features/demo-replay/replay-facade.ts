@@ -37,6 +37,7 @@ export class ReplayFacade implements OnDestroy {
   readonly selectedRunId = this.selectedValue.asReadonly();
   readonly preparation = this.preparationValue.asReadonly();
   readonly historyCursor = signal<string | null>(null);
+  readonly resetting = signal(false);
   private generation: number | undefined;
   private request: AbortController | undefined;
   private detailRequest: AbortController | undefined;
@@ -64,8 +65,53 @@ export class ReplayFacade implements OnDestroy {
       this.fresh() &&
       this.monitor.retryWait <= 0 &&
       !this.pending() &&
+      !this.resetting() &&
       (this.view()?.allowedActions.includes(action) ?? false)
     );
+  }
+  canReset(): boolean {
+    const view = this.view();
+    return (
+      this.fresh() &&
+      !this.resetting() &&
+      !this.pending() &&
+      this.monitor.retryWait <= 0 &&
+      !!view &&
+      !view.pendingAction &&
+      (!view.run || ['completed', 'stopped', 'error', 'interrupted'].includes(view.run.state))
+    );
+  }
+  async reset(): Promise<void> {
+    if (!this.canReset()) return;
+    const view = this.view()!;
+    this.resetting.set(true);
+    this.errorValue.set(null);
+    this.noticeValue.set('Limpiando los datos de la demostración…');
+    // No se reintenta este POST. Su señal no pertenece a la conexión SSE que
+    // el servidor cierra al invalidar la generación anterior.
+    const request = new AbortController();
+    const timeout = setTimeout(() => request.abort(), 15000);
+    try {
+      await this.api.reset(view.instanceId, view.controlVersion, request.signal);
+      this.invalidate(true);
+      this.noticeValue.set('Demostración limpia. Puedes iniciar una nueva primera reproducción.');
+      this.monitor.reconnect();
+    } catch (error) {
+      const known =
+        error instanceof HttpErrorResponse && [400, 403, 404, 409, 429].includes(error.status);
+      this.noticeValue.set(null);
+      this.errorValue.set(
+        known
+          ? error instanceof HttpErrorResponse && error.error?.code === 'DEMO_BUSY'
+            ? 'Detén la reproducción y espera que terminen las ingestas antes de limpiar.'
+            : this.explain(error)
+          : 'No se pudo confirmar la limpieza. Recupera el control y comprueba los datos; no repetiremos el borrado.',
+      );
+      if (!known) this.monitor.reconnect();
+    } finally {
+      clearTimeout(timeout);
+      this.resetting.set(false);
+    }
   }
   private fresh(): boolean {
     return (

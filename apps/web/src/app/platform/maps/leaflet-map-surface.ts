@@ -16,11 +16,23 @@ export class LeafletMapSurface {
       zoomAnimation: false,
       fadeAnimation: false,
       markerZoomAnimation: false,
+      scrollWheelZoom: false,
+      worldCopyJump: false,
+      maxBounds: [
+        [-85.05112878, -180],
+        [85.05112878, 180],
+      ],
+      maxBoundsViscosity: 1,
     });
     L.control.zoom({ zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' }).addTo(this.map);
     this.layer = L.tileLayer(provider.tileUrl, {
       maxZoom: provider.maxZoom,
       minZoom: 0,
+      noWrap: true,
+      bounds: [
+        [-85.05112878, -180],
+        [85.05112878, 180],
+      ],
       referrerPolicy: 'strict-origin-when-cross-origin',
       updateWhenIdle: true,
       updateWhenZooming: false,

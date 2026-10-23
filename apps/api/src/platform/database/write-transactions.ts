@@ -13,6 +13,9 @@ export class WriteTransactions {
     try {
       await client.query('BEGIN ISOLATION LEVEL READ COMMITTED');
       await client.query("SET LOCAL transaction_timeout='10s'");
+      // Compartido entre admisión, procesamiento, recuperación y diario.
+      // La limpieza demo toma el exclusivo antes de comprobar/vaciar datos.
+      await client.query('SELECT pg_advisory_xact_lock_shared(72416004)');
       const result = await operation(drizzle(client));
       await client.query('COMMIT');
       confirmed = true;

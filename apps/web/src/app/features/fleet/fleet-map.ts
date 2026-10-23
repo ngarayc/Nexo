@@ -1,3 +1,5 @@
+import { Icon } from '../../platform/presentation/icon';
+import { ActionTooltip } from '../../platform/presentation/action-tooltip';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -18,15 +20,25 @@ import { FLEET_MAP_FACTORY } from './adapters/fleet-map-factory';
 import type { FleetMapRenderer, TilePhase } from './adapters/fleet-map-renderer';
 
 @Component({
+  imports: [Icon, ActionTooltip],
   selector: 'nexo-fleet-map',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section aria-labelledby="fleet-map-title">
-      <h3 id="fleet-map-title">Últimas posiciones</h3>
+      <div class="map-heading">
+        <h3 id="fleet-map-title">Últimas posiciones</h3>
+        <button
+          class="icon-button"
+          nexoTooltip="Ver flota visible"
+          type="button"
+          (click)="fit()"
+          [disabled]="!rendered() || items().length === 0"
+        >
+          <nexo-icon name="focus" /><span class="sr-only">Ver flota visible</span>
+        </button>
+      </div>
       <p>Selecciona un vehículo en el mapa o en la tabla para abrir su historial.</p>
-      <button type="button" (click)="fit()" [disabled]="!rendered() || items().length === 0">
-        Ver flota visible
-      </button>
+
       @if (provider.phase() === 'loading') {
         <p role="status">Preparando mapa…</p>
       }
@@ -34,7 +46,9 @@ import type { FleetMapRenderer, TilePhase } from './adapters/fleet-map-renderer'
         <p role="status">
           No fue posible cargar la cartografía. La tabla y el historial siguen disponibles.
         </p>
-        <button type="button" (click)="retry()">Reintentar mapa</button>
+        <button class="icon-button" nexoTooltip="Reintentar mapa" type="button" (click)="retry()">
+          <nexo-icon name="refresh" /><span class="sr-only">Reintentar mapa</span>
+        </button>
       }
       @if (items().length === 0) {
         <p>No hay posiciones de vehículos visibles en el mapa.</p>
@@ -67,42 +81,7 @@ import type { FleetMapRenderer, TilePhase } from './adapters/fleet-map-renderer'
       </p>
     </section>
   `,
-  styles: `
-    :host {
-      display: block;
-      min-width: 0;
-      margin-block: 1.5rem;
-    }
-    .map-wrap {
-      position: relative;
-      margin-block: 0.75rem;
-    }
-    .map {
-      height: clamp(16rem, 42vh, 28rem);
-      width: 100%;
-      background: #e7efec;
-    }
-    .attribution {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      z-index: 900;
-      max-width: 90%;
-      margin: 0;
-      padding: 0.3rem;
-      background: white;
-      font-size: 0.75rem;
-      overflow-wrap: anywhere;
-    }
-    .external {
-      color: #526970;
-      font-size: 0.875rem;
-    }
-    button {
-      padding: 0.6rem;
-      font: inherit;
-    }
-  `,
+  styleUrl: './map-panel.css',
 })
 export class FleetMap {
   readonly items = input.required<readonly VehicleView[]>();

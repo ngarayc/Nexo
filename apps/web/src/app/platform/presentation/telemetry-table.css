@@ -4,73 +4,143 @@
 }
 .scroll {
   overflow: auto;
-  border: 1px solid #dbe6e5;
-  border-radius: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: #c9d5e6 transparent;
 }
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: 12px;
+  color: #5e708a;
 }
 caption {
-  padding: 0.75rem;
+  padding: 13px 16px;
   text-align: left;
-  color: #526970;
+  color: #66758b;
+  font-size: 10px;
+  border-bottom: 1px solid #edf1f7;
 }
 th,
 td {
-  padding: 0.8rem;
+  padding: 14px 16px;
   text-align: left;
-  vertical-align: top;
-  border-block-start: 1px solid #dbe6e5;
+  vertical-align: middle;
+  border-bottom: 1px solid #edf1f7;
   min-width: 7rem;
 }
 thead th {
-  background: #f0f6f5;
+  background: #f8faff;
+  font-size: 10px;
+  color: #64748b;
+  font-weight: 600;
+  white-space: nowrap;
+}
+tbody tr:last-child > * {
+  border-bottom: 0;
 }
 tbody th {
   max-width: 18rem;
+  color: #384d6f;
+  font-weight: 600;
 }
-tr.selected {
-  background: #e9f5f2;
+tbody tr {
+  transition: background 0.15s;
 }
-button {
-  padding: 0.6rem 0.75rem;
-  cursor: pointer;
+tbody tr:hover {
+  background: #fbfcff;
+}
+tbody tr.selected,
+tbody tr.highlighted {
+  background: #f0f5ff;
+}
+td:nth-child(3) {
+  font-variant-numeric: tabular-nums;
+}
+th:last-child,
+td:last-child {
+  text-align: center;
+  min-width: 4rem;
+}
+.icon-button {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border-color: #e6edf8;
+  color: #7d94b8;
+}
+.icon-button nexo-icon {
+  width: 17px;
+  height: 17px;
 }
 .state {
-  display: inline-block;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.35rem;
-  background: #edf1f3;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 9px;
+  border-radius: 6px;
+  background: #f1f4f8;
   white-space: nowrap;
+  font-size: 10px;
+  font-weight: 500;
+}
+.state::before {
+  content: '';
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
 }
 .MOVING {
-  background: #d5efe2;
-  color: #16543d;
+  background: #eaf7f1;
+  color: #248365;
 }
 .STOPPED {
-  background: #fff0c2;
-  color: #604a0a;
+  background: #fff6e7;
+  color: #ac7c32;
 }
 .OFF {
-  background: #e6e9ed;
-  color: #354653;
+  background: #f0f3f7;
+  color: #7b8799;
 }
-
 tr.highlighted {
-  background: #dff4e8;
-  outline: 2px solid #13766d;
+  outline: 2px solid #7ca5f7;
   outline-offset: -2px;
 }
 .selected-label {
   display: block;
-  color: #16543d;
-  font-weight: 700;
-  font-size: 0.75rem;
+  color: #2463eb;
+  font-weight: 600;
+  font-size: 10px;
+  margin-top: 5px;
+}
+.exact-time {
+  border: 1px solid var(--line);
+  background: #fbfcff;
+  border-radius: 11px;
+  padding: 14px 17px;
+  margin-top: 14px;
+  font-size: 12px;
+}
+.exact-time summary {
+  color: #3566ae;
+  font-weight: 550;
+  cursor: pointer;
+}
+.exact-time p,
+.exact-time dt {
+  color: #66758b;
 }
 .exact-time dd {
   margin: 0.35rem 0 1rem;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 600px) {
+  th,
+  td {
+    padding: 12px;
+  }
 }

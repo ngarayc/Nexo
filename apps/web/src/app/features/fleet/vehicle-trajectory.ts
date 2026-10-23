@@ -1,3 +1,5 @@
+import { Icon } from '../../platform/presentation/icon';
+import { ActionTooltip } from '../../platform/presentation/action-tooltip';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -22,11 +24,22 @@ import type { TrajectoryRenderer } from './adapters/trajectory-renderer';
 
 @Component({
   selector: 'nexo-vehicle-trajectory',
-  imports: [IdentityText],
+  imports: [IdentityText, Icon, ActionTooltip],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section aria-labelledby="trajectory-title">
-      <h3 id="trajectory-title">Trayectoria de observaciones</h3>
+      <div class="map-heading">
+        <h3 id="trajectory-title">Trayectoria de observaciones</h3>
+        <button
+          class="icon-button"
+          nexoTooltip="Ver trayectoria completa"
+          type="button"
+          (click)="fit()"
+          [disabled]="!rendered() || !items().length"
+        >
+          <nexo-icon name="route" /><span class="sr-only">Ver trayectoria completa</span>
+        </button>
+      </div>
       <p>
         Las líneas unen muestras recibidas en orden cronológico. No representan una ruta calculada
         por calles ni movimiento entre muestras.
@@ -38,9 +51,7 @@ import type { TrajectoryRenderer } from './adapters/trajectory-renderer';
       @if (items().length === 0) {
         <p>No hay observaciones disponibles para representar.</p>
       }
-      <button type="button" (click)="fit()" [disabled]="!rendered() || !items().length">
-        Ver trayectoria completa
-      </button>
+
       @if (provider.phase() === 'loading') {
         <p role="status">Preparando trayectoria…</p>
       }
@@ -48,7 +59,14 @@ import type { TrajectoryRenderer } from './adapters/trajectory-renderer';
         <p role="status">
           No fue posible cargar la cartografía de la trayectoria. El historial sigue disponible.
         </p>
-        <button type="button" (click)="retry()">Reintentar mapa de trayectoria</button>
+        <button
+          class="icon-button"
+          nexoTooltip="Reintentar mapa de trayectoria"
+          type="button"
+          (click)="retry()"
+        >
+          <nexo-icon name="refresh" /><span class="sr-only">Reintentar mapa de trayectoria</span>
+        </button>
       }
       @if (projectionLimited()) {
         <p>
@@ -93,58 +111,7 @@ import type { TrajectoryRenderer } from './adapters/trajectory-renderer';
       }
     </section>
   `,
-  styles: `
-    :host {
-      display: block;
-      min-width: 0;
-      margin-block: 1.5rem;
-    }
-    .map-wrap {
-      position: relative;
-      margin-block: 0.75rem;
-    }
-    .map {
-      width: 100%;
-      height: clamp(16rem, 42vh, 28rem);
-      background: #e7efec;
-    }
-    .attribution {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      z-index: 900;
-      max-width: 90%;
-      margin: 0;
-      padding: 0.3rem;
-      background: white;
-      font-size: 0.75rem;
-      overflow-wrap: anywhere;
-    }
-    .external {
-      color: #526970;
-      font-size: 0.875rem;
-    }
-    button {
-      padding: 0.6rem;
-      font: inherit;
-    }
-    dl {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
-      gap: 0.5rem;
-    }
-    dt {
-      font-weight: 600;
-    }
-    dd {
-      margin: 0;
-      overflow-wrap: anywhere;
-    }
-    .observation {
-      padding: 0.75rem;
-      background: #f5f8f8;
-    }
-  `,
+  styleUrl: './map-panel.css',
 })
 export class VehicleTrajectory {
   readonly vehicleId = input.required<string>();

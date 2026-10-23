@@ -4,6 +4,8 @@
 
 Solo web publica loopback mediante Compose. Acceso verifica Argon2id contra PostgreSQL, sesiones absolutas, origen/CSRF, capacidad, cuotas y políticas explícitas de rutas; su contrato y límites están en [acceso](access.md). La ingesta comprueba API key antes del parser; [SSE](realtime.md) requiere sesión, origen válido si existe, cuota, cupos y reautorización por envío, con cierre por revocación/vencimiento. No hay telemetría ficticia para simular esas capacidades.
 
+El [perfil cloud](cloud-deployment.md) agrega HTTPS y una cuenta con contraseña privada; solo publica el gateway. Aplica cinco intentos globales de login por minuto y dos verificaciones Argon2 concurrentes, sin depender de un CAPTCHA externo. El perfil local conserva su límite de diez intentos/minuto. El frontend ya no muestra credenciales de acceso. Las credenciales configuradas permanecen fuera de Git, de las imágenes y del entorno HTTP posterior al bootstrap.
+
 Las credenciales de GitHub se utilizan mediante las herramientas de autenticación y no forman parte del repositorio, del frontend o de las imágenes. `.gitignore` excluye entornos reales, dependencias, builds y reportes. Los artefactos publicables se seleccionan y comprueban mediante una lista cerrada y un marcador sintético excluido, según [CI](ci-controls.md); trazas, HAR, cookies y logs crudos no se suben por defecto.
 
 ## Dependencias
@@ -39,3 +41,9 @@ Trivy 0.76.0 detectó hallazgos altos/críticos en las bases Debian iniciales: 6
 Las imágenes finales usan bases oficiales Alpine fijadas por digest y conservan Node 24.22.0, NGINX 1.30.6 y PostgreSQL 18.6. La API elimina npm/yarn del runtime, donde solo necesita Node y dependencias de aplicación. La web instala los parches fijados libexpat 2.9.0-r0 y libx11 1.8.14-r0. PostgreSQL comienza directamente como su usuario, con el directorio de datos preparado en la imagen; se retira el helper Go antiguo que ya no necesita para abandonar root. No se modifica el entrypoint oficial.
 
 Las tres imágenes construidas pasaron Trivy sin hallazgos altos/críticos y las 12 pruebas de integración volvieron a pasar sobre estas variantes, incluido el módulo nativo Argon2 y persistencia tras recreación. No se habilitó `ignore-unfixed`, se redujo la severidad requerida ni se agregaron exclusiones. El resultado pertenece a esas imágenes y la base de avisos consultada; se repite al construir el candidato de CI.
+
+## Limpieza explícita en modo demo
+
+La [limpieza del panel](replay-panel.md#limpiar-demostracion) comparte sesión, origen, CSRF y cuota con el control del reproductor. La confirmación indica que borra datos e informes sin respaldo. El bootstrap habilita una función SQL de alcance fijo solamente con DEMO_ENABLED=true, revoca PUBLIC y concede EXECUTE a nexo_app en la misma transacción. Al deshabilitar el modo demo se retira la función. No permite elegir tablas, introducir SQL ni modificar la cuenta o migraciones; la API no hereda credenciales administrativas.
+
+La función usa un search_path seguro y nombres cualificados, conforme a [las precauciones de PostgreSQL para SECURITY DEFINER](https://www.postgresql.org/docs/18/sql-createfunction.html#SQL-CREATEFUNCTION-SECURITY). Un [bloqueo asesor transaccional](https://www.postgresql.org/docs/18/explicit-locking.html#ADVISORY-LOCKS) exclusivo serializa el borrado con las escrituras compartidas. El usuario SQL de la aplicación sigue siendo una frontera técnica privada, no una identidad humana; en este perfil todos los clientes autenticados usan la única cuenta de demostración y pueden confirmar la limpieza.

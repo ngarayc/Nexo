@@ -40,7 +40,10 @@ export const users = pgTable(
     passwordHash: text('password_hash').notNull(),
     createdAt: technicalTime('created_at').defaultNow().notNull(),
   },
-  (table) => [check('users_demo_only', sql`${table.username} = 'demo'`)],
+  (table) => [
+    check('users_demo_only', sql`${table.username} IN ('demo', 'Demo')`),
+    uniqueIndex('users_single_account').on(sql`(true)`),
+  ],
 );
 
 export const telemetryEvents = pgTable(
@@ -293,6 +296,7 @@ export const replayRuns = pgTable(
     scenarioVerification: text('scenario_verification').notNull().default('pending'),
     scenarioDocument: originalJson('scenario_document'),
     scenarioClosedAt: technicalTime('scenario_closed_at'),
+    postClosure: boolean('post_closure').notNull().default(false),
     closeCode: text('close_code'),
     lastCommandId: uuid('last_command_id'),
     lastCommandInstance: uuid('last_command_instance'),
@@ -302,6 +306,10 @@ export const replayRuns = pgTable(
     updatedAt: technicalTime('updated_at').notNull().defaultNow(),
   },
   (table) => [
+    check(
+      'replay_runs_post_closure_valid',
+      sql`NOT ${table.postClosure} OR (${table.stage} = 'exploratory' AND ${table.previousRunId} IS NOT NULL)`,
+    ),
     check('replay_runs_fixture_valid', sql`${table.fixtureSha256} ~ '^[a-f0-9]{64}$'`),
     check('replay_runs_interval_valid', sql`${table.intervalMs} BETWEEN 100 AND 5000`),
     check('replay_runs_revision_valid', sql`${table.revision} BETWEEN 0 AND 9007199254740991`),

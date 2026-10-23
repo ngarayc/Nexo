@@ -1,3 +1,5 @@
+import { Icon } from '../../platform/presentation/icon';
+import { ActionTooltip } from '../../platform/presentation/action-tooltip';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -13,7 +15,7 @@ import { formatTime } from '../../platform/presentation/format-time';
 
 @Component({
   selector: 'nexo-vehicle-history',
-  imports: [IdentityText],
+  imports: [IdentityText, Icon, ActionTooltip],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
@@ -59,12 +61,14 @@ import { formatTime } from '../../platform/presentation/format-time';
               <td>{{ event.longitude }}</td>
               <td>
                 <button
+                  class="icon-button"
+                  [nexoTooltip]="'Seleccionar observación ' + identityPreview(event.eventId)"
                   type="button"
                   (click)="selectEvent.emit(event.eventId)"
                   [attr.aria-pressed]="event.eventId === highlighted()"
                   [attr.aria-label]="'Seleccionar observación ' + identityPreview(event.eventId)"
                 >
-                  Seleccionar
+                  <nexo-icon name="focus" /><span class="sr-only">Seleccionar</span>
                 </button>
               </td>
             </tr>

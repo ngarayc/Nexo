@@ -207,6 +207,38 @@ describe('sesión HTTP con bibliotecas reales y credenciales sustituidas explíc
     await client.get('/api/session').set('X-API-Key', 'fake-producer-key').expect(403);
   });
 
+  it('HTTPS exige su origen y emite cookie Secure detrás del proxy privado', async () => {
+    const cloudOrigin = 'https://nexo.example.com';
+    const client = await start({ origin: cloudOrigin });
+    await client
+      .post('/api/session')
+      .set('Origin', origin)
+      .set('X-Forwarded-Proto', 'https')
+      .send({ username: 'demo', password: 'demo' })
+      .expect(403);
+    const login = await client
+      .post('/api/session')
+      .set('Origin', cloudOrigin)
+      .set('X-Forwarded-Proto', 'https')
+      .send({ username: 'demo', password: 'demo' })
+      .expect(200);
+    expect(String(login.headers['set-cookie'])).toContain('; Secure');
+    expect(String(login.headers['set-cookie'])).toContain('; HttpOnly');
+    expect(String(login.headers['set-cookie'])).toContain('; SameSite=Strict');
+    const cookie = cookieOf(login);
+    await client.get('/api/session').set('Cookie', cookie).expect(200);
+    const logout = await client
+      .delete('/api/session')
+      .set('Cookie', cookie)
+      .set('Origin', cloudOrigin)
+      .set('X-Forwarded-Proto', 'https')
+      .set('X-CSRF-Token', login.body.csrfToken)
+      .expect(204);
+    expect(String(logout.headers['set-cookie'])).toContain('; Secure');
+    await client.get('/api/session').set('Cookie', cookie).expect(403);
+    expect(app.getHttpAdapter().getInstance().get('trust proxy')).toBe(false);
+  });
+
   it('las cuatro horas son absolutas, incluso con consultas previas', async () => {
     const client = await start();
     const nativeNow = Date.now();

@@ -1,0 +1,93 @@
+:host {
+  display: block;
+  min-width: 0;
+  margin-top: 26px;
+}
+.map-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+h3 {
+  font-size: 15px;
+  margin: 0;
+  font-weight: 650;
+}
+p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: #65758b;
+}
+.map-wrap {
+  position: relative;
+  margin-block: 14px 10px;
+  border: 1px solid var(--line);
+}
+.map {
+  height: clamp(18rem, 43vh, 29rem);
+  width: 100%;
+  background: #e9eef5;
+}
+.attribution {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  z-index: 900;
+  max-width: 90%;
+  margin: 0;
+  padding: 3px 9px;
+  background: #ffffffed;
+  font-size: 10px;
+  border-top-left-radius: 7px;
+  overflow-wrap: anywhere;
+}
+.attribution a {
+  color: #536d94;
+}
+.external {
+  font-size: 10px;
+  color: #718097;
+  margin-block: 8px;
+}
+.observation {
+  padding: 18px;
+  border: 1px solid #dce7fa;
+  border-radius: 12px;
+  background: #f4f7fd;
+  margin-top: 16px;
+}
+.observation h4 {
+  margin: 0 0 9px;
+  font-size: 13px;
+  color: #4a6185;
+}
+dl {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 8px;
+  font-size: 12px;
+}
+dt {
+  color: #72829a;
+}
+dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #314563;
+}
+@media (max-width: 600px) {
+  .map {
+    height: 20rem;
+  }
+  .observation {
+    padding: 12px;
+  }
+  dl {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  dd {
+    margin-bottom: 8px;
+  }
+}

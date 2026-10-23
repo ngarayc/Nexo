@@ -524,3 +524,23 @@ describe('cierre separado del escenario', () => {
     expect((await verifier(data).evaluateScenario(firstId)).result).toBe('inconclusive');
   });
 });
+
+// La continuación cerrada es explícita y solo acredita disponibilidad exploratoria.
+describe('continuación tras cierre', () => {
+  it('conserva el cierre y exige la variante explícita para explorar', async () => {
+    const data = facts();
+    data.runs[0]!.verification = 'conformant';
+    data.runs[0]!.scenarioVerification = 'inconclusive';
+    data.runs[0]!.scenarioClosedAt = data.observedAt;
+    expect((await verifier(data).prepareContinuation(firstId)).result).toBe('non_conformant');
+    expect((await verifier(data).prepareContinuation(firstId, true)).result).toBe('conformant');
+    expect(data.runs[0]!.scenarioVerification).toBe('inconclusive');
+  });
+  it('no admite como cerrado un escenario pendiente ni con cierre inconsistente', async () => {
+    const data = facts();
+    expect((await verifier(data).prepareContinuation(firstId, true)).result).toBe('non_conformant');
+    data.runs[0]!.scenarioClosedAt = data.observedAt;
+    expect((await verifier(data).prepareContinuation(firstId, true)).result).toBe('non_conformant');
+    expect((await verifier(data).prepareContinuation(firstId)).result).toBe('non_conformant');
+  });
+});

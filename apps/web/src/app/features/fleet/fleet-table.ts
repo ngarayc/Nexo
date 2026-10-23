@@ -1,3 +1,5 @@
+import { Icon } from '../../platform/presentation/icon';
+import { ActionTooltip } from '../../platform/presentation/action-tooltip';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -13,7 +15,7 @@ import { formatTime } from '../../platform/presentation/format-time';
 import { stateLabels } from '../../platform/presentation/vehicle-state-label';
 @Component({
   selector: 'nexo-fleet-table',
-  imports: [IdentityText],
+  imports: [IdentityText, Icon, ActionTooltip],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
@@ -54,6 +56,8 @@ import { stateLabels } from '../../platform/presentation/vehicle-state-label';
               </td>
               <td>
                 <button
+                  class="icon-button"
+                  [nexoTooltip]="'Ver historial de ' + preview(vehicle.vehicleId)"
                   #historyButton
                   type="button"
                   (click)="selectVehicle.emit(vehicle.vehicleId)"
@@ -61,7 +65,7 @@ import { stateLabels } from '../../platform/presentation/vehicle-state-label';
                   [attr.aria-expanded]="vehicle.vehicleId === selected()"
                   [attr.aria-controls]="vehicle.vehicleId === selected() ? 'vehicle-history' : null"
                 >
-                  Ver historial
+                  <nexo-icon name="history" /><span class="sr-only">Ver historial</span>
                 </button>
               </td>
             </tr>

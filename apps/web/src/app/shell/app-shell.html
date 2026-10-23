@@ -1,63 +1,114 @@
-<main aria-labelledby="page-title">
-  <div class="identity" aria-hidden="true"><span></span><span></span><span></span></div>
-  <p class="eyebrow">TELEMETRÍA DE FLOTAS</p>
-  <h1 id="page-title">Nexo</h1>
-  <p class="description">Vehículos, información y supervisión conectados.</p>
-  @if (access.session(); as session) {
-  <div class="session">
-    <p>Sesión iniciada como {{ session.user.username }}.</p>
-    <button type="button" (click)="access.logout()" [disabled]="access.pending()">
-      Cerrar sesión
-    </button>
-  </div>
-  @if (access.error()) {
-  <p role="alert">{{ access.error() }}</p>
-  } }
-  <section
-    class="connection"
-    aria-labelledby="connection-title"
-    [attr.aria-busy]="monitor.phase() === 'loading'"
-  >
-    <h2 id="connection-title">Supervisión en tiempo real</h2>
-    <p role="status" aria-live="polite" class="connection-status">
-      @switch (monitor.phase()) { @case ('loading') { Conectando y preparando los datos… } @case
-      ('live') { En vivo } @case ('reconnecting') { Reconectando. Los datos mostrados pueden estar
-      desactualizados. } @case ('error') { No fue posible recuperar la conexión. } @case ('idle') {
-      Conexión cerrada. } }
-    </p>
-    @if (monitor.phase() === 'error') {
-    <p role="alert">
-      Comprueba tu conexión y vuelve a intentarlo. @if (monitor.hasBase()) { Conservamos los últimos
-      datos confirmados; pueden estar desactualizados. }
-    </p>
-    <button type="button" (click)="monitor.reconnect()">Reconectar</button>
-    } @if (monitor.hasBase()) {
-    <dl class="totals" aria-label="Totales confirmados">
-      <div>
-        <dt>Vehículos</dt>
-        <dd data-testid="vehicle-total">{{ fleet.total() }}</dd>
-      </div>
-      <div>
-        <dt>Alertas históricas</dt>
-        <dd data-testid="alert-total">{{ alerts.total() }}</dd>
-      </div>
-    </dl>
-    @if (monitor.lastSynchronizedAt(); as synchronizedAt) {
-    <p class="synchronized">Última base confirmada: {{ formatTime(synchronizedAt) }}</p>
-    } } @else {
-    <p>Los totales estarán disponibles cuando confirmemos la primera carga.</p>
-    }
-  </section>
+<aside class="rail" aria-label="Navegación principal">
+  <a routerLink="/" class="brand" aria-label="Nexo, inicio"><nexo-icon name="nexo" /></a>
   <nav aria-label="Secciones del panel">
     <a
       routerLink="/"
       routerLinkActive="active"
       [routerLinkActiveOptions]="{ exact: true }"
       ariaCurrentWhenActive="page"
-      >Flota</a
+      ><nexo-icon name="fleet" /><span>Flota</span></a
     >
-    <a routerLink="/alerts" routerLinkActive="active" ariaCurrentWhenActive="page">Alertas</a>
+    <a routerLink="/alerts" routerLinkActive="active" ariaCurrentWhenActive="page"
+      ><nexo-icon name="alert" /><span>Alertas</span></a
+    >
   </nav>
+  @if (access.session(); as session) {
+  <div class="rail-session">
+    <span class="avatar" [attr.aria-label]="'Sesión iniciada como ' + session.user.username"
+      >D</span
+    >
+    <span class="user-name">{{ session.user.username }}</span>
+    <button
+      class="icon-button is-quiet"
+      type="button"
+      (click)="access.logout()"
+      [disabled]="access.pending()"
+      nexoTooltip="Cerrar sesión"
+    >
+      <nexo-icon name="logout" />
+    </button>
+  </div>
+  }
+</aside>
+<main aria-labelledby="page-title">
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">CENTRO DE OPERACIONES</p>
+      <h1 id="page-title">Nexo<span class="brand-dot" aria-hidden="true">.</span></h1>
+      <p class="description">Vehículos, información y supervisión conectados.</p>
+    </div>
+    <span class="local-badge"><nexo-icon name="shield" /> Datos sintéticos</span>
+  </header>
+  @if (access.error()) {
+  <p role="alert" class="access-error">{{ access.error() }}</p>
+  }
+  <section
+    class="connection"
+    aria-labelledby="connection-title"
+    [attr.aria-busy]="monitor.phase() === 'loading'"
+  >
+    <h2 id="connection-title" class="sr-only">Supervisión en tiempo real</h2>
+    <dl class="totals" aria-label="Totales confirmados">
+      <div class="metric">
+        <span class="metric-icon"><nexo-icon name="fleet" /></span>
+        <div>
+          <dt>Vehículos</dt>
+          @if (monitor.hasBase()) {
+          <dd data-testid="vehicle-total">{{ fleet.total() }}</dd>
+          } @else {
+          <dd aria-label="Pendiente de confirmar">—</dd>
+          }
+        </div>
+        <span class="metric-caption">Flota registrada</span>
+      </div>
+      <div class="metric metric-alerts">
+        <span class="metric-icon"><nexo-icon name="alert" /></span>
+        <div>
+          <dt>Alertas históricas</dt>
+          @if (monitor.hasBase()) {
+          <dd data-testid="alert-total">{{ alerts.total() }}</dd>
+          } @else {
+          <dd aria-label="Pendiente de confirmar">—</dd>
+          }
+        </div>
+        <span class="metric-caption">Exceso de velocidad</span>
+      </div>
+    </dl>
+    <div class="connection-card" [class.is-live]="monitor.phase() === 'live'">
+      <div class="connection-top">
+        <span class="live-dot"></span><span>Conexión</span><nexo-icon name="activity" />
+      </div>
+      <p role="status" aria-live="polite" class="connection-status">
+        @switch (monitor.phase()) { @case ('loading') { Conectando y preparando los datos… } @case
+        ('live') { En vivo } @case ('reconnecting') { Reconectando. Los datos mostrados pueden estar
+        desactualizados. } @case ('error') { No fue posible recuperar la conexión. } @case ('idle')
+        { Conexión cerrada. } }
+      </p>
+      @if (monitor.lastSynchronizedAt(); as synchronizedAt) {
+      <p class="synchronized">Última base confirmada: {{ formatTime(synchronizedAt) }}</p>
+      } @else {
+      <p class="synchronized">
+        Los totales estarán disponibles cuando confirmemos la primera carga.
+      </p>
+      } @if (monitor.phase() === 'error') {
+      <p role="alert">
+        Comprueba tu conexión y vuelve a intentarlo. @if (monitor.hasBase()) { Conservamos los
+        últimos datos confirmados; pueden estar desactualizados. }
+      </p>
+      <button
+        class="icon-button"
+        type="button"
+        (click)="monitor.reconnect()"
+        nexoTooltip="Reconectar"
+      >
+        <nexo-icon name="refresh" />
+      </button>
+      }
+    </div>
+  </section>
   <router-outlet />
+  <footer class="workspace-footer">
+    <span>Nexo · Telemetría de flotas</span><span>America/Bogota · 24 h</span>
+  </footer>
   @if (access.session()) { <nexo-replay-panel /> }
 </main>

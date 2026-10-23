@@ -50,6 +50,12 @@ Las tablas usan caption, encabezados con scope y regiones de desplazamiento enfo
 
 La vista materializa todas las filas de sus colecciones; no hay paginación de servidor o promesa de capacidad productiva para miles de vehículos. Los reintentos y costes de descarga completa son los documentados en sincronización. La [issue #35](https://github.com/ngarayc/Nexo/issues/35) añade dos navegadores con el fixture original, carreras y recuperación; sus resultados/candidatos están en verificación.
 
+## Presentación visual
+
+La navegación lateral, tarjetas de totales/conexión, tablas, detalle y panel comparten colores, espaciado y estados de foco. En pantallas estrechas la navegación pasa arriba y las tablas conservan desplazamiento horizontal propio. Se mantiene el orden de consulta y las colecciones de las fachadas.
+
+Las acciones usan SVG locales de `Icon` y la directiva `ActionTooltip`: nombre accesible, ayuda al pasar el puntero o enfocar, cierre con Escape y descripción retirada al desplazar o destruir la vista. El tooltip se monta fuera de tablas/mapas para evitar recortes; el texto se asigna con textContent. Las ayudas extensas se resumen con una elipsis sin recortar el nombre accesible completo. Los estados de vehículo y los resultados conservan sus etiquetas textuales; ningún color sustituye el significado. Los totales pendientes se distinguen del cero confirmado.
+
 ## Comprobaciones
 
 Pruebas de presentación verifican ausencia de ceros/vacíos inventados, estados de historial, representación de Unicode/HTML, selección por identidad y recuperación de foco. Chromium con API/PostgreSQL/NGINX reales comprueba contenido renderizado, búsqueda literal por IDs exactos, tardío recibido por SSE, hora 24h, pantalla de 360 px, teclado y POST JSON para 70.000 caracteres, NUL, una unidad sustituta aislada y los IDs `.`/`..`. [Verificación](verification.md) registra los resultados y candidatos efectivos.

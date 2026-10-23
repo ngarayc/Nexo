@@ -1,3 +1,5 @@
+import { Icon } from '../../platform/presentation/icon';
+import { ActionTooltip } from '../../platform/presentation/action-tooltip';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -9,6 +11,7 @@ import {
   computed,
   viewChild,
 } from '@angular/core';
+import type { IconName } from '../../platform/presentation/icon';
 import type { VehicleState } from '@nexo/contracts';
 import { FleetFacade } from './fleet-facade';
 import { VehicleDetailFacade } from './vehicle-detail-facade';
@@ -29,6 +32,8 @@ import { VehicleSpeedChart } from './vehicle-speed-chart';
     FleetMap,
     VehicleTrajectory,
     VehicleSpeedChart,
+    Icon,
+    ActionTooltip,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './fleet-page.html',
@@ -38,12 +43,13 @@ export class FleetPage {
   readonly fleet = inject(FleetFacade);
   readonly detail = inject(VehicleDetailFacade);
   readonly monitor = inject(LiveMonitor);
-  readonly stateFilters: readonly { value: VehicleState | null; label: string }[] = [
-    { value: null, label: 'Todos' },
-    { value: 'MOVING', label: 'En movimiento' },
-    { value: 'STOPPED', label: 'Detenidos' },
-    { value: 'OFF', label: 'Apagados' },
-  ];
+  readonly stateFilters: readonly { value: VehicleState | null; label: string; icon: IconName }[] =
+    [
+      { value: null, label: 'Todos', icon: 'grid' },
+      { value: 'MOVING', label: 'En movimiento', icon: 'fleet' },
+      { value: 'STOPPED', label: 'Detenidos', icon: 'pause' },
+      { value: 'OFF', label: 'Apagados', icon: 'power' },
+    ];
   readonly hiddenSelection = computed(() => {
     const id = this.detail.selected();
     return (

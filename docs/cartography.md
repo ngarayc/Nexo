@@ -10,6 +10,8 @@ La primera colección no vacía ajusta el encuadre a sus posiciones, con zoom in
 
 Seleccionar una fila o marcador abre el mismo detalle y centra su marcador si está visible. Enter y espacio activan los marcadores y la tabla sigue ofreciendo todas las acciones por teclado. Filtrar puede ocultar el marcador sin cerrar el detalle; su aviso permite limpiar los filtros. Al desaparecer un marcador enfocado, el foco vuelve a la región del mapa. El componente destruye mapa, listeners y observador de tamaño al salir, también al cerrar sesión.
 
+Ambos mapas desactivan el [zoom por rueda](https://leafletjs.com/reference.html#map-scrollwheelzoom): desplazar la página sobre ellos no cambia el encuadre. Los controles Acercar/Alejar conservan el zoom explícito. La capa usa [noWrap](https://leafletjs.com/reference.html#gridlayer-nowrap) y los [límites del mundo](https://leafletjs.com/reference.html#map-maxbounds), de modo que al alejar solo aparece una copia del mundo, con margen vacío si el contenedor es más ancho. Estos límites son de presentación y no cambian las coordenadas de dominio. Los tooltips tienen ancho horizontal acotado al viewport; cada mapa crea su propio contexto de capas para que sus panes no tapen el reproductor flotante.
+
 La proyección Web Mercator tiene un alcance visual menor que el rango de latitud admitido por el contrato. Si una posición lo supera, aparece un aviso y se conservan sus valores originales; no se rechaza o modifica la telemetría. No se calculan rutas, distancias, velocidades, geocodificación o movimiento interpolado.
 
 ## Trayectoria y observación seleccionada

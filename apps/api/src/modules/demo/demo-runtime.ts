@@ -7,7 +7,8 @@ import { QueueConnection } from '../../platform/queue/connection.js';
 import { RuntimeHealth, RuntimeInstance } from '../../platform/runtime/runtime.module.js';
 import { readServerConfig } from '../../platform/config.js';
 import { Sessions } from '../access/public.js';
-import { StreamConnections } from '../realtime/public.js';
+import { StreamConnections, OutboxDispatcher } from '../realtime/public.js';
+import { DemoMaintenance, DemoMaintenanceBusy } from '../../platform/runtime/demo-maintenance.js';
 import { readIngestionLimits } from '../ingestion/public.js';
 import { FileOfficialSources } from './adapters/files/official-sources.js';
 import { loadReplaySoftwareFingerprint } from './adapters/files/replay-software.js';
@@ -20,12 +21,12 @@ import { ReplayCoordinator } from './application/replay-coordinator.js';
 import { replayConfigurationFingerprint } from './application/replay-material.js';
 import { VerifyOfficialReplay } from './application/verify-official.js';
 import { readReplayUuid } from './domain/command.js';
-import { ReplayConflict } from './domain/replay.js';
+import { ReplayConflict, terminalReplay, ReplayInputError } from './domain/replay.js';
 
 @Injectable()
 export class DemoRuntime implements OnModuleInit, OnApplicationBootstrap, OnModuleDestroy {
   // Esta identidad nunca cambia por la resincronización del stream SSE.
-  readonly instanceId = randomUUID();
+  instanceId = randomUUID();
   private coordinator: ReplayCoordinator | undefined;
   private journal: PostgresReplayJournal | undefined;
   private verifier: VerifyOfficialReplay | undefined;
@@ -42,6 +43,8 @@ export class DemoRuntime implements OnModuleInit, OnApplicationBootstrap, OnModu
     private readonly streamInstance: RuntimeInstance,
     private readonly connections: StreamConnections,
     private readonly sessions: Sessions,
+    private readonly maintenance: DemoMaintenance = new DemoMaintenance(),
+    private readonly outbox?: OutboxDispatcher,
   ) {}
 
   async onModuleInit(): Promise<void> {
@@ -98,12 +101,65 @@ export class DemoRuntime implements OnModuleInit, OnApplicationBootstrap, OnModu
     this.wake();
   }
   async view() {
-    if (!this.coordinator) throw new ReplayAdmissionUnknown();
+    if (!this.coordinator || this.maintenance.active) throw new ReplayAdmissionUnknown();
     return this.coordinator.view();
   }
   async command(value: unknown) {
-    if (!this.coordinator) throw new ReplayAdmissionUnknown();
+    if (!this.coordinator || this.maintenance.active) throw new ReplayAdmissionUnknown();
     return this.coordinator.command(value);
+  }
+  async reset(value: unknown): Promise<{ cleared: true }> {
+    if (typeof value !== 'object' || !value || Array.isArray(value)) throw new ReplayInputError();
+    const input = value as Record<string, unknown>;
+    if (
+      Object.keys(input).length !== 3 ||
+      input['confirmation'] !== 'CLEAR_DEMO' ||
+      typeof input['instanceId'] !== 'string' ||
+      !Number.isSafeInteger(input['expectedControlVersion'])
+    )
+      throw new ReplayInputError();
+    if (!this.coordinator || !this.sessions.demoEnabled) throw new ReplayAdmissionUnknown();
+    const release = this.maintenance.begin();
+    let paused = false;
+    let rebuild = false;
+    try {
+      const view = await this.coordinator.view();
+      if (
+        input['instanceId'] !== this.instanceId ||
+        input['expectedControlVersion'] !== view.controlVersion
+      )
+        throw new ReplayConflict();
+      if (view.pendingAction || (view.run && !terminalReplay(view.run.state)))
+        throw new DemoMaintenanceBusy();
+      await this.coordinator.whenIdle();
+      await this.publishing;
+      await this.outbox?.pause();
+      paused = true;
+      this.coordinator.close();
+      rebuild = true;
+      // Una sentencia/una transacción. El propietario solo expone esta función
+      // fija; el HTTP conserva su usuario restringido y no recibe sus secretos.
+      await this.write.controlSlots.run(() =>
+        this.write.pool.query('SELECT public.clear_demo_data()', []),
+      );
+      return { cleared: true };
+    } finally {
+      try {
+        if (rebuild) {
+          // También ante una respuesta SQL perdida: invalidar el token anterior
+          // y recuperar la verdad durable, sin repetir el borrado.
+          this.instanceId = randomUUID();
+          this.coordinator = undefined;
+          await this.onModuleInit();
+          this.streamInstance.renew();
+          this.connections.closeAll();
+        }
+      } finally {
+        if (paused) this.outbox?.resume();
+        release();
+        this.wake();
+      }
+    }
   }
   async receipt(commandId: string, instanceId: string) {
     if (!this.coordinator) throw new ReplayAdmissionUnknown();
@@ -126,7 +182,13 @@ export class DemoRuntime implements OnModuleInit, OnApplicationBootstrap, OnModu
     return this.verifier.inspect(readReplayUuid(runId));
   }
   private wake(): void {
-    if (this.closed || !this.coordinator || !this.connections.subscriberCount) return;
+    if (
+      this.closed ||
+      this.maintenance.active ||
+      !this.coordinator ||
+      !this.connections.subscriberCount
+    )
+      return;
     this.dirty = true;
     if (this.publishing) return;
     this.publishing = this.publish().finally(() => {

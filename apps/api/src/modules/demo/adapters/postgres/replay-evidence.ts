@@ -121,7 +121,7 @@ export class PostgresReplayEvidence implements ReadReplayEvidence {
           rows: [preparation],
         } = await client.query<{ hash: string | null; account_ready: boolean }>(`SELECT
           (SELECT hash FROM drizzle.__drizzle_migrations ORDER BY id DESC LIMIT 1) AS hash,
-          ((SELECT count(*) FROM users)=1 AND coalesce((SELECT bool_and(username='demo' AND password_hash LIKE '$argon2id$%') FROM users),false)) AS account_ready`);
+          ((SELECT count(*) FROM users)=1 AND coalesce((SELECT bool_and(username IN ('demo','Demo') AND password_hash LIKE '$argon2id$%') FROM users),false)) AS account_ready`);
         if (!preparation) throw new ReplayEvidenceUnavailable();
         const {
           rows: [counts],

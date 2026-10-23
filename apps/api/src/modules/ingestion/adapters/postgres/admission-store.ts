@@ -5,6 +5,7 @@ import type { Pool } from 'pg';
 import { ingestionBatches, ingestionItems } from '../../../../platform/database/schema.js';
 import { DatabaseSlots, DatabaseCapacityError } from '../../../../platform/database/slots.js';
 import { WriteTransactions } from '../../../../platform/database/write-transactions.js';
+import type { DemoMaintenance } from '../../../../platform/runtime/demo-maintenance.js';
 import { ingestionQueue } from '../../../../platform/queue/policy.js';
 import { OriginalJson } from '../../../telemetry/public.js';
 import type { BatchInput } from '../../domain/batch.js';
@@ -28,13 +29,20 @@ export class AdmissionStore {
     private readonly readPool: Pool,
     private readonly boss: PgBoss,
     private readonly readSlots: DatabaseSlots,
+    private readonly maintenance?: DemoMaintenance,
   ) {
     this.db = new WriteTransactions(writePool);
   }
 
   async admit(ingestionId: string, batch: BatchInput): Promise<'created' | 'existing'> {
     try {
-      return await this.admitChecked(ingestionId, batch);
+      // La admisión SQL mantiene su propia reserva: el plazo HTTP puede
+      // finalizar antes que ella sin demostrar que se cancelara la escritura.
+      return await (this.maintenance
+        ? this.maintenance.ingestion(this.maintenance.generation, () =>
+            this.admitChecked(ingestionId, batch),
+          )
+        : this.admitChecked(ingestionId, batch));
     } catch (error) {
       if (error instanceof DatabaseCapacityError) throw new IngestionCapacityError();
       throw error;

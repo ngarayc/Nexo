@@ -1,3 +1,5 @@
+import { Icon } from '../../platform/presentation/icon';
+import { ActionTooltip } from '../../platform/presentation/action-tooltip';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -10,11 +12,17 @@ import { VehicleDetailFacade } from '../fleet/vehicle-detail-facade';
 
 @Component({
   selector: 'nexo-alerts-page',
-  imports: [AlertsTable, IdentityText, FormsModule],
+  imports: [AlertsTable, IdentityText, FormsModule, Icon, ActionTooltip],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section aria-labelledby="alerts-title">
-      <h2 id="alerts-title">Alertas por exceso de velocidad</h2>
+      <header class="section-heading">
+        <div>
+          <p class="eyebrow">SUPERVISIÓN DE EVENTOS</p>
+          <h2 id="alerts-title">Alertas por exceso de velocidad</h2>
+        </div>
+        <span class="section-mark" aria-hidden="true"><nexo-icon name="alert" /></span>
+      </header>
       <p>Observaciones confirmadas con más de 80 km/h.</p>
       @if (monitor.hasBase()) {
         <div class="filter">
@@ -36,7 +44,14 @@ import { VehicleDetailFacade } from '../fleet/vehicle-detail-facade';
           <p id="alerts-filter-description">El total general incluye todos los vehículos.</p>
           @if (filter.vehicleId(); as vehicleId) {
             <p>Vehículo seleccionado: <nexo-identity [value]="vehicleId" /></p>
-            <button type="button" (click)="showAll(vehicleFilter)">Mostrar todos</button>
+            <button
+              class="icon-button"
+              nexoTooltip="Mostrar todos"
+              type="button"
+              (click)="showAll(vehicleFilter)"
+            >
+              <nexo-icon name="filter" /><span class="sr-only">Mostrar todos</span>
+            </button>
           }
         </div>
         <p aria-live="polite">
@@ -64,27 +79,7 @@ import { VehicleDetailFacade } from '../fleet/vehicle-detail-facade';
       }
     </section>
   `,
-  styles: `
-    .filter {
-      display: grid;
-      justify-items: start;
-      gap: 0.5rem;
-      margin-block: 1rem;
-      min-width: 0;
-    }
-    select {
-      width: min(32rem, 100%);
-      min-width: 0;
-      max-width: 100%;
-      padding: 0.5rem;
-      color: inherit;
-      font: inherit;
-    }
-    .filter p {
-      max-width: 100%;
-      margin: 0;
-    }
-  `,
+  styleUrl: './alerts-page.css',
 })
 export class AlertsPage {
   readonly filter = inject(AlertsFilterFacade);

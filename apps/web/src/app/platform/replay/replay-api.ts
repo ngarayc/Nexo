@@ -13,6 +13,23 @@ import {
 @Injectable({ providedIn: 'root' })
 export class ReplayApi {
   private readonly http = inject(HttpClient);
+  async reset(instanceId: string, expectedControlVersion: number, signal: AbortSignal) {
+    const value = await readResponse(
+      this.http.post<unknown>('/api/demo/replay/reset', {
+        instanceId,
+        expectedControlVersion,
+        confirmation: 'CLEAR_DEMO',
+      }),
+      signal,
+    );
+    if (
+      typeof value !== 'object' ||
+      value === null ||
+      !('cleared' in value) ||
+      value.cleared !== true
+    )
+      throw new Error('Respuesta de limpieza no comprobable.');
+  }
   async current(signal: AbortSignal) {
     return readReplayControl(
       await readResponse(this.http.get<unknown>('/api/demo/replay'), signal),

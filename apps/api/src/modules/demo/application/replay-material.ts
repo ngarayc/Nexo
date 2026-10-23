@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { isCanonicalPublicOrigin } from '@nexo/contracts';
 
 // Perfil efectivo permitido: nunca recibe process.env ni serializa credenciales.
 export interface ReplayConfiguration {
@@ -27,7 +28,7 @@ export function replayConfigurationFingerprint(config: ReplayConfiguration): str
     !/^[a-zA-Z0-9.-]{1,253}$/.test(value.database.host) ||
     value.database.port !== 5432 ||
     value.database.database !== 'nexo' ||
-    !/^http:\/\/localhost:(8080|8081)$/.test(value.publicOrigin) ||
+    !isCanonicalPublicOrigin(value.publicOrigin) ||
     typeof value.demoEnabled !== 'boolean' ||
     !['127.0.0.1', '0.0.0.0'].includes(value.server.host) ||
     !Number.isInteger(value.server.port) ||

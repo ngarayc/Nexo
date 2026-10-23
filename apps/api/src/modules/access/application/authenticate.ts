@@ -2,7 +2,7 @@ import type { Credentials } from '../domain/credentials.js';
 
 export interface UserAccount {
   readonly id: string;
-  readonly username: 'demo';
+  readonly username: 'demo' | 'Demo';
   readonly passwordHash: string;
 }
 export interface UserReader {
@@ -24,13 +24,15 @@ export class Authenticate {
     private readonly maximum = 2,
   ) {}
 
-  async execute(credentials: Credentials): Promise<{ id: string; username: 'demo' } | undefined> {
+  async execute(
+    credentials: Credentials,
+  ): Promise<{ id: string; username: 'demo' | 'Demo' } | undefined> {
     if (!this.enabled) return;
     if (this.active >= this.maximum) throw new HashCapacityError();
     this.active += 1;
     try {
       const account = await this.users.findDemo();
-      const known = credentials.username === 'demo' && account !== undefined;
+      const known = account !== undefined && credentials.username === account.username;
       const matches = await this.passwords.verify(
         known ? account.passwordHash : undefined,
         credentials.password,
