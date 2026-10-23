@@ -1,5 +1,7 @@
 # Mapa de últimas posiciones
 
+La [geocerca fija de demostración](geofence.md) añade una zona compartida por ambos mapas, clasificación Dentro/Fuera y cambios observados del historial. Conserva colecciones, selección y oráculos; no genera alertas persistidas.
+
 La [issue #67](https://github.com/ngarayc/Nexo/issues/67) incorpora Leaflet 1.9.4 como adaptador de presentación. `FleetFacade.visibleItems` alimenta tanto tabla como marcadores; búsqueda y estado se combinan con AND. El mapa no consulta telemetría, no mantiene otra colección de dominio y no abre una conexión SSE. La [sincronización existente](frontend-sync.md) conserva el último estado y el [historial](dashboard.md) conserva todas las observaciones aceptadas. La imagen web distribuye el archivo `3rdpartylicenses.txt` generado por Angular, incluidos los avisos BSD de Leaflet, junto a los assets.
 
 ## Posiciones e interacción

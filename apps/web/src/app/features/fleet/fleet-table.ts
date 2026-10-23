@@ -13,6 +13,7 @@ import { IdentityText, identityPreview } from '../../platform/presentation/ident
 import { formatTime } from '../../platform/presentation/format-time';
 
 import { stateLabels } from '../../platform/presentation/vehicle-state-label';
+import { geofenceStatus, geofenceLabels } from './geofence';
 @Component({
   selector: 'nexo-fleet-table',
   imports: [IdentityText, Icon, ActionTooltip],
@@ -35,6 +36,7 @@ import { stateLabels } from '../../platform/presentation/vehicle-state-label';
             <th scope="col">Velocidad (km/h)</th>
             <th scope="col">Encendido</th>
             <th scope="col">Estado</th>
+            <th scope="col">Geocerca</th>
             <th scope="col">Acciones</th>
           </tr>
         </thead>
@@ -52,6 +54,11 @@ import { stateLabels } from '../../platform/presentation/vehicle-state-label';
               <td>
                 <span class="state" [class]="'state ' + vehicle.status">{{
                   labels[vehicle.status]
+                }}</span>
+              </td>
+              <td>
+                <span class="geofence-state" [attr.data-geofence]="geofenceStatus(vehicle)">{{
+                  geofenceLabels[geofenceStatus(vehicle)]
                 }}</span>
               </td>
               <td>
@@ -83,6 +90,8 @@ export class FleetTable {
   readonly formatTime = formatTime;
   readonly preview = identityPreview;
   readonly labels = stateLabels;
+  readonly geofenceStatus = geofenceStatus;
+  readonly geofenceLabels = geofenceLabels;
   private readonly buttons = viewChildren<ElementRef<HTMLButtonElement>>('historyButton');
   focusVehicle(vehicleId: string): boolean {
     const index = this.items().findIndex((vehicle) => vehicle.vehicleId === vehicleId);

@@ -18,6 +18,7 @@ import { MapProviderStore } from '../../platform/maps/map-provider-store';
 import { hasProjectionLimit } from '../../platform/maps/projection';
 import { FLEET_MAP_FACTORY } from './adapters/fleet-map-factory';
 import type { FleetMapRenderer, TilePhase } from './adapters/fleet-map-renderer';
+import { demoGeofence, geofenceStatus } from './geofence';
 
 @Component({
   imports: [Icon, ActionTooltip],
@@ -38,6 +39,28 @@ import type { FleetMapRenderer, TilePhase } from './adapters/fleet-map-renderer'
         </button>
       </div>
       <p>Selecciona un vehículo en el mapa o en la tabla para abrir su historial.</p>
+      <div class="geofence-summary" aria-label="Resumen de geocerca">
+        <div>
+          <strong>Geocerca · {{ geofence.name }}</strong>
+          <p data-testid="geofence-summary">
+            {{ geofenceSummary().inside }} dentro · {{ geofenceSummary().outside }} fuera
+            @if (geofenceSummary().unknown) {
+              · {{ geofenceSummary().unknown }} sin posición válida
+            }
+            · flota visible
+          </p>
+          <span>El rectángulo azul incluye sus bordes. No modifica las alertas.</span>
+        </div>
+        <button
+          class="icon-button"
+          nexoTooltip="Ver geocerca"
+          type="button"
+          [disabled]="!rendered()"
+          (click)="fitGeofence()"
+        >
+          <nexo-icon name="pin" /><span class="sr-only">Ver geocerca</span>
+        </button>
+      </div>
 
       @if (provider.phase() === 'loading') {
         <p role="status">Preparando mapa…</p>
@@ -91,6 +114,12 @@ export class FleetMap {
   readonly rendered = signal(false);
   readonly tiles = signal<TilePhase>('loading');
   readonly projectionLimited = computed(() => hasProjectionLimit(this.items()));
+  readonly geofence = demoGeofence;
+  readonly geofenceSummary = computed(() => {
+    const counts = { inside: 0, outside: 0, unknown: 0 };
+    for (const vehicle of this.items()) counts[geofenceStatus(vehicle)]++;
+    return counts;
+  });
   private readonly host = viewChild<ElementRef<HTMLElement>>('mapHost');
   private readonly factory = inject(FLEET_MAP_FACTORY);
   private renderer?: FleetMapRenderer;
@@ -121,6 +150,9 @@ export class FleetMap {
   }
   focusVehicle(id: string): void {
     this.renderer?.focusVehicle(id);
+  }
+  fitGeofence(): void {
+    this.renderer?.fitGeofence();
   }
   retry(): void {
     if (this.provider.phase() === 'error') this.provider.load();

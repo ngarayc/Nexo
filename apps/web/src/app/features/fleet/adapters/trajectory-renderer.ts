@@ -5,6 +5,7 @@ import type { TilePhase } from '../../../platform/maps/leaflet-map-surface';
 export interface TrajectoryRenderer {
   sync(vehicleId: string, events: readonly EventView[], selected: string | null): void;
   fit(): void;
+  fitGeofence(): void;
   focusEvent(eventId: string): void;
   retryTiles(): void;
   destroy(): void;

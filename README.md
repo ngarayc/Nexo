@@ -6,6 +6,8 @@ La API admite lotes por HTTP y conserva su trabajo en una cola durable PostgreSQ
 
 Angular muestra flota, búsqueda, estados, historial y alertas mediante snapshot y SSE compartido, con recuperación de conexión y sesión. CR-01 añade filtro exacto por vehículo con selección propia de cada cliente. Tabla, mapa, trayectoria y gráfico comparten selección por evento; el historial permite inspeccionar la fecha recibida y el UTC exacto. Los datos siguen disponibles ante un fallo cartográfico. [Dashboard](docs/dashboard.md), [cartografía](docs/cartography.md) y [velocidad](docs/speed-chart.md) explican comportamiento y accesibilidad.
 
+Una [geocerca fija](docs/geofence.md) clasifica las posiciones Dentro/Fuera y muestra cambios observados entre muestras del historial, sin alterar las alertas del contrato. Es un extra de consulta, con bordes incluidos y sin editor de zonas.
+
 El [reproductor HTTP](docs/replay-emitter.md), controlado desde un [panel flotante](docs/replay-panel.md), envía progresivamente las 24 líneas originales con intervalo, inicio, pausa, reanudación y reinicio. Su [diario](docs/replay-journal.md) y [verificador](docs/replay-verification.md) conservan resultados e incertidumbre. La pausa actúa sobre nuevos envíos; el servidor sigue procesando lo admitido. La [guía](docs/demo-guide.md) demuestra 20/2/2 y 0/22/2 sin reset intermedio, con 20 eventos/8 vehículos/4 alertas. El [reset local](docs/demo-reset.md) identifica el volumen sintético y conserva evidencia antes de recrearlo.
 
 [Verificación](docs/verification.md) registra resultados y promociones por candidato; la [auditoría final](docs/final-audit.md) reúne hallazgos y correcciones. La validación del SHA definitivo y los artefactos de entrega conservan su evidencia propia.

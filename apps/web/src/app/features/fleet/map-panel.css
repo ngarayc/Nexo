@@ -50,6 +50,54 @@ p {
   color: #718097;
   margin-block: 8px;
 }
+.geofence-summary,
+.geofence-history {
+  padding: 14px 16px;
+  border: 1px solid #d8e5fc;
+  border-radius: 12px;
+  background: #f3f7ff;
+  margin-block: 14px;
+}
+.geofence-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+.geofence-summary strong,
+.geofence-history h4 {
+  color: #365c96;
+}
+.geofence-summary p {
+  margin: 4px 0;
+}
+.geofence-summary span {
+  font-size: 10px;
+  color: #667b9b;
+}
+.geofence-history h4 {
+  margin: 0;
+  font-size: 13px;
+}
+.geofence-changes {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+.geofence-changes li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid #dce6f6;
+  font-size: 12px;
+}
+.geofence-changes p {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
 .observation {
   padding: 18px;
   border: 1px solid #dce7fa;

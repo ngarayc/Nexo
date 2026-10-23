@@ -17,10 +17,11 @@ import type { EventView } from '@nexo/contracts';
 import { MapProviderStore } from '../../platform/maps/map-provider-store';
 import { hasProjectionLimit } from '../../platform/maps/projection';
 import type { TilePhase } from '../../platform/maps/leaflet-map-surface';
-import { IdentityText } from '../../platform/presentation/identity-text';
+import { IdentityText, identityPreview } from '../../platform/presentation/identity-text';
 import { formatTime } from '../../platform/presentation/format-time';
 import { TRAJECTORY_FACTORY } from './adapters/trajectory-factory';
 import type { TrajectoryRenderer } from './adapters/trajectory-renderer';
+import { geofenceChanges, geofenceLabels, geofenceStatus } from './geofence';
 
 @Component({
   selector: 'nexo-vehicle-trajectory',
@@ -87,6 +88,56 @@ import type { TrajectoryRenderer } from './adapters/trajectory-renderer';
       <p class="external">
         La cartografía requiere Internet y contacta al proveedor para cargar el área visible.
       </p>
+      <section aria-labelledby="geofence-changes-title" class="geofence-history">
+        <div class="map-heading">
+          <h4 id="geofence-changes-title">Cambios observados en la geocerca</h4>
+          <button
+            class="icon-button"
+            nexoTooltip="Ver geocerca en trayectoria"
+            type="button"
+            [disabled]="!rendered()"
+            (click)="fitGeofence()"
+          >
+            <nexo-icon name="pin" /><span class="sr-only">Ver geocerca en trayectoria</span>
+          </button>
+        </div>
+        <p>
+          El rectángulo azul es la zona fija, con sus bordes incluidos. Un cambio entre muestras no
+          determina el punto ni la hora exacta del cruce.
+        </p>
+        @if (changes().length === 0) {
+          <p>
+            No se observan cambios Dentro/Fuera entre estas muestras. La primera solo establece la
+            posición inicial.
+          </p>
+        } @else {
+          <ul class="geofence-changes" aria-label="Cambios de geocerca">
+            @for (change of changes(); track change.after.eventId) {
+              <li>
+                <div>
+                  <strong>{{
+                    change.kind === 'entry' ? 'Entrada observada' : 'Salida observada'
+                  }}</strong>
+                  <p>
+                    Entre {{ formatTime(change.before.observedAt) }} y
+                    {{ formatTime(change.after.observedAt) }}
+                  </p>
+                </div>
+                <button
+                  class="icon-button"
+                  type="button"
+                  (click)="selectEvent.emit(change.after.eventId)"
+                  [nexoTooltip]="'Ver observación ' + preview(change.after.eventId)"
+                >
+                  <nexo-icon name="history" /><span class="sr-only"
+                    >Ver observación {{ preview(change.after.eventId) }}</span
+                  >
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
       @if (observation(); as event) {
         <section aria-labelledby="selected-observation-title" class="observation">
           <h4 id="selected-observation-title">Observación seleccionada</h4>
@@ -102,6 +153,8 @@ import type { TrajectoryRenderer } from './adapters/trajectory-renderer';
             <dd>{{ event.latitude }}</dd>
             <dt>Longitud original</dt>
             <dd>{{ event.longitude }}</dd>
+            <dt>Geocerca</dt>
+            <dd>{{ geofenceLabels[geofenceStatus(event)] }}</dd>
           </dl>
         </section>
       } @else if (selected() !== null) {
@@ -125,6 +178,10 @@ export class VehicleTrajectory {
     this.items().find((event) => event.eventId === this.selected()),
   );
   readonly projectionLimited = computed(() => hasProjectionLimit(this.items()));
+  readonly changes = computed(() => geofenceChanges(this.items()));
+  readonly geofenceStatus = geofenceStatus;
+  readonly geofenceLabels = geofenceLabels;
+  readonly preview = identityPreview;
   readonly formatTime = formatTime;
   private readonly host = viewChild<ElementRef<HTMLElement>>('mapHost');
   private readonly factory = inject(TRAJECTORY_FACTORY);
@@ -157,6 +214,9 @@ export class VehicleTrajectory {
   }
   focusEvent(id: string): void {
     this.renderer?.focusEvent(id);
+  }
+  fitGeofence(): void {
+    this.renderer?.fitGeofence();
   }
   retry(): void {
     if (this.provider.phase() === 'error') this.provider.load();

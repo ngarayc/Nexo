@@ -144,3 +144,15 @@ tr.highlighted {
     padding: 12px;
   }
 }
+.geofence-state {
+  display: inline-block;
+  font-size: 11px;
+  padding: 5px 9px;
+  border-radius: 7px;
+  color: #61718a;
+  background: #f0f3f8;
+}
+.geofence-state[data-geofence='inside'] {
+  color: #28715d;
+  background: #eaf6f0;
+}
