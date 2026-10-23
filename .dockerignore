@@ -9,5 +9,6 @@
 reports
 test-results
 playwright-report
+apps/web/public/map-provider.json
 **/*.log
 **/coverage

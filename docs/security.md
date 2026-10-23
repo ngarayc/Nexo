@@ -4,7 +4,7 @@
 
 Solo web publica loopback mediante Compose. Acceso verifica Argon2id contra PostgreSQL, sesiones absolutas, origen/CSRF, capacidad, cuotas y políticas explícitas de rutas; su contrato y límites están en [acceso](access.md). La ingesta comprueba API key antes del parser; [SSE](realtime.md) requiere sesión, origen válido si existe, cuota, cupos y reautorización por envío, con cierre por revocación/vencimiento. No hay telemetría ficticia para simular esas capacidades.
 
-Las credenciales de GitHub se utilizan mediante las herramientas de autenticación y no forman parte del repositorio, del frontend o de las imágenes. `.gitignore` excluye entornos reales, dependencias, builds y reportes. Los artefactos publicables se seleccionarán explícitamente; trazas, HAR, cookies y logs crudos no se suben por defecto.
+Las credenciales de GitHub se utilizan mediante las herramientas de autenticación y no forman parte del repositorio, del frontend o de las imágenes. `.gitignore` excluye entornos reales, dependencias, builds y reportes. Los artefactos publicables se seleccionan y comprueban mediante una lista cerrada y un marcador sintético excluido, según [CI](ci-controls.md); trazas, HAR, cookies y logs crudos no se suben por defecto.
 
 ## Dependencias
 
@@ -20,7 +20,7 @@ Drizzle Kit incorpora un adaptador legado con esbuild 0.18.20, afectado por [GHS
 
 La ausencia de hallazgos es evidencia del árbol y la base de avisos consultados, no seguridad total. Un hallazgo alto/crítico bloquea por defecto; las excepciones requieren evaluación expresa, componente exacto, motivo y vencimiento. Un escaneo inconcluso no equivale a aprobación.
 
-## Verificación pendiente
+## Verificación de componentes y escaneos
 
 La [issue #43](https://github.com/ngarayc/Nexo/issues/43) surgió al investigar detalles ausentes en Trivy para CVE-2026-107891. El [registro de Alpine3.24](https://secdb.alpinelinux.org/v3.24/main.json) relaciona musl con una corrección1.2.6-r3, disponible como [paquete oficial](https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/musl). Las tres imágenes contenían1.2.6-r2; API/web/DB y sus etapas de construcción pertinentes ahora instalan musl y musl-utils1.2.6-r3 fijados, manteniendo los digests base y usuarios. No se infiere una severidad ni un rechazo del CVE a partir de metadatos ausentes.
 

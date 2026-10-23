@@ -3,7 +3,7 @@
   "info": {
     "title": "Nexo API",
     "version": "0.1.0",
-    "description": "Contratos efectivos de Nexo: backend, dashboard SSE y motor HTTP compartido de demo. Monolito NestJS y perfil HTTP local. CR-01 incorpora filtro exacto de alertas por GET y POST JSON; la selección visual mantiene su incremento posterior. Ver api.md, realtime.md y replay-emitter.md para límites, incertidumbre y recuperación."
+    "description": "Contratos efectivos de Nexo: backend, dashboard SSE y motor HTTP compartido de demo. Monolito NestJS y perfil HTTP local. CR-01 incorpora filtro exacto de alertas por GET y POST JSON; la selección Angular conserva filtros por cliente sobre la colección global sincronizada. Ver api.md, realtime.md y replay-emitter.md para límites, incertidumbre y recuperación."
   },
   "servers": [
     {
@@ -1174,6 +1174,12 @@
           },
           "ignitionOn": {
             "type": "boolean"
+          },
+          "observedAtOriginal": {
+            "type": "string",
+            "minLength": 1,
+            "readOnly": true,
+            "description": "Metadato de salida: cadena observedAt recibida al aceptar el evento, conservada sin reconstruirla desde UTC. Representa el mismo instante exacto. Las consultas actuales y notificaciones nuevas lo incluyen; puede faltar en notificaciones históricas conservadas anteriores."
           }
         },
         "additionalProperties": false
@@ -1226,6 +1232,12 @@
           "status": {
             "type": "string",
             "enum": ["OFF", "MOVING", "STOPPED"]
+          },
+          "observedAtOriginal": {
+            "type": "string",
+            "minLength": 1,
+            "readOnly": true,
+            "description": "Metadato de salida: cadena observedAt recibida al aceptar el evento, conservada sin reconstruirla desde UTC. Representa el mismo instante exacto. Las consultas actuales y notificaciones nuevas lo incluyen; puede faltar en notificaciones históricas conservadas anteriores."
           }
         },
         "additionalProperties": false
@@ -1273,6 +1285,12 @@
           "speedKph": {
             "type": "number",
             "minimum": 0
+          },
+          "observedAtOriginal": {
+            "type": "string",
+            "minLength": 1,
+            "readOnly": true,
+            "description": "Metadato de salida: cadena observedAt recibida al aceptar el evento, conservada sin reconstruirla desde UTC. Representa el mismo instante exacto. Las consultas actuales y notificaciones nuevas lo incluyen; puede faltar en notificaciones históricas conservadas anteriores."
           }
         },
         "additionalProperties": false
@@ -2813,7 +2831,7 @@
           "externalEvidence": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["twoRenderedClients", "pauseResume", "ci", "video"],
+            "required": ["twoRenderedClients", "pauseResume", "ci"],
             "properties": {
               "twoRenderedClients": {
                 "const": "not_assessed"
@@ -2822,9 +2840,6 @@
                 "const": "not_assessed"
               },
               "ci": {
-                "const": "not_assessed"
-              },
-              "video": {
                 "const": "not_assessed"
               }
             }

@@ -69,3 +69,8 @@ tr.highlighted {
   font-weight: 700;
   font-size: 0.75rem;
 }
+.exact-time dd {
+  margin: 0.35rem 0 1rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}

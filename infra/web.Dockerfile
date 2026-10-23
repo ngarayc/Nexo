@@ -10,12 +10,17 @@ RUN npm ci --no-audit
 COPY tsconfig.base.json ./
 COPY apps/web apps/web
 COPY packages/contracts packages/contracts
+COPY scripts/map-provider.mjs scripts/map-provider.mjs
+COPY infra/map-provider.json infra/nginx.conf infra/
 RUN npm run build --workspace @nexo/web
+RUN node scripts/map-provider.mjs /app/generated
 
 FROM nginx:1.30.6-alpine@sha256:970364228b1e4f932abc22d321932816782cca8a20b85a77552a7cfe9acfb3b5 AS runtime
 RUN apk add --no-cache --upgrade libexpat=2.9.0-r0 libx11=1.8.14-r0 musl=1.2.6-r3 musl-utils=1.2.6-r3
 COPY --from=build /app/apps/web/dist/web/browser /usr/share/nginx/html
-COPY infra/nginx.conf /etc/nginx/nginx.conf
+COPY --from=build /app/apps/web/dist/web/3rdpartylicenses.txt /usr/share/nginx/html/3rdpartylicenses.txt
+COPY --from=build /app/generated/nginx.conf /etc/nginx/nginx.conf
+COPY --from=build /app/generated/map-provider.json /usr/share/nginx/html/map-provider.json
 USER nginx
 EXPOSE 8080
 ENTRYPOINT ["nginx", "-g", "daemon off;"]

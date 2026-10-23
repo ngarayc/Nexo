@@ -6,18 +6,30 @@ import {
   afterNextRender,
   afterRenderEffect,
   inject,
+  computed,
   viewChild,
 } from '@angular/core';
+import type { VehicleState } from '@nexo/contracts';
 import { FleetFacade } from './fleet-facade';
 import { VehicleDetailFacade } from './vehicle-detail-facade';
 import { LiveMonitor } from '../live-monitoring/live-monitor';
 import { IdentityText } from '../../platform/presentation/identity-text';
 import { FleetTable } from './fleet-table';
 import { VehicleHistory } from './vehicle-history';
+import { FleetMap } from './fleet-map';
+import { VehicleTrajectory } from './vehicle-trajectory';
+import { VehicleSpeedChart } from './vehicle-speed-chart';
 
 @Component({
   selector: 'nexo-fleet-page',
-  imports: [FleetTable, VehicleHistory, IdentityText],
+  imports: [
+    FleetTable,
+    VehicleHistory,
+    IdentityText,
+    FleetMap,
+    VehicleTrajectory,
+    VehicleSpeedChart,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './fleet-page.html',
   styleUrl: './fleet-page.css',
@@ -26,11 +38,27 @@ export class FleetPage {
   readonly fleet = inject(FleetFacade);
   readonly detail = inject(VehicleDetailFacade);
   readonly monitor = inject(LiveMonitor);
+  readonly stateFilters: readonly { value: VehicleState | null; label: string }[] = [
+    { value: null, label: 'Todos' },
+    { value: 'MOVING', label: 'En movimiento' },
+    { value: 'STOPPED', label: 'Detenidos' },
+    { value: 'OFF', label: 'Apagados' },
+  ];
+  readonly hiddenSelection = computed(() => {
+    const id = this.detail.selected();
+    return (
+      id !== null &&
+      this.fleet.get(id) !== undefined &&
+      !this.fleet.visibleItems().some((vehicle) => vehicle.vehicleId === id)
+    );
+  });
   private readonly injector = inject(Injector);
   private readonly history = viewChild<ElementRef<HTMLElement>>('historyPanel');
   private readonly search = viewChild<ElementRef<HTMLInputElement>>('search');
   private readonly table = viewChild(FleetTable);
   private readonly historyTable = viewChild(VehicleHistory);
+  private readonly map = viewChild(FleetMap);
+  private readonly trajectory = viewChild(VehicleTrajectory);
   private lastFocusedEvent: string | null = null;
   constructor() {
     afterRenderEffect(() => {
@@ -46,7 +74,17 @@ export class FleetPage {
 
   open(vehicleId: string): void {
     this.detail.select(vehicleId);
+    this.map()?.focusVehicle(vehicleId);
     afterNextRender(() => this.history()?.nativeElement.focus(), { injector: this.injector });
+  }
+  selectObservation(eventId: string): void {
+    this.detail.selectObservation(eventId);
+    this.trajectory()?.focusEvent(eventId);
+    afterNextRender(() => this.historyTable()?.focusEvent(eventId), { injector: this.injector });
+  }
+  clearFilters(): void {
+    this.fleet.clearFilters();
+    afterNextRender(() => this.search()?.nativeElement.focus(), { injector: this.injector });
   }
   close(): void {
     const previous = this.detail.selected();

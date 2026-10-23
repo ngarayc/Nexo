@@ -1,5 +1,81 @@
 # Verificación de Nexo
 
+## Presentación temporal consistente en WebKit — #80
+
+La preparación ampliada de E6 detectó una diferencia real del parser nativo de fechas: WebKit27.2 redondeaba una fracción canónica de12 dígitos al segundo siguiente y rechazaba otra de20. El recorrido ISO con API/PostgreSQL/SSE reales y la imagen del cierre608152b reprodujo el fallo en la tabla: recibió00:00:02 donde debía mostrar00:00:01. Un primer intento del runner no inició casos por un argumento CLI incorrecto; se conservó como fallo de preparación y no se contó como evidencia del producto. El segundo sí ejecutó WebKit y conservó la aserción fallida.
+
+El formateador ahora obtiene los milisegundos mediante el lector de instantes compartido y trunca la fracción solo para presentar. Conserva Bogotá24h, el segundo correcto, cambio de día e instantes negativos; el dominio/DTO conserva toda su precisión. Pasaron sus tres pruebas, tipos/lint y seis recorridos reales focalizados: ISO y gráfico adversarial en Chromium, Firefox y WebKit, sin omisiones. El caso ISO amplía la fracción canónica comprobada a20 dígitos sin relajar fechas, orden o errores esperados.
+
+Solo se reconstruyó y reescaneó la imagen web afectada, `sha256:e12844230f53dc51a37207f8fdfd18a526e0adc62515c1c4780077ca86e8dca2`: inventario completo y cero HIGH/CRITICAL. Las imágenes API/DB del cierre ordinario permanecieron iguales. No se repitió la batería local general ya aprobada. Este defecto reproducido en WebKit es distinto de la exploración cruda de #73; tampoco sustituye el recorrido ampliado final de E6 o el CI remoto del nuevo candidato.
+
+## Cierre local ordinario E5 — #74
+
+La fuente `608152bac0137d2aa085314667189c32fd03b29d` completó una única batería local general al cierre de E5:463 pruebas API en46 archivos,122 Angular en27,127 PostgreSQL/HTTP y25 Chromium en19 archivos, sin fallos u omisiones. Los63 controles CI también pasaron. Quality, compilación, políticas de workflows/Compose,357 enlaces internos, fixtures y esquema quedaron comprobados. Se conservaron los oráculos20/2/2→0/22/2, identidades,20 eventos/8 vehículos/4 alertas y43 mensajes en sus escenarios propios.
+
+La auditoría de dependencias informó cero vulnerabilidades y el historial pasó el escaneo de secretos. Las tres imágenes y tres Dockerfiles completaron inventarios/escaneos sin HIGH/CRITICAL ni resultados inconclusos. Las imágenes construidas, escaneadas y usadas en integración/navegador fueron API `sha256:d35bfd9dab22d5af1a9a9e939edff5719996815fc26f77f87fcbaabab3cabbd2`, web `sha256:15ae1052f483c28dc92e3afa229bd591ccb24834c76651123f8149c728b95789` y DB `sha256:e4d4a3d9054879118858ec07768314ed605f6145af728d854a87aadb45777000`.
+
+Esta evidencia corresponde al recorrido ordinario de esa fuente. Firefox/WebKit, carga ampliada, CI del siguiente candidato, revisión humana y entrega final conservan sus comprobaciones propias. Una corrección posterior repite el alcance afectado; no se atribuye anticipadamente el cierre ampliado a Chromium ni se reinicia toda la batería local por documentación.
+
+## Coherencia visual y recuperación — E5-I05 / #74
+
+El recorrido focalizado de dos clientes pasó con ingesta, SQL, proxy y SSE reales. Conserva filtros AND y selección propia de historial/trayectoria/gráfico; un cambio de estado oculta la fila sin cerrar su detalle. Tras cortar un SSE mediante el intermediario TCP y dejar offline solo ese cliente, el segundo sigue recibiendo datos. Al recuperar el primero, snapshot e historial conservan selección y foco, ordenan el tardío y dejan una sola conexión activa por aplicación.
+
+La caída controlada de tiles afecta a ambos mapas, con reintentos manuales y gráfico, sesión e historial disponibles. Cada cliente conserva sus filtros; cerrar una sesión destruye sus visualizaciones y mantiene la otra. El caso usa datos propios:6 eventos/2 vehículos/2 alertas/13 mensajes, sin pendientes; los oráculos oficiales se comprueban en sus escenarios separados. Este resultado no sustituye todavía la batería local integral de cierre ni la revisión del autor.
+
+## Gráfico de velocidad — E5-I04 / #72
+
+Pasaron tipos web y14 pruebas focalizadas en tres archivos: modelo temporal del gráfico, componente y página. Conservan entradas/identidades, velocidades80/81, puntos visualmente coincidentes con instantes exactos distintos, vacío, muestra única y máximo finito, alternativa accesible, selección y destrucción. La auditoría de la dependencia fijada informó cero vulnerabilidades.
+
+Los dos primeros recorridos de canvas encontraron puntos incompletos en los límites explícitos del área gráfica. Se ajustó el recorte del dataset observado para mostrar esos puntos completos; no se bajó el requisito visual de las pruebas. Tras construir otra vez, ambos recorridos Chromium pasaron con API/PostgreSQL/NGINX reales y tiles sintéticos. Inspeccionan píxeles del canvas y pulsan el punto dibujado, sin acceder a una instancia global de Chart.js o a hooks agregados al producto.
+
+El caso oficial verifica dos clientes, selección gráfico/historial/trayectoria/alerta, cambio visible de color, avisos de licencia y ambos replays20/2/2→0/22/2 con20 eventos/8 vehículos/4 alertas/43 mensajes. El adversarial conserva muestras coincidentes y subnanosegundos,80sin alerta/81con alerta, selección estable y foco de búsqueda ante un tardío, duplicado sin puntos nuevos, ancho360px, una velocidad Number.MAX_VALUE sin errores y destrucción al cerrar sesión. La compilación y lint afectados pasaron. La batería local general permanece reservada al cierre E5; estos resultados no la sustituyen.
+
+## Normalización temporal entre entrada, API y presentación — #73
+
+Un recorrido Chromium con API/PostgreSQL/SSE reales pasó sobre el formateador original: tres observaciones con coma decimal, forma básica y offset ingresan fuera de orden; tabla, historial y mapas muestran hora Bogotá 24h, latest correcto y selección sin errores de página. El DTO devuelve UTC canónico y conserva la fracción exacta, incluida `2026-01-01T05:00:01.999999999999Z`.
+
+Una exploración directa del helper con sintaxis cruda encontró RangeError, pero la integración confirmó que esa entrada no corresponde al DTO canónico que recibe. El primer caso esperaba incorrectamente la sintaxis original en la respuesta; se corrigió a valores canónicos explícitos y se repitió sobre la implementación original. El cambio exploratorio del formateador se retiró: este incremento añade evidencia de normalización, sin atribuir a la aplicación un fallo que el recorrido real no reprodujo.
+
+## Promoción de filtros, mapa y trayectoria a test — PR69
+
+El candidato `e46392a4c3ae875576056df573178cab15c0eee0` completó su CI propio39850982896, intento1, con seis jobs y cinco artefactos descargados/revalidados:463 pruebas API,113 Angular,127 PostgreSQL/HTTP y21 Chromium, sin fallos u omisiones. El checkout de integración fue `ac75099ffa403946009daec9343b44f2112043d3`. Tras QA se integró [PR69](https://github.com/ngarayc/Nexo/pull/69) en test `6d98d4fe71b35f79b599c23f9c2e1a1c8528265f`, con el mismo árbol de código revisado.
+
+Ese candidato incorpora los tres primeros incrementos E5 y la corrección #71; no acredita el gráfico o la aceptación integral posterior. La revisión técnica del agente y la promoción a test no sustituyen la revisión humana de un futuro candidato a main.
+
+## Selectores de conexión y diagnóstico cerrado — #71
+
+El CI propio39848095971 de PR69, sobre986c791, pasó los nuevos casos cartográficos y el resto de archivos Chromium salvo synchronization.spec.mjs. El log público conservó el archivo fallido, pero su detalle privado no quedó disponible para recuperar la causa exacta de esa ejecución. La repetición local del caso original sobre las fuentes publicadas pasó; no se declara probado el motivo histórico.
+
+Una reproducción controlada retuvo la respuesta real de configuración cartográfica y demostró el defecto del selector global: «En vivo» y «Preparando mapa…» convivían correctamente, pero getByRole('status') produjo strict mode violation al encontrar ambos. La aserción se acotó a la región accesible Supervisión en tiempo real en los dos archivos que usaban ese selector. No se alteraron los valores esperados, errores de página, controles de sesión o conteos SSE. Pasaron los dos casos de sincronización, incluida la carga retenida, y los dos casos de flota afectados.
+
+El runner conserva los reportes privados y puede publicar únicamente la categoría cerrada locator-ambiguity cuando aparece en un error; no imprime mensajes, trazas o datos del reporte ni cambia el fallo del job. Sus cinco pruebas focalizadas pasaron, incluidas dos nuevas de clasificación segura y estructura ausente/cíclica. El candidato corregido requiere otro CI propio completo y cinco artefactos antes de promover; el intento anterior fallido no se reutiliza.
+
+## Trayectoria y selección de observaciones — E5-I03 / #70
+
+Pasaron tipos web y22 pruebas focalizadas en cinco archivos: fachada de detalle, historial, trayectoria, mapa y página. El primer intento de tipos y compilación de pruebas falló al asignar undefined a una propiedad opcional bajo exactOptionalPropertyTypes; se declaró explícitamente la unión y se repitió ese alcance, sin relajar TypeScript.
+
+Tres recorridos Chromium focalizados pasaron con API/PostgreSQL/NGINX reales y tiles sintéticos. El oficial comprueba dos clientes, orden histórico, selección historial/punto/alerta y ambos replays20/2/2→0/22/2 con20 eventos/8 vehículos/4 alertas/43 mensajes. El adversarial comprueba cero segmentos con una muestra, puntos coincidentes conservados, muestras separadas por fracciones inferiores a un nanosegundo y orden geométrico real del SVG tras un tardío. Mantiene el mismo marcador seleccionado, encuadre y foco de búsqueda; un duplicado no agrega puntos. Una respuesta HTTP real retenida se cancela al cambiar de vehículo y no reemplaza su punto/historial. También pasó el caso de mapa previo afectado por la extracción de superficie compartida.
+
+La construcción web pasó. Esta validación sigue siendo focalizada; no se ejecutó otra batería local completa ni se atribuye al nuevo incremento el escaneo de otra imagen anterior. El gráfico y la aceptación integral E5 continúan pendientes.
+
+## Mapa de últimas posiciones — E5-I02 / #67
+
+Pasaron seis pruebas de configuración/generador y doce pruebas Angular focalizadas en tres archivos (proveedor, mapa y página), además de tipos, lint afectado y fronteras de273 módulos/1002 dependencias. El primer intento Angular no inició casos porque el asset estaba fuera del workspace; se corrigió generándolo en el directorio público del proyecto desde la misma fuente revisada. No se omitieron pruebas ni se duplicó una configuración manual.
+
+El primer intento de construcción Docker no comenzó porque el servicio estaba detenido. Tras iniciarlo el autor, la construcción web terminó. Los dos primeros recorridos Chromium llegaron hasta la selección por teclado y fallaron porque Enter no abría el detalle del marcador; el adaptador incorpora activación explícita por Enter/espacio. La repetición del caso oficial pasó con dos clientes, ejes/hemisferio correctos, filtros compartidos, foco y ambos replays20/2/2 y0/22/2:20 eventos/8 vehículos/4 alertas/43 mensajes, sin pendientes. El caso adversarial posterior tuvo una expectativa incorrecta de ID completo en un tooltip resumido; se corrigió usando una identidad HTML compacta, conservando la comprobación íntegra e inerte del payload.
+
+El recorrido adversarial corregido pasó: mismo elemento de marcador y foco ante SSE, encuadre estable, tardío sin desplazar latest, Enter/espacio, fallo de tiles con historial y actualizaciones disponibles, reintento manual, CSP que bloquea otro origen, texto HTML inerte, ancho360px, latitud90 sin modificación y destrucción al cerrar sesión. Los tiles usaron referente de origen, sin cookie de Nexo, clave de ingesta o CSRF. Los escenarios usaron tanto la página estándar como contextos explícitos del fixture de red controlada, sin solicitudes al proveedor público. La revisión del paquete incorporó los avisos de licencias generados por Angular; el caso oficial se repitió con ese nuevo control y pasó.
+
+La auditoría de dependencias informó cero vulnerabilidades al fijar Leaflet y sus tipos. La imagen web final `sha256:207da4310f7dc1149a83dc4dbab7d6367c368d457663db6bbe02d01a40b8b083` y su Dockerfile completaron inventario y escaneo sin HIGH/CRITICAL ni detalles inconclusos. Formato/lint afectados y348 enlaces internos pasaron. No se reconstruyeron o escanearon otra vez las imágenes API/DB durante este incremento de UI.
+
+Los recorridos generales locales se reservan al cierre E5. Estos resultados no acreditan todavía trayectoria, gráfico, proveedor real o entrega final. [Cartografía](cartography.md) explica configuración, procedencia y límites.
+
+## Resumen interactivo — E5-I01 / #66
+
+Pasaron tipos web y15 pruebas focalizadas de fachada/página en dos archivos. Verifican filtros AND, independencia por cliente, resumen global, transición de último estado, tardío que no lo revierte, snapshot con filtros conservados, limpieza de sesión y detalle oculto sin perder selección. El foco permanece en el botón de estado ante una actualización y vuelve a búsqueda al limpiar los filtros del detalle.
+
+La revisión de primera carga añadió una comprobación de que los botones deshabilitados todavía no muestran ceros antes de confirmar la base. Sus cinco pruebas de página se repitieron y pasaron después del ajuste. Los recorridos integrados de las visualizaciones se incorporan durante E5; no se atribuyen al incremento pruebas de navegador posteriores al nuevo filtro ni otra ejecución local general.
+
 ## Aceptación local integral E4 — #64
 
 La base funcional `f1f9331508a6a613e9c09abe42e463312bdbcdc8` completó el cierre local de CR-01: compilación,463 pruebas API,95 Angular,127 integraciones PostgreSQL/HTTP y16 Chromium, sin fallos u omisiones en sus resultados finales. Los casos oficiales conservan20/2/2 y0/22/2,20 eventos/8 vehículos/4 alertas e identidades originales; los adversariales usaron datos propios.
@@ -8,7 +84,7 @@ Se ejecutaron formato, lint, tipos, enlaces, fixtures y coherencia del esquema. 
 
 La auditoría de dependencias informó0 vulnerabilidades. El historial disponible y los cuatro commits incrementales posteriores pasaron el escaneo de secretos; los cambios documentales finales se revisaron por separado. Las tres imágenes y tres Dockerfiles completaron sus inventarios y escaneos sin HIGH/CRITICAL. Se conservaron las mismas imágenes durante las pruebas: API `sha256:cd341b122f28c4f1ce7841f16bd8a137a169319cfab2c82976de8e95445e0126`, web `sha256:085b9c80a33c3553288e1cf0a5dd4886988ffac7b8489075cfa65eaf5321c28d` y PostgreSQL `sha256:63bdd19b7e400b9f71e2c9d91219cbdf33d8787e3faaf0d87ca15337e3f8bcfc`. Los resultados no acreditan capacidad de producción ni reemplazan los escaneos del candidato remoto.
 
-La batería local completa se ejecutó al cierre de la épica; las correcciones posteriores repitieron solo las comprobaciones afectadas. [PR61](https://github.com/ngarayc/Nexo/pull/61) conserva QA, CI propio y promoción del nuevo origen. El CI de c97890e pasó antes463API/90Angular/125PostgreSQL/14Chromium con cinco artefactos revalidados; ese candidato anterior no acredita la interfaz ni las correcciones siguientes. La revisión humana y promoción de E4 a main siguen pendientes y no se reutiliza la aprobación de E3.
+La batería local completa se ejecutó al cierre de la épica; las correcciones posteriores repitieron solo las comprobaciones afectadas. [PR61](https://github.com/ngarayc/Nexo/pull/61) conserva QA, CI propio y promoción del nuevo origen. El CI de c97890e pasó antes463API/90Angular/125PostgreSQL/14Chromium con cinco artefactos revalidados; ese candidato anterior no acredita la interfaz ni las correcciones siguientes. La aprobación efectiva de ngarayc en main-review39844605142 cubrió el candidato0edba3b de [PR68](https://github.com/ngarayc/Nexo/pull/68). Su CI propio39844604982 pasó seis jobs y cinco artefactos revalidados (463API/95Angular/127PostgreSQL/16Chromium), checkout4acb9516b0f37588968efb1431bd4b0e72431906. Se integró en maincb494a285fe31b1bfad94cf6278e0f49462786eb; el CI posterior39848012781 también completó sus seis jobs y cinco artefactos revalidados con los mismos inventarios. E4 y sus siete issues quedaron cerradas. No se reutiliza la aprobación de E3 ni se atribuye a E5.
 
 ## Control de fronteras después de construir — #65
 
@@ -48,7 +124,7 @@ La primera publicación db75242 de esta API tuvo [CI propio39828497893](https://
 
 [PR51](https://github.com/ngarayc/Nexo/pull/51#issuecomment-6347135921) integró ese árbol en main `e0f298f8960f8f8baf35dd783ac227f882d32c85`, después de aprobación efectiva de ngarayc en [main-review39820865479](https://github.com/ngarayc/Nexo/actions/runs/39820865479). [CI propio39820865413](https://github.com/ngarayc/Nexo/actions/runs/39820865413), intento1, pasó con cinco artefactos revalidados para checkout `9839e93507c67140b921135bb3432049e74cef06`, fuente99912bf y los mismos inventarios.
 
-[Post-main39823965751](https://github.com/ngarayc/Nexo/actions/runs/39823965751), intento1, también pasó sobre el merge e0f298f; sus cinco artefactos se descargaron/revalidaron con458API/90Angular/123PostgreSQL/14Chromium, sin fallos u omisiones y con los seis jobs aprobados. Acredita motor, panel, reset, aceptación integral y corrección de metadatos de #56. Se cerraron #42/#49/#52/#55/#56 y el milestone E3, con sus nueve issues completadas. E4/E5/E6 conservan trabajo propio; no existe todavía video final ni tag entrega-final.
+[Post-main39823965751](https://github.com/ngarayc/Nexo/actions/runs/39823965751), intento1, también pasó sobre el merge e0f298f; sus cinco artefactos se descargaron/revalidaron con458API/90Angular/123PostgreSQL/14Chromium, sin fallos u omisiones y con los seis jobs aprobados. Acredita motor, panel, reset, aceptación integral y corrección de metadatos de #56. Se cerraron #42/#49/#52/#55/#56 y el milestone E3, con sus nueve issues completadas. E4/E5/E6 conservan trabajo propio; no existe todavía el tag entrega-final.
 
 ## Aceptación integral del núcleo — E3-I06 / #55
 
@@ -68,7 +144,7 @@ El [recorrido ampliado](../tests/system/replay-panel.spec.mjs) crea una observac
 
 La revisión agregó una protección de configuración: el manifiesto vincula también el Compose expandido, por lo que cambiar WEB_PORT heredado del proceso impide reanudar antes de tocar el destino. La integración completa probó ese rechazo y la posterior recuperación con la configuración original. Los servicios habituales permanecieron intactos; los ensayos usaron y limpiaron exclusivamente recursos sintéticos propios.
 
-La promoción y revisión humana de este cierre E3 están acreditadas arriba. Cada candidato posterior conserva sus propios checks y revisión. E4 mantiene selección visual/aceptación/revisión del filtro, E5 visualizaciones y E6 video/copia limpia/tag y el total estimado del autor pendientes. No existe todavía el video accesible ni tag entrega-final.
+La promoción y revisión humana de este cierre E3 están acreditadas arriba. Cada candidato posterior conserva sus propios checks y revisión. E4 mantiene selección visual/aceptación/revisión del filtro, E5 visualizaciones y E6 copia limpia/tag y el total estimado del autor pendientes. No existe todavía el tag entrega-final.
 
 ## Panel compartido — E3-I04 / #49
 
@@ -410,3 +486,77 @@ La prueba nueva de arranque reprodujo otro fallo: depender de la salud completa 
 Una muestra local de los 10.000 eventos HTTP y su repetición registró 191.875 ms, pico de once conexiones runtime y máximos individuales de tres de escrituras, dos de consultas y cinco de cola/listener. El muestreo comprueba también outbox hasta una y total hasta dieciséis. El historial de cien eventos sobre diez mil usó Bitmap Index Scan, Bitmap Heap Scan y Sort; planificación 0,924 ms y ejecución 0,870 ms. Son observaciones del escenario, sin promesa de rendimiento productivo.
 
 [Tiempo real](realtime.md) describe protocolo, archivos, procedencia, costes y límites. OpenAPI pasó validación estructural oficial con veintidós esquemas; el inventario AST coincide con las catorce operaciones reales. Este incremento backend no acredita todavía el dashboard, el reproductor controlable ni EP-03/CR-01 completos. La PR y sus reportes identifican la verificación remota y la promoción; main conserva revisión humana propia.
+
+## Auditoría final y corrección del intermediario SSE — #83
+
+La auditoría de [#82](https://github.com/ngarayc/Nexo/issues/82#issuecomment-6354066081) contrastó planeación y obligaciones originales sobre `577d1a2a38f5e085ed4f41932ca05452c08bece0`, antes de editar fuentes. Su CI de push39868234653 pasó seis jobs/cinco artefactos revalidados:463 API/124 Angular/127 PostgreSQL/25 Chromium. El ensayo ampliado de esa fuente no aprobó: Firefox25 pasaron; WebKit22 pasaron y3 fallaron en la conexión inicial mediante el intermediario. El diagnóstico directo/intermediario comprobó bloqueo CSP por cambio de origen, sin solicitudes recibidas por el proxy; el stream directo respondió200 y alcanzó En vivo. No se atribuyó ese fallo al procesamiento de telemetría.
+
+El componente de carga ejecutado después sobre las mismas imágenes/fuente sí pasó:100.000 eventos,100 vehículos,40.000 alertas,200 lotes/200.000 posiciones tras repetir sin efectos nuevos. Pico observado13 conexiones runtime, escritura3/consultas4/cola y listener5/outbox1, dentro de sus presupuestos. La consulta medida devolvió1000 filas con índice hash de vehículo y orden residual. Fue evidencia parcial de integridad/recursos, sin emitir un manifiesto ampliado aprobado o inventar métricas de memoria/latencia por petición ausentes.
+
+[El perfil de cortes](ci-controls.md) conserva ahora el mismo origen y la CSP real. Pasaron dos pruebas focalizadas del transporte y los tres casos completos afectados —alerts-filter-live, realtime-recovery y visualization-coherence— en WebKit, Chromium y Firefox:9 casos aprobados, cero fallidos/omitidos. Usaron las imágenes de577 y el diff del harness #83; no acreditan otras correcciones posteriores o una ejecución ampliada completa. Lint y formato de los archivos afectados pasaron. Los fallos anteriores se conservan; CI de promoción y verificación final de main mantienen su candidato propio.
+
+## Fronteras de arquitectura — #84
+
+La configuración anterior aceptaba las tres negativas de auditoría: dominio→adaptador, dominio→node:fs y acceso privado cruzado. Se añadieron las fronteras backend y frontend descritas en [CI](ci-controls.md); AppShell se movió desde platform/layout al área de composición app/shell, sin cambiar su comportamiento. Las referencias privadas detectadas por la primera comprobación adicional pertenecían a fixtures unitarios que sustituyen proveedores DI; las nuevas reglas delimitan producción y las reglas anteriores se conservan sobre todas las fuentes.
+
+Pasaron23 casos de fronteras —incluidos los originales y el servidor compilado— y cinco casos externos añadidos después para Nest/pg/Leaflet/Chart.js/HttpClient:28 comprobaciones focalizadas en total. El primer intento del nuevo comprobador esperaba erróneamente salida10 del reporterJSON; se conservó el fallo y se verificó además el comando/reporter real de CI, que sí termina con error ante cada negativa. Los controles positivos pasan y la fuente actual no tiene violaciones:289 módulos/1072 dependencias. No se afirma que el intento fallido hubiera aprobado.
+
+También pasaron tipos de Angular, la prueba propia de AppShell y lint de los archivos afectados. No se repitieron todas las suites locales por el movimiento de composición; CI remoto conserva sus controles completos y la batería integral queda para el cierre de la unidad de correcciones.
+
+## Detalle temporal exacto — #85
+
+[La corrección #85](https://github.com/ngarayc/Nexo/issues/85) añade el metadato de salida observedAtOriginal desde el valor conservado, además del UTC exacto. No cambia los siete campos obligatorios de entrada, esquema SQL, identidad, orden, umbral o recibos. Las consultas lo leen de PostgreSQL; los eventos confirmados lo incluyen en sus notificaciones. Los lectores rechazan un original inválido o de otro instante y conservan las tramas históricas anteriores sin reescribir sus bytes. Un extra de entrada con ese nombre no sustituye el original autoritativo.
+
+Pasaron28 pruebas de evento, cuatro de mensajes y tres de trama almacenada; diez de protocolo Angular y tres de historial. El primer chequeo de tipos detectó una unión inferida en el fixture nuevo; se anotó con el contrato público. La primera prueba de detalle detectó espacios de plantilla alrededor del valor; se usa textContent para conservar la cadena seleccionable completa, sin recortar el dato. Se conservaron esos fallos y se repitieron sus comprobaciones afectadas. Tipos, lint y fronteras pasaron; el grafo actual tiene288 módulos/1074 dependencias.
+
+El recorrido ISO ampliado pasó en WebKit, Chromium y Firefox: original con coma/forma básica/offset y veinte cifras, orden exacto aunque las etiquetas de segundos coincidan, inspección por teclado/toque a360px y una observación tardía adicional recibida por SSE con el historial abierto. Verificó los originales recuperados por HTTP, UTC completos y latest sin retroceso. PostgreSQL/NGINX/API/Angular fueron reales; no hubo errores de página o casos omitidos.
+
+La comprobación focalizada del consumidor/HTTP volvió a acreditar20/2/2 y0/22/2, identidades/latest/alertas y43 efectos sin reset. Las nuevas imágenes API/web se construyeron y completaron Trivy con inventarios e IDs contrastados, sin HIGH/CRITICAL; DB no cambió. OpenAPI pasó el esquema oficial3.1 conservado y coincide con17 operaciones/33 esquemas; los cuatro fixtures siguen intactos. Esto acredita el incremento probado, no la ejecución completa de una candidatura final posterior.
+
+## Exclusión demostrable de adjuntos — #86
+
+La [corrección #86](https://github.com/ngarayc/Nexo/issues/86) prepara un adjunto sintético excluido antes de cada publicación y comprueba el contenido seleccionado. El agregado revisa también los cinco archivos realmente descargados. La política de workflows impide retirar, condicionar o desplazar esa comprobación y conserva los uploads exactos de cinco JSON ordinarios y un manifiesto ampliado.
+
+Pasaron once comprobaciones focalizadas de publicación/workflows: fixture físico con marcador excluido, contenido contaminado literal/escapado, nombres/rutas/adjuntos indebidos, archivos ausentes, contexto de CLI ajeno y modificación/omisión del paso previo. La CLI rechaza el contexto distinto con un diagnóstico fijo que no propaga datos crudos. Lint y validación de los workflows actuales pasaron. El verificador externo de descargas comprueba contenido y puede exigir además el paso real satisfactorio de GitHub.
+
+Esta verificación local no se presenta como upload remoto ejecutado. Los resultados del candidato remoto, sus archivos descargados y la publicación ampliada mantienen su comprobación propia antes de promover o cerrar la entrega.
+
+## Instrumentación real de carga y ajuste del comprobador — #87/#85
+
+[La corrección #87](https://github.com/ngarayc/Nexo/issues/87) añade observación monótona de POST/confirmación de recibos, resultados operativos y memoria real del servidor/contenedor. El mismo módulo se entrega a los tres consumidores del probe de consultas; no cambia la aplicación, límites de admisión o imágenes probadas en #85. El manifiesto ampliado exige métricas completas de200 POST y carga100.000; el smoke2000 no satisface ese criterio.
+
+Pasaron seis comprobaciones de agregación/lector/entrega ESM y siete de candidatura ampliada. Cubren percentiles independientes, unidades, contador de solicitudes, separación503 pendiente/fallo, PID/ámbito de cgroup, datos ilegibles, perfiles de lector, esquema cerrado y métricas incompletas. El smoke real2000 más repetición pasó:2000 eventos/100 vehículos/800 alertas,4 lotes/4000 posiciones y ausencia de nuevos efectos en la repetición. Midió cuatro POST HTTP200, cero fallos y30 muestras de memoria v2; el proceso API y el contenedor se observaron por separado. Es comprobación de instrumentación con muestra pequeña, sin extrapolar rendimiento o capacidad.
+
+La primera consulta oficial posterior falló con diagnóstico inicialmente acotado. Su repetición diagnóstica identificó que la lista cerrada del comprobador aún esperaba siete campos y rechazaba observedAtOriginal, añadido por #85. Se conservó la lista exacta actualizada de historial/alertas y se comprobó el valor original contra el primer evento fuente. No se abrió la respuesta a extras arbitrarios ni se cambió el fixture/oráculo. La repetición focalizada pasó ambos resultados20/2/2 y0/22/2, GET/POST equivalentes, snapshot, identidades, total8/4 y ausencia de efectos por consultas. El smoke ya aprobado no se repitió por ese ajuste de aserción.
+
+Lint de los archivos afectados pasó. El ampliado completo y el CI de la candidatura final conservan su ejecución propia; las métricas nuevas no se atribuyen retrospectivamente al ensayo577, que sigue registrado con sus fallos y evidencia parcial.
+
+## Coherencia documental y CI acumulado — #88
+
+La corrección documental mueve la retrospectiva a la ruta exigida por el PDF, actualiza funciones ya compuestas y conserva resultados históricos. Arquitectura recoge cinco migraciones y justifica la biblioteca pura compartida; operación declara Node en el host para el reset. El resumen de decisiones humanas explica la independencia del receptor y la retirada del formulario, sin publicar conversaciones. La [matriz final](final-audit.md) reúne hallazgos, correcciones, variantes aceptadas y pendientes de entrega. Pasaron enlaces internos, formato, integridad de los cuatro fixtures y la revisión de comandos/versiones; OpenAPI conserva sus operaciones y esquemas.
+
+Antes de ese cambio documental, el [CI de 5c821a3](https://github.com/ngarayc/Nexo/actions/runs/39881999395) completó sus seis jobs. Los cinco artefactos reales se descargaron y revalidaron contra SHA/ejecución/checkout: 465 API, 127 Angular, 127 PostgreSQL y 25 Chromium, sin fallos u omisiones. Los cinco pasos previos al upload concluyeron correctamente; el conjunto descargado respeta nombres/contenido y excluye el marcador sensible ficticio. Esta es la demostración remota de #86 para ese candidato, no una atribución retrospectiva a otros runs.
+
+Las promociones conservan CI propio y revisión de su diff. El cierre integral local de las correcciones y la verificación ampliada/final se acreditan por sus ejecuciones, sin repetir la batería local completa por cada issue documental.
+
+## Alcance vigente de evidencia y contratos — #90
+
+La [issue #90](https://github.com/ngarayc/Nexo/issues/90) ajusta la documentación y las tareas al alcance vigente de entrega. Los extractos de requisitos afectados están identificados como abreviados; el kit original se conserva por separado y no se presenta como modificado. Los fixtures, oráculos, reproductor HTTP y controles de promoción permanecen.
+
+El informe expone únicamente twoRenderedClients, pauseResume y ci como evidencia externa no evaluada por el comparador de datos. Backend, contratos, lector Angular, panel y OpenAPI comparten esos campos. La proyección HTTP también filtra metadatos retirados de informes históricos sin reescribir sus documentos persistidos; se comprueba en escenario, inspección y error de precondiciones.
+
+Pasaron 85 pruebas focalizadas de API y diez de Angular, incluidas compatibilidad histórica y campos obligatorios. También pasaron tipos, lint, formato, enlaces y los cuatro fixtures. La ejecución local integral anterior se interrumpió al pausar el objetivo general: conserva su prefijo aprobado como evidencia parcial de 15a25c3, sin declarar aprobado el recorrido completo. Este ajuste no repite esa batería; el CI remoto conserva sus workflows.
+
+## Política de promoción con evidencia reutilizada — #91
+
+El ajuste conserva los resultados históricos anteriores y sustituye la repetición por rama para las promociones siguientes. El ciclo ordinario [39890784362](https://github.com/ngarayc/Nexo/actions/runs/39890784362) aprobó en development la fuente d88b05b36a54be56a48d736a3d2351afc51893d3. El nuevo verificador descargó sus cinco ZIP por ID, comprobó digests, inventarios, pasos de publicación y reportes originales; la comprobación privada de fuente no se presenta como promoción ejecutada. La ejecución duplicada de PR39890787817 se canceló. Test y main conservaron sus revisiones previas.
+
+Los cambios del protocolo requieren su propio CI en development. La [política](ci-controls.md) define cómo las promociones posteriores acreditan árbol idéntico, procedencia y resultados reales sin reejecutar suites. Los controles locales focalizados incluyen rutas disjuntas, metadatos y reportes manipulados, artefactos/ZIP inválidos, intento cambiado y equivalencia de árboles Git reales. El resultado remoto de la ruta nueva debe registrarse con su ejecución concreta antes de integrar; la existencia de estos validadores no acredita esa integración.
+
+## Ensayo ampliado completo de las correcciones — d88b05b
+
+El recorrido local rehearsal de d88b05b36a54be56a48d736a3d2351afc51893d3 terminó con código0 y emitió un manifiesto satisfactorio revalidado. Construyó desde git archive, comprobó IDs/revisiones y escaneos completos de las tres imágenes, arranque/login/persistencia/reset y los19 archivos de sistema en Firefox y WebKit:25 casos aprobados por motor, sin omisiones. Conservó la CSP y los cortes bajo el mismo origen.
+
+La carga verificó100.000 eventos/100 vehículos/40.000 alertas y, tras repetir sin efectos nuevos,200 lotes/200.000 posiciones. Pico runtime13 dentro del presupuesto16; escritura3, consultas4, cola y listener5, outbox1. Los200 POST y sus confirmaciones tienen métricas propias:198 respuestas completas y2 pendientes503 resueltas consultando recibos, sin fallos de petición o respuestas inesperadas. El p95 observado de POST fue34.375,238ms; no representa latencia por evento, commit→UI o un SLA. La memoria muestreada del proceso API alcanzó736.727.040 bytes RSS; el cgroup, que incluye al cliente de carga,945.434.624 bytes. Los agregados conservan su fuente y límites de medición.
+
+Este ensayo completo resuelve la repetición local de los fallos del harness anteriores y comprueba la instrumentación de #87 sobre100.000. No se transforma en ejecución remota final, no acredita el protocolo posterior de #91 ni su promoción y conserva los resultados fallidos anteriores. Los servicios/datos habituales permanecieron intactos; solo se retiraron los recursos sintéticos de esta ejecución.

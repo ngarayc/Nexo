@@ -1,6 +1,6 @@
 # Admisión durable — E1-I02
 
-La [issue #14](https://github.com/ngarayc/Nexo/issues/14) prepara pg-boss, admite lotes mediante HTTP y permite consultar sus recibos durables. El [consumidor de E1-I03](classification.md) clasifica cada posición y confirma sus efectos y continuación conjuntamente. Un lote que termina dentro del plazo devuelve 200 con resultados durables; un trabajo aún pendiente conserva su respuesta 503 consultable. La pantalla conserva el acceso inicial de E0.
+La [issue #14](https://github.com/ngarayc/Nexo/issues/14) prepara pg-boss, admite lotes mediante HTTP y permite consultar sus recibos durables. El [consumidor de E1-I03](classification.md) clasifica cada posición y confirma sus efectos y continuación conjuntamente. Un lote que termina dentro del plazo devuelve 200 con resultados durables; un trabajo aún pendiente conserva su respuesta 503 consultable. El [dashboard](dashboard.md) consulta los datos confirmados mediante sesión y recibe sus cambios por SSE.
 
 ## Contratos HTTP y acceso
 

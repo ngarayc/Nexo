@@ -119,12 +119,20 @@ describe('evento estricto y reglas de clasificación independientes del transpor
     expect(vehicleState(value)).toBe(state);
     expect(isOverspeed(value)).toBe(alert);
   });
-  it('la vista pública tiene solo los siete campos y fecha UTC exacta, sin extras', () => {
+  it('la vista añade el original real a los siete campos, con UTC exacto y sin extras arbitrarios', () => {
     const value = event(
       { observedAt: '2026-10-18T05:05:00.1234567891-05:00' },
       ',"privateExtra":1e400',
     );
-    expect(eventView(value)).toEqual(base);
-    expect(Object.keys(eventView(value)).length).toBe(7);
+    expect(eventView(value)).toEqual({
+      ...base,
+      observedAtOriginal: '2026-10-18T05:05:00.1234567891-05:00',
+    });
+    expect(Object.keys(eventView(value)).length).toBe(8);
+  });
+  it('un extra llamado observedAtOriginal no sustituye la fecha realmente recibida', () => {
+    const value = event({}, ',"observedAtOriginal":"forged"');
+    expect(eventView(value).observedAtOriginal).toBe(base.observedAt);
+    expect(value.extra.property('observedAtOriginal')?.stringValue).toBe('forged');
   });
 });

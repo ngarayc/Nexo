@@ -126,6 +126,65 @@ it('resumen y totales se derivan del modelo completo aun cuando la búsqueda no 
   expect(fleet.summary()).toEqual({ OFF: 1, MOVING: 1, STOPPED: 1 });
   expect(Object.isFrozen(fleet.visibleItems())).toBe(true);
 });
+
+it('combina estado y búsqueda con AND sin alterar resumen o filtros de otro cliente', () => {
+  const fleet = new FleetFacade(),
+    other = new FleetFacade();
+  const base = [
+    vehicle(event({ vehicleId: 'VEH%01', speedKph: 81 })),
+    vehicle(event({ vehicleId: 'VEH%02', speedKph: 0 })),
+    vehicle(event({ vehicleId: 'OTHER', ignitionOn: false })),
+  ];
+  fleet.install(base);
+  other.install(base);
+  fleet.setSearch('%');
+  fleet.setStatus('STOPPED');
+  expect(fleet.visibleItems().map((view) => view.vehicleId)).toEqual(['VEH%02']);
+  expect(fleet.summary()).toEqual({ OFF: 1, MOVING: 1, STOPPED: 1 });
+  expect(fleet.total()).toBe(3);
+  expect(other.visibleItems().length).toBe(3);
+  expect(other.statusFilter()).toBeNull();
+  fleet.setStatus('OFF');
+  expect(fleet.visibleItems()).toEqual([]);
+  fleet.setSearch('');
+  expect(fleet.visibleItems().map((view) => view.vehicleId)).toEqual(['OTHER']);
+  expect(Object.isFrozen(fleet.visibleItems())).toBe(true);
+});
+
+it('latest confirmado cambia pertenencia al filtro y un tardío no revierte estado ni resumen', () => {
+  const fleet = new FleetFacade();
+  fleet.install([vehicle(event({ observedAt: '2026-01-01T00:01:00Z', speedKph: 0 }))]);
+  fleet.setStatus('MOVING');
+  expect(fleet.visibleItems()).toEqual([]);
+  fleet.apply(update(event({ eventId: 'next', observedAt: '2026-01-01T00:02:00Z' })));
+  expect(fleet.visibleItems().length).toBe(1);
+  expect(fleet.summary()).toEqual({ OFF: 0, MOVING: 1, STOPPED: 0 });
+  fleet.apply(update(event({ eventId: 'late', observedAt: '2026-01-01T00:01:30Z', speedKph: 0 })));
+  expect(fleet.get('V-1')?.eventId).toBe('next');
+  expect(fleet.visibleItems().length).toBe(1);
+  expect(fleet.summary()).toEqual({ OFF: 0, MOVING: 1, STOPPED: 0 });
+});
+
+it('snapshot conserva filtros y clear de sesión elimina búsqueda y estado', () => {
+  const fleet = new FleetFacade();
+  fleet.install([vehicle(event())]);
+  fleet.setStatus('STOPPED');
+  fleet.setSearch('V-');
+  fleet.install([vehicle(event({ vehicleId: 'V-2', speedKph: 0 }))]);
+  expect(fleet.statusFilter()).toBe('STOPPED');
+  expect(fleet.search()).toBe('V-');
+  expect(fleet.visibleItems().map((view) => view.vehicleId)).toEqual(['V-2']);
+  fleet.clearFilters();
+  expect(fleet.items().length).toBe(1);
+  expect(fleet.statusFilter()).toBeNull();
+  expect(fleet.search()).toBe('');
+  fleet.setStatus('OFF');
+  fleet.setSearch('other');
+  fleet.clear();
+  expect(fleet.items()).toEqual([]);
+  expect(fleet.statusFilter()).toBeNull();
+  expect(fleet.search()).toBe('');
+});
 it('alertas mantienen identidad única y orden descendente con precisión exacta', () => {
   const alerts = new AlertsFacade();
   alerts.apply(alert(event({ eventId: 'newer', observedAt: '2026-01-01T00:00:00.000000000002Z' })));

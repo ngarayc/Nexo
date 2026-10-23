@@ -58,6 +58,7 @@ export function eventView(event: TelemetryEvent): EventView {
     eventId: event.eventId,
     vehicleId: event.vehicleId,
     observedAt: observedInstantUtc(event.observedAt),
+    observedAtOriginal: event.observedAt.original,
     latitude: event.latitude,
     longitude: event.longitude,
     speedKph: event.speedKph,

@@ -8,6 +8,19 @@
   align-items: center;
   gap: 0.75rem;
 }
+.state-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  border: 0;
+  padding: 0;
+  margin-block: 1rem;
+}
+.state-filters button[aria-pressed='true'] {
+  background: #0c5b54;
+  border-color: #0c5b54;
+  color: white;
+}
 input {
   flex: 1 1 12rem;
   min-width: 0;

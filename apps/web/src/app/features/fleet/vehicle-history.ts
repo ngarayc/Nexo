@@ -1,6 +1,14 @@
-import { ChangeDetectionStrategy, Component, ElementRef, input, viewChildren } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  ElementRef,
+  input,
+  output,
+  viewChildren,
+} from '@angular/core';
 import type { EventView } from '@nexo/contracts';
-import { IdentityText } from '../../platform/presentation/identity-text';
+import { IdentityText, identityPreview } from '../../platform/presentation/identity-text';
 import { formatTime } from '../../platform/presentation/format-time';
 
 @Component({
@@ -26,6 +34,7 @@ import { formatTime } from '../../platform/presentation/format-time';
             <th scope="col">Encendido</th>
             <th scope="col">Latitud</th>
             <th scope="col">Longitud</th>
+            <th scope="col">Selección</th>
           </tr>
         </thead>
         <tbody>
@@ -48,18 +57,54 @@ import { formatTime } from '../../platform/presentation/format-time';
               <td>{{ event.ignitionOn ? 'Sí' : 'No' }}</td>
               <td>{{ event.latitude }}</td>
               <td>{{ event.longitude }}</td>
+              <td>
+                <button
+                  type="button"
+                  (click)="selectEvent.emit(event.eventId)"
+                  [attr.aria-pressed]="event.eventId === highlighted()"
+                  [attr.aria-label]="'Seleccionar observación ' + identityPreview(event.eventId)"
+                >
+                  Seleccionar
+                </button>
+              </td>
             </tr>
           }
         </tbody>
       </table>
     </div>
+    @if (selectedObservation(); as event) {
+      <section class="exact-time" aria-label="Fecha de la observación seleccionada">
+        <details>
+          <summary>Inspeccionar fecha exacta</summary>
+          <p>
+            La hora de Bogotá se resume a segundos; estos valores conservan la precisión recibida.
+          </p>
+          <dl>
+            <dt>Fecha recibida</dt>
+            <dd
+              data-testid="observation-original-time"
+              [textContent]="
+                event.observedAtOriginal ?? 'No disponible en esta notificación histórica.'
+              "
+            ></dd>
+            <dt>Instante UTC exacto</dt>
+            <dd data-testid="observation-utc-time" [textContent]="event.observedAt"></dd>
+          </dl>
+        </details>
+      </section>
+    }
   `,
   styleUrl: '../../platform/presentation/telemetry-table.css',
 })
 export class VehicleHistory {
   readonly items = input.required<readonly EventView[]>();
   readonly highlighted = input<string | null>(null);
+  readonly selectEvent = output<string>();
+  readonly identityPreview = identityPreview;
   readonly formatTime = formatTime;
+  readonly selectedObservation = computed(() =>
+    this.items().find((event) => event.eventId === this.highlighted()),
+  );
   private readonly rows = viewChildren<ElementRef<HTMLTableRowElement>>('eventRow');
   focusEvent(eventId: string): boolean {
     const index = this.items().findIndex((event) => event.eventId === eventId);

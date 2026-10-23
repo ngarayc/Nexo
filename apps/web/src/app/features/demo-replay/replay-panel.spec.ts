@@ -169,7 +169,6 @@ it('verificación muestra diferencias y valores como texto con hora Bogotá24h',
       twoRenderedClients: 'not_assessed' as const,
       pauseResume: 'not_assessed' as const,
       ci: 'not_assessed' as const,
-      video: 'not_assessed' as const,
     },
   };
   detail.set({

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../support/browser-test.mjs';
 
 test('presenta Angular compilado con estilos bajo CSP y sin errores de ejecución', async ({
   page,

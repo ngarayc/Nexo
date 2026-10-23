@@ -2,8 +2,9 @@ import { execFileSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { join, dirname } from 'node:path';
 import { readFile, rm, writeFile, mkdir, readdir } from 'node:fs/promises';
-import { testStack } from '../../tests/support/stack.mjs';
+import { browserStack } from '../../tests/support/browser-stack.mjs';
 import { validatePlaywrightReport } from './results.mjs';
+import { browserFailureStage } from './failure-diagnostics.mjs';
 
 await rm('reports/system-summary.json', { force: true });
 const inventory = (await readdir('tests/system', { recursive: true }))
@@ -16,7 +17,7 @@ const records = [];
 let failed = false;
 let total = 0;
 for (const file of inventory) {
-  const stack = testStack({ webPort: 8081 });
+  const stack = browserStack(file);
   const output = join(directory, file + '.json');
   const record = { file, report: output, status: 'failed' };
   try {
@@ -38,7 +39,15 @@ for (const file of inventory) {
     console.log(`system: ${file}, ${tests.passed} casos aprobados.`);
   } catch {
     failed = true;
-    console.error(`system: ${file} no aprobado; su diagnóstico permanece privado.`);
+    let stage;
+    try {
+      stage = browserFailureStage(JSON.parse(await readFile(output, 'utf8')));
+    } catch {
+      /* Un proceso que no inició puede carecer de reporte. */
+    }
+    console.error(
+      `system: ${file} no aprobado; su diagnóstico permanece privado.${stage ? ' Categoría: ' + stage + '.' : ''}`,
+    );
   } finally {
     try {
       stack.close();

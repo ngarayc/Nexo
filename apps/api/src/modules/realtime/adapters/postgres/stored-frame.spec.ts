@@ -66,3 +66,40 @@ it('payload, identidad, versión, estado, alerta o tamaño incompatibles nunca s
     ),
   ).toThrow('OUTBOX_PAYLOAD_INVALID');
 });
+
+it('conserva el original exacto y lee la trama histórica sin metadato sin reescribir sus bytes', () => {
+  const message = changeMessage('telemetry.accepted', fixture(), randomUUID());
+  const { observedAtOriginal, ...legacyData } = message.data;
+  expect(observedAtOriginal).toBe('2026-01-01T01:00:00.1234567890001+01:00');
+  const legacy = { ...message, data: legacyData };
+  const frame = changeFrame(legacy);
+  expect(
+    storedFrame(
+      {
+        messageId: message.messageId,
+        type: message.type,
+        schemaVersion: 1,
+        frameBytes: Buffer.byteLength(frame),
+      },
+      JSON.stringify(legacy),
+    ),
+  ).toBe(frame);
+  for (const original of [null, 1, 'not-a-date', '2026-01-01T00:00:00.1234567890002Z']) {
+    const payload = JSON.stringify({
+      ...message,
+      data: { ...message.data, observedAtOriginal: original },
+    });
+    const candidate = `id:${message.messageId}\nevent:${message.type}\ndata:${payload}\n\n`;
+    expect(() =>
+      storedFrame(
+        {
+          messageId: message.messageId,
+          type: message.type,
+          schemaVersion: 1,
+          frameBytes: Buffer.byteLength(candidate),
+        },
+        payload,
+      ),
+    ).toThrow('OUTBOX_PAYLOAD_INVALID');
+  }
+});

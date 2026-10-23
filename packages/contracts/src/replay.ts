@@ -122,7 +122,6 @@ export interface ReplayReportDto {
     twoRenderedClients: 'not_assessed';
     pauseResume: 'not_assessed';
     ci: 'not_assessed';
-    video: 'not_assessed';
   }>;
 }
 export interface ReplayDetailDto {

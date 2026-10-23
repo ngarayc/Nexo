@@ -15,7 +15,6 @@ export default defineConfig({
     baseURL: 'http://localhost:8081',
     trace: 'off',
     screenshot: 'off',
-    video: 'off',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 });

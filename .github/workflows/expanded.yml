@@ -1,0 +1,56 @@
+name: Validación ampliada
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: SHA completo del candidato
+        required: true
+        type: string
+      stage:
+        description: Ensayo o cierre final de development
+        required: true
+        default: rehearsal
+        type: choice
+        options: [rehearsal, final]
+  workflow_call:
+    inputs:
+      source:
+        required: true
+        type: string
+      stage:
+        required: true
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: expanded-${{ inputs.source }}
+  cancel-in-progress: false
+jobs:
+  expanded:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      NEXO_CANDIDATE: ${{ inputs.source }}
+      NEXO_STAGE: ${{ inputs.stage }}
+    steps:
+      - name: Validar SHA antes del checkout
+        shell: bash
+        run: '[[ "$NEXO_CANDIDATE" =~ ^[0-9a-f]{40}$ ]]'
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ inputs.source }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: ./.github/actions/setup-project
+      - name: Preparar motores fijados y dependencias de Linux
+        run: npx --no-install playwright install --with-deps firefox webkit
+      - name: Comprobar candidatura completa
+        run: node scripts/ci/run-expanded.mjs "$NEXO_CANDIDATE" "$NEXO_STAGE"
+      - name: Verificar publicación y exclusión
+        run: node scripts/ci/check-publication.mjs expanded
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: expanded-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/expanded/manifest.json
+          if-no-files-found: error
+          retention-days: 7

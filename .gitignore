@@ -6,6 +6,7 @@ coverage/
 reports/
 test-results/
 playwright-report/
+apps/web/public/map-provider.json
 .env
 .env.*
 !.env.example

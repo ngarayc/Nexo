@@ -3,10 +3,10 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { expect, it, vi } from 'vitest';
 import { AppShell } from './app-shell';
-import { AccessFacade } from '../../features/access/access-facade';
-import { LiveMonitor } from '../../features/live-monitoring/live-monitor';
-import type { LivePhase } from '../../features/live-monitoring/live-monitor';
-import { FleetFacade } from '../../features/fleet/fleet-facade';
+import { AccessFacade } from '../features/access/access-facade';
+import { LiveMonitor } from '../features/live-monitoring/live-monitor';
+import type { LivePhase } from '../features/live-monitoring/live-monitor';
+import { FleetFacade } from '../features/fleet/fleet-facade';
 
 it('carga y error inicial no presentan cero confirmado; recuperación conserva datos señalados y acción accesible', async () => {
   const monitor = {

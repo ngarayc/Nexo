@@ -7,6 +7,10 @@ import { FleetFacade } from './fleet-facade';
 import { VehicleDetailFacade } from './vehicle-detail-facade';
 import type { DetailPhase } from './vehicle-detail-facade';
 import { LiveMonitor } from '../live-monitoring/live-monitor';
+import { MapProviderStore } from '../../platform/maps/map-provider-store';
+import { FLEET_MAP_FACTORY } from './adapters/fleet-map-factory';
+import { TRAJECTORY_FACTORY } from './adapters/trajectory-factory';
+import { SPEED_CHART_FACTORY } from './adapters/speed-chart-factory';
 
 function setup() {
   const selected = signal<string | null>(null),
@@ -32,18 +36,43 @@ function setup() {
       hasBase.set(false);
     }),
     retry: vi.fn(),
+    selectObservation: vi.fn((id: string) => focusedEvent.set(id)),
   };
   const monitor = { hasBase: signal(false) };
+  const map = {
+    sync: vi.fn(),
+    fit: vi.fn(),
+    focusVehicle: vi.fn(),
+    retryTiles: vi.fn(),
+    destroy: vi.fn(),
+  };
   TestBed.configureTestingModule({
     imports: [FleetPage],
     providers: [
       { provide: VehicleDetailFacade, useValue: detail },
       { provide: LiveMonitor, useValue: monitor },
+      {
+        provide: MapProviderStore,
+        useValue: {
+          load: vi.fn(),
+          phase: signal('ready'),
+          provider: signal({
+            tileUrl: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+            allowedOrigin: 'https://tile.openstreetmap.org',
+            attribution: '© OpenStreetMap contributors',
+            attributionUrl: 'https://www.openstreetmap.org/copyright',
+            maxZoom: 18,
+          }),
+        },
+      },
+      { provide: FLEET_MAP_FACTORY, useValue: () => map },
+      { provide: TRAJECTORY_FACTORY, useValue: () => ({ ...map, focusEvent: vi.fn() }) },
+      { provide: SPEED_CHART_FACTORY, useValue: () => ({ sync: vi.fn(), destroy: vi.fn() }) },
     ],
   });
   const fixture = TestBed.createComponent(FleetPage);
   const root: HTMLElement = fixture.nativeElement;
-  return { fixture, root, detail, monitor, fleet: TestBed.inject(FleetFacade) };
+  return { fixture, root, detail, monitor, map, fleet: TestBed.inject(FleetFacade) };
 }
 const vehicle = {
   eventId: 'event',
@@ -61,6 +90,12 @@ it('distingue primera carga, vacío confirmado y búsqueda sin coincidencias sin
   await fixture.whenStable();
   expect(root.textContent).not.toContain('No hay vehículos registrados.');
   expect(root.querySelector('input')?.disabled).toBe(true);
+  expect(
+    [...root.querySelectorAll<HTMLButtonElement>('fieldset button')].every(
+      (button) => button.disabled,
+    ),
+  ).toBe(true);
+  expect(root.querySelector('fieldset')?.textContent).not.toContain('(0)');
   monitor.hasBase.set(true);
   await fixture.whenStable();
   expect(root.textContent).toContain('No hay vehículos registrados.');
@@ -121,4 +156,56 @@ it('abrir enfoca el panel y cerrar devuelve foco a su fila o a búsqueda si ya n
   fixture.componentInstance.close();
   await fixture.whenStable();
   expect(document.activeElement).toBe(root.querySelector('input'));
+});
+
+it('el resumen interactivo conserva conteos globales, selección y foco ante actualizaciones', async () => {
+  const { fixture, root, monitor, fleet } = setup();
+  monitor.hasBase.set(true);
+  fleet.install([
+    vehicle,
+    { ...vehicle, vehicleId: 'moving', eventId: 'moving-event', speedKph: 30, status: 'MOVING' },
+  ]);
+  await fixture.whenStable();
+  const stopped = [...root.querySelectorAll<HTMLButtonElement>('fieldset button')].find((button) =>
+    button.textContent?.includes('Detenidos'),
+  )!;
+  expect(stopped.textContent).toContain('(1)');
+  stopped.focus();
+  stopped.click();
+  await fixture.whenStable();
+  expect(stopped.getAttribute('aria-pressed')).toBe('true');
+  expect(fleet.visibleItems().length).toBe(1);
+  expect(root.querySelector('.summary')?.textContent).toContain('1 de 2 vehículos');
+  fleet.install([{ ...vehicle, eventId: 'replacement' }]);
+  await fixture.whenStable();
+  expect(document.activeElement).toBe(stopped);
+  expect(stopped.getAttribute('aria-pressed')).toBe('true');
+  expect(root.querySelector('.summary')?.textContent).toContain('1 de 1 vehículos');
+});
+
+it('indica detalle oculto y limpiar filtros conserva el vehículo y devuelve foco a búsqueda', async () => {
+  const { fixture, root, monitor, fleet, detail } = setup();
+  monitor.hasBase.set(true);
+  fleet.install([vehicle]);
+  detail.selected.set(vehicle.vehicleId);
+  detail.items.set([vehicle]);
+  detail.hasBase.set(true);
+  detail.phase.set('ready');
+  fleet.setStatus('MOVING');
+  fleet.setSearch('missing');
+  await fixture.whenStable();
+  expect(root.textContent).toContain('El vehículo seleccionado está oculto por los filtros');
+  expect(root.querySelector('nexo-vehicle-history')).not.toBeNull();
+  const clear = [...root.querySelectorAll<HTMLButtonElement>('button')].find((button) =>
+    button.textContent?.includes('Limpiar filtros de flota'),
+  )!;
+  clear.focus();
+  clear.click();
+  await fixture.whenStable();
+  expect(detail.selected()).toBe(vehicle.vehicleId);
+  expect(detail.close).not.toHaveBeenCalled();
+  expect(fleet.statusFilter()).toBeNull();
+  expect(fleet.search()).toBe('');
+  expect(document.activeElement).toBe(root.querySelector('input'));
+  expect(root.textContent).not.toContain('El vehículo seleccionado está oculto');
 });
