@@ -3,6 +3,8 @@ export interface EventView {
   readonly eventId: string;
   readonly vehicleId: string;
   readonly observedAt: string;
+  // Metadato de salida. Opcional para leer notificaciones conservadas anteriores.
+  readonly observedAtOriginal?: string;
   readonly latitude: number;
   readonly longitude: number;
   readonly speedKph: number;

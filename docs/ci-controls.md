@@ -44,7 +44,7 @@ La [corrección #43](https://github.com/ngarayc/Nexo/issues/43) exige que el esc
 
 `scripts/ci/results.mjs` exige los cinco controles: quality, unit, integration, security-source y system. Su evaluación rechaza fallo, ausencia, cancelación, skip, reportes de otra revisión/ejecución/intento y comprobaciones obligatorias incompletas. La revisión hacia main utiliza un contexto separado y obligatorio, descrito a continuación.
 
-Los reportes publicables solo contienen versión de formato, job, SHA, ejecución, intento, nombres de controles, resultado y métricas de pruebas. Campos adicionales se rechazan. No se publican respuestas de aplicación, logs crudos, cookies, hashes, entornos o trazas.
+Los reportes ordinarios publicables solo contienen versión de formato, job, SHA, ejecución, intento, nombres de controles, resultado y métricas de pruebas. Campos adicionales se rechazan. No se publican respuestas de aplicación, logs crudos, cookies, hashes, entornos o trazas.
 
 El runner de navegador crea un stack sintético nuevo por cada archivo de su inventario. Así, el fixture oficial parte de una base vacía sin borrar los datos de otro escenario o de la aplicación habitual. Conserva el mismo job system y los cinco artefactos permitidos. Valida cada reporte contra su archivo y suma únicamente casos aprobados; un fallo de prueba, reporte o limpieza impide emitir el resumen satisfactorio.
 
@@ -68,7 +68,7 @@ Las 31 pruebas de los controles incluyen omisiones, reportes antiguos, discrepan
 
 ## Workflows y revisión del candidato
 
-[CI](../.github/workflows/ci.yml) se ejecuta en pushes de las tres ramas permanentes y PR hacia test/main. Quality precede a los otros cuatro controles. `ci-required` se ejecuta con `always()` y verifica sus resultados y cinco reportes del mismo SHA, ejecución e intento. Los uploads nombran únicamente cada JSON saneado, exigen su existencia y conservan siete días. No hay despliegue automático.
+[CI](../.github/workflows/ci.yml) se ejecuta en pushes de las tres ramas permanentes y PR hacia test/main. En la ruta completa de development, quality precede a los otros cuatro controles y ci-required verifica sus cinco reportes del mismo SHA, ejecución e intento. En las promociones, ci-required verifica y reutiliza esos resultados según #91. Los uploads nombran únicamente cada JSON saneado, exigen su existencia y conservan siete días. No hay despliegue automático.
 
 [La revisión de main](../.github/workflows/main-review.yml) solo se ejecuta para PR con destino main y espera el entorno `main-review`, cuyo revisor requerido es el autor y cuyo bypass administrativo está deshabilitado. Después de su intervención valida la promoción y checkout exactos. `main` requiere ambos contextos, `ci-required` y `main-review`; `test` requiere `ci-required`, vinculados a la aplicación GitHub Actions observada. Se conserva PR, base actualizada y protección contra force push/borrado. Las PR [#8](https://github.com/ngarayc/Nexo/pull/8) y [#22](https://github.com/ngarayc/Nexo/pull/22) ya tienen aprobación real del autor e integración comprobada; [verificación](verification.md) identifica sus candidatos y ejecuciones. Esas aprobaciones no cubren cambios posteriores.
 
@@ -87,3 +87,49 @@ La preparación instala npm y el lockfile con `--no-audit` para concentrar la co
 ## Compatibilidad de puntuación de Refs — #62
 
 La [issue #62](https://github.com/ngarayc/Nexo/issues/62) corrige la compatibilidad del trailer publicado en db75242: `Refs #57, #59.`. [CI propio de PR61,39828497893](https://github.com/ngarayc/Nexo/actions/runs/39828497893) rechazó ese punto final conforme a la gramática anterior, después de pasar calidad de fuentes; los jobs funcionales dependientes no se ejecutaron. La corrección admite solo ese signo opcional final y mantiene extracción de números, identidad real de cada issue, rechazo de PR/repositorio ajeno y reglas de contexto/promoción. No hay excepción por commit, exclusión de historia, cambio de workflows o reducción de controles. El historial y el intento fallido se conservan; el candidato nuevo requiere CI propio completo.
+
+## Recorrido ampliado de cierre — #77
+
+El [workflow ampliado](../.github/workflows/expanded.yml) es manual y recibe SHA y etapa explícitos. Conserva permisos de lectura, actions fijadas, validación del SHA antes del checkout y un único upload por lista cerrada. El runner vuelve a comprobar checkout/ejecución y el development vigente para cierre final. El despacho CI con profile expanded permite ejecutar ese recorrido antes de promover. [El procedimiento](expanded-validation.md) detalla exportación limpia, imágenes escaneadas/probadas, carga100.000, Firefox/WebKit y manifiesto saneado. La ruta ordinaria conserva sus cinco controles, agregado y cinco artefactos; este workflow no omite sus controles ni concede revisión humana.
+
+Las negativas de workflow rechazan referencia móvil, guardia ausente, pasos omitidos, escritura y upload amplio. Las del manifiesto rechazan otro candidato/intento/fixture/imagen, contenido crudo en niveles anidados, ensayo local presentado como final, carga menor, exceso de conexiones, reset pendiente o resultados de navegador incompletos. El cierre real requiere los resultados del SHA final y no la existencia de estos archivos.
+
+## Cortes SSE bajo el mismo origen
+
+La [corrección #83](https://github.com/ngarayc/Nexo/issues/83) conserva el origen canónico al probar fallos de conexión. Los tres archivos con cortes usan un perfil compartido por los runners ordinario y ampliado: NGINX publica un puerto efímero de loopback propio, manteniendo el origen de aplicación8081. El intermediario del caso sirve ese mismo origen y transporta HTTP/SSE al NGINX real; un identificador de prueba selecciona las conexiones TCP que se destruyen. La otra sesión y las consultas siguen pasando. El destino solo admite el puerto propio de loopback; la limpieza cierra también las conexiones restantes.
+
+La versión anterior reescribía el SSE a otro origen. En WebKit, CSP bloqueaba antes de que el intermediario recibiera una petición; el SSE directo funcionaba. No se relajaron cabeceras, simularon mensajes o eliminaron casos. Las pruebas de transporte comprueban cuerpo, sesión, origen y CSP conservados; los recorridos integrados usan la aplicación, PostgreSQL y SSE reales. [Verificación](verification.md) identifica los resultados y el alcance de esa corrección.
+
+## Fronteras de código comprobadas
+
+[La corrección #84](https://github.com/ngarayc/Nexo/issues/84) mantiene las cinco reglas anteriores y añade entradas públicas entre los seis módulos backend, independencia de dominio/casos de uso respecto de adaptadores/frameworks/base, y dominio sin IO de Node. En Angular se declaran superficies concretas de colaboración: fachadas, coordinador de sincronización y acceso de sesión. Platform no importa funcionalidades; fachadas, transportes y controles de presentación tienen restricciones propias. Las páginas, AppShell y el panel que componen vistas conservan esa responsabilidad fuera de los controles de presentación. AppShell se ubica en app/shell.
+
+Las nuevas reglas de capas se aplican al código de producción; los fixtures unitarios pueden inspeccionar proveedores privados de otro módulo para comprobar su integración HTTP/DI. Ciclos y las cinco reglas anteriores siguen analizando también las pruebas. No se excluyen dependencias compiladas alcanzadas desde una fuente. Al añadir una funcionalidad o superficie pública, su colaboración debe quedar explícita en la configuración y sus regresiones.
+
+Las negativas ejecutan el grafo y también el comando con el reporter efectivo de CI: detectar una violación en JSON por sí solo no acredita bloqueo por código de salida. Los controles positivos conservan imports públicos y colaboración legítima. [Verificación](verification.md) registra las pruebas ejecutadas.
+
+## Comprobación inmediatamente anterior al upload
+
+[La corrección #86](https://github.com/ngarayc/Nexo/issues/86) añade un paso explícito antes de cada upload ordinario y ampliado. Prepara en reports/raw un storageState.synthetic.json con un marcador ficticio, comprueba que existe y selecciona únicamente el JSON permitido. Rechaza archivos adicionales, rutas alternativas y el marcador, incluso escrito con escapes JSON. El paso vuelve a comprobar el contexto y el esquema cerrado del reporte; el ampliado contrasta además fixtures, inventario y las imágenes/revisiones actuales.
+
+El control de workflows exige ese paso sin tolerancia de errores, inmediatamente antes del upload final: incondicional dentro de las ejecuciones ordinaria/ampliada y habilitado junto al upload únicamente en la ruta de promoción. Permanecen cinco artefactos ordinarios y un manifiesto ampliado separado; el adjunto sintético y los diagnósticos no se publican. ci-required vuelve a revisar el conjunto real descargado y la ausencia del marcador antes de validar resultados/candidato/intento. La revisión externa de descargas conserva las mismas comprobaciones y acredita por separado si el paso previo terminó efectivamente en GitHub.
+
+Las negativas locales comprueban el mecanismo; su existencia no acredita que una ejecución remota posterior lo haya completado. [Verificación](verification.md) y las ejecuciones identifican ese estado. No se usa una credencial real o una filtración para demostrar el control.
+
+## Reutilización de evidencia al promover — #91
+
+El ciclo completo se ejecuta en un push de development: quality precede a unit, integration, security-source y system; ci-required exige los cinco resultados y sus reportes del mismo SHA/run/intento. El despacho manual con perfil full sirve para una comprobación ordinaria explícita en development. No se promueve ni despliega test hasta terminar la implementación y sus verificaciones de entrega.
+
+Las PR development→test y test→main, y sus merges posteriores, ejecutan ci-required para verificar evidencia existente. No instalan dependencias de la aplicación, construyen imágenes ni repiten suites/escaneos. Los cinco jobs ordinarios aparecen omitidos porque pertenecen a la otra ruta; el agregado exige esa ruta explícita, verifica la procedencia de promoción y no convierte esos skips en resultados de pruebas.
+
+[El verificador](../scripts/ci/reuse-evidence.mjs) busca una revisión antecesora de development cuyo árbol Git sea exactamente igual al candidato, incluido el merge sintético de una PR. Exige ejecución satisfactoria del workflow CI del mismo repositorio, cinco controles y agregado satisfactorios del intento actual, pasos de exclusión aprobados y cinco artefactos vigentes. Descarga cada ZIP por ID, comprueba su digest SHA-256 y exige un único JSON con el nombre previsto. Revalida la lista publicable, el marcador excluido y todos los reportes contra su SHA, ejecución e intento originales. Reconsulta el intento al terminar.
+
+El árbol Git incluye fuentes, lockfile, configuración, pruebas, fixtures y documentación. Un merge que modifique cualquiera de esos archivos requiere volver a development y comprobar el nuevo contenido. Mismo nombre de rama, diff aparente, etiqueta o aprobación anterior no acreditan equivalencia. La evidencia certifica una ejecución en su entorno original; no verifica cambios posteriores de servicios externos, nuevas bases de vulnerabilidades o una instalación desplegada. Una comprobación nueva por esos motivos debe solicitarse explícitamente, no dispararse por promover una rama.
+
+Sin evidencia íntegra, con ejecución fallida/en curso, jobs omitidos, artefactos caducados/ausentes o árbol distinto, la promoción falla. No hay fallback que repita automáticamente las suites ni un éxito vacío. Si la PR se comprueba antes de terminar el CI de development, se repite únicamente su verificador de promoción cuando exista la evidencia; no se vuelve a ejecutar el ciclo completo. Los cinco JSON originales conservan su SHA/run/intento; nunca se renombran como si se hubieran ejecutado sobre el merge.
+
+La promoción publica únicamente reports/promotion/manifest.json: candidato, árbol común, contexto de promoción, ejecución verificadora, fuente/ejecución/intento probados y hashes de los cinco reportes. Es evidencia de reutilización, separada de los cinco artefactos ordinarios. Se comprueba el adjunto excluido antes del upload y no se publican logs o ZIP crudos. La protección sigue exigiendo ci-required; main exige además main-review y la aprobación humana del candidato actual.
+
+El perfil manual expanded llama al [workflow ampliado](../.github/workflows/expanded.yml) del mismo commit de development. Ejecuta únicamente ese recorrido, sin repetir el ordinario. Su manifiesto final identifica esa fuente realmente probada; la publicación posterior vincula el árbol promovido con ella, conservando SHA e identidad de las imágenes originales.
+
+El mecanismo usa [ejecuciones e intentos de Actions](https://docs.github.com/en/rest/actions/workflow-runs), [artefactos identificados y sus digests](https://docs.github.com/en/rest/actions/artifacts) y [workflows reutilizables del mismo repositorio](https://docs.github.com/en/actions/how-tos/reuse-automations/reuse-workflows). La igualdad de árbol y los rechazos son controles propios de Nexo, descritos en la [issue #91](https://github.com/ngarayc/Nexo/issues/91).

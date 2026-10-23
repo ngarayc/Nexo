@@ -1,6 +1,6 @@
 # Diario durable del reproductor
 
-La [issue #38](https://github.com/ngarayc/Nexo/issues/38) incorpora persistencia y operaciones del diario del emisor simulado. El [verificador #40](replay-verification.md) añade su comparación con los oráculos. Todavía no se ofrece motor HTTP, controles de replay, panel o reset. El receptor conserva su cola y procesamiento independientes.
+La [issue #38](https://github.com/ngarayc/Nexo/issues/38) incorpora persistencia y operaciones del diario del emisor simulado. El [verificador #40](replay-verification.md) añade su comparación con los oráculos. El [motor HTTP](replay-emitter.md), los controles y el [panel](replay-panel.md) usan ese diario; el [reset](demo-reset.md) permanece como operación local explícita. El receptor conserva su cola y procesamiento independientes.
 
 ## Datos y relaciones
 
@@ -31,9 +31,9 @@ ingestionId se registra **antes** de enviar HTTP y puede no tener todavía recib
 PostgresReplayJournal recibe los pools y turnos de acceso; no crea otro pool o broker. Usa transacciones breves y un bloqueo asesor propio, distinto del de admisión de ingesta. No realiza HTTP ni conserva una conexión/exclusión esperando red.
 
 1. Crear una ejecución reserva sus 24 posiciones dentro del máximo de 1.000 ejecuciones retenidas hasta reset. No es necesario precrear intentos que aún no se realizaron.
-2. beginAttempt guarda línea/ingestionId antes de delegar al futuro emisor. Solo admite la siguiente posición de una ejecución reproduciendo y una línea en curso.
+2. beginAttempt guarda línea/ingestionId antes de delegar al emisor HTTP. Solo admite la siguiente posición de una ejecución reproduciendo y una línea en curso.
 3. resolveAttempt registra el desenlace y avanza cursor/revisión en la misma transacción. Las restricciones diferidas comprueban coherencia al COMMIT, incluso si un escritor intenta separar esas sentencias.
-4. El resultado se devuelve después de confirmar. Si se pierde la confirmación, el método falla y el consumidor debe releer antes de autorizar otro efecto; el fallo no demuestra rollback. La coordinación del motor/recibos de comandos se implementará con los controles HTTP.
+4. El resultado se devuelve después de confirmar. Si se pierde la confirmación, el método falla y el consumidor debe releer antes de autorizar otro efecto; el fallo no demuestra rollback. La coordinación del motor y los recibos de comandos aplican esa relectura mediante los [controles HTTP](replay-emitter.md).
 
 Cada modificación exige la revisión durable esperada; dos coordinadores con conexiones independientes no ganan sobre la misma revisión. La capacidad, único activo y unicidad de intento también tienen protección SQL. Alcanzar el cupo impide crear ejecuciones, pero conserva lecturas y cierre/recuperación de las existentes.
 
@@ -45,7 +45,7 @@ Los diagnósticos permiten únicamente código cerrado, estado HTTP, admisión, 
 
 Los intentos finalizados y sus resultados no se reescriben. Consultar después el recibo puede aportar una observación adicional al operador, sin convertir un intento incierto en clasificación original. Los informes finalizados de ejecución/escenario son inmutables. El usuario de runtime carece de DELETE y de UPDATE sobre identidades/entrada del diario.
 
-recover conserva recorridos terminales y marca cualquier ejecución no terminada —incluida pausada— como interrumpida/inconclusa; un intento en curso queda incierto. No programa trabajos o envíos. El futuro módulo del motor compondrá esta operación en el arranque antes de admitir controles; este incremento la verifica como operación del adaptador, sin anunciar todavía esa integración.
+recover conserva recorridos terminales y marca cualquier ejecución no terminada —incluida pausada— como interrumpida/inconclusa; un intento en curso queda incierto. No programa trabajos o envíos. DemoRuntime compone esta operación al arrancar, antes de admitir controles. La recuperación del diario conserva incertidumbre y requiere una nueva intención explícita para emitir; sus pruebas de adaptador y composición se distinguen en verificación.
 
 El [emisor #42](replay-emitter.md) amplía el puerto con cierre e informe en una misma transacción y confirmación de intención tras la barrera advisory existente. Las pruebas SQL pierden la respuesta antes/después de COMMIT y comprueban la espera real del bloqueo; una ausencia anterior no se interpreta como rollback.
 
@@ -61,4 +61,4 @@ Las pruebas puras cubren partición/prefijo/intervalo y diagnóstico. PostgreSQL
 
 Los estados/resultados de estos casos SQL son **sintéticos**: asignar clasificaciones o un informe controlado prueba el diario, sin acreditar 24 peticiones HTTP, conformidad oficial o una reproducción real. [Verificación](verification.md) identifica resultados ejecutados; motor, preparación/verificador y recorrido integral mantienen sus incrementos propios.
 
-[PostgreSQL 18: restricciones](https://www.postgresql.org/docs/18/ddl-constraints.html) aporta PK/FK/CHECK/índices; [CREATE TRIGGER](https://www.postgresql.org/docs/18/sql-createtrigger.html) permite comprobar el conjunto al final de la transacción; [bloqueos asesores](https://www.postgresql.org/docs/18/explicit-locking.html#ADVISORY-LOCKS) coordina las operaciones breves. Nexo añade su máquina de estados, prefijo, marcador, cuotas y separación de verificación. No se atribuye atomicidad entre el diario y el futuro HTTP a esas herramientas.
+[PostgreSQL 18: restricciones](https://www.postgresql.org/docs/18/ddl-constraints.html) aporta PK/FK/CHECK/índices; [CREATE TRIGGER](https://www.postgresql.org/docs/18/sql-createtrigger.html) permite comprobar el conjunto al final de la transacción; [bloqueos asesores](https://www.postgresql.org/docs/18/explicit-locking.html#ADVISORY-LOCKS) coordina las operaciones breves. Nexo añade su máquina de estados, prefijo, marcador, cuotas y separación de verificación. No se atribuye atomicidad entre el diario y el envío HTTP a esas herramientas.

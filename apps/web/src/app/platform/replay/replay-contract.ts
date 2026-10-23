@@ -199,7 +199,7 @@ function report(v: unknown): v is ReplayReportDto {
         one(c['state'], ['pending', 'matches', 'differs', 'unavailable']),
     ) &&
     object(v['externalEvidence']) &&
-    ['twoRenderedClients', 'pauseResume', 'ci', 'video'].every(
+    ['twoRenderedClients', 'pauseResume', 'ci'].every(
       (k) => (v['externalEvidence'] as ObjectValue)[k] === 'not_assessed',
     )
   );

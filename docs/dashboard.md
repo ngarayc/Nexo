@@ -53,3 +53,9 @@ La vista materializa todas las filas de sus colecciones; no hay paginación de s
 ## Comprobaciones
 
 Pruebas de presentación verifican ausencia de ceros/vacíos inventados, estados de historial, representación de Unicode/HTML, selección por identidad y recuperación de foco. Chromium con API/PostgreSQL/NGINX reales comprueba contenido renderizado, búsqueda literal por IDs exactos, tardío recibido por SSE, hora 24h, pantalla de 360 px, teclado y POST JSON para 70.000 caracteres, NUL, una unidad sustituta aislada y los IDs `.`/`..`. [Verificación](verification.md) registra los resultados y candidatos efectivos.
+
+## Inspección temporal accesible
+
+Seleccionar una observación en el historial, trayectoria, gráfico o enlace de alerta habilita Inspeccionar fecha exacta en el historial. El control nativo details/summary se abre con teclado o toque; muestra Fecha recibida y el Instante UTC exacto completos, como texto seleccionable. Las filas mantienen la hora resumida de Bogotá24h y las muestras con igual etiqueta visual conservan identidades distintas.
+
+La representación recibida procede del servidor mediante observedAtOriginal. Si una notificación histórica anterior no tiene ese metadato, la vista informa que no está disponible y conserva el UTC; no lo inventa. Las consultas actuales lo recuperan del original ya persistido. [El contrato](api.md) y [verificación](verification.md) describen validación y recorridos reales.

@@ -13,6 +13,7 @@ import {
 import { ReplayControlCapacity } from '../../application/command-receipts.js';
 import { ReplayPreconditionsFailed } from '../../application/replay-coordinator.js';
 import type { ReplayRun } from '../../application/journal.js';
+import type { ReplayReport } from '../../application/verification.js';
 import { ReplayCapacity, ReplayConflict, ReplayInputError } from '../../domain/replay.js';
 import { readReplayQuery } from './replay-query.js';
 
@@ -31,6 +32,16 @@ function runView(run: ReplayRun) {
     closeCode: run.closeCode,
     createdAt: run.createdAt,
     updatedAt: run.updatedAt,
+  };
+}
+function reportView(report: ReplayReport): ReplayReport {
+  return {
+    ...report,
+    externalEvidence: {
+      twoRenderedClients: report.externalEvidence.twoRenderedClients,
+      pauseResume: report.externalEvidence.pauseResume,
+      ci: report.externalEvidence.ci,
+    },
   };
 }
 const problem = (
@@ -79,6 +90,7 @@ export class ReplayController {
           ? snapshot
           : await this.runtime.detail(snapshot.run.scenarioId);
       if (!root) throw new ReplayAdmissionUnknown();
+      const inspection = await this.runtime.inspect(query.runId);
       return {
         run: runView(snapshot.run),
         progress: snapshot.progress,
@@ -89,14 +101,14 @@ export class ReplayController {
           report:
             root.run.scenarioDocument === null
               ? null
-              : (JSON.parse(root.run.scenarioDocument) as unknown),
+              : reportView(JSON.parse(root.run.scenarioDocument) as ReplayReport),
         },
         attempts: snapshot.attempts.map(({ diagnosticDocument, ...attempt }) => ({
           ...attempt,
           diagnostic:
             diagnosticDocument === null ? null : (JSON.parse(diagnosticDocument) as unknown),
         })),
-        inspection: await this.runtime.inspect(query.runId),
+        inspection: { ...inspection, report: reportView(inspection.report) },
       };
     });
   }
@@ -148,7 +160,7 @@ export class ReplayController {
           409,
           'PRECONDITIONS_FAILED',
           'No se cumplen las condiciones para esta reproducción.',
-          { report: error.report },
+          { report: reportView(error.report) },
         );
       if (error instanceof ReplayAdmissionUnknown)
         throw problem(

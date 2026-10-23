@@ -5,15 +5,24 @@ on:
   pull_request:
     branches: [test, main]
   workflow_dispatch:
+    inputs:
+      profile:
+        description: Validación ordinaria o ampliada en development
+        required: true
+        default: full
+        type: choice
+        options: [full, expanded]
 permissions:
   contents: read
+  actions: read
   issues: read
   pull-requests: read
 concurrency:
-  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}-${{ inputs.profile || 'full' }}
   cancel-in-progress: true
 jobs:
   quality:
+    if: ${{ github.ref == 'refs/heads/development' && (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.profile == 'full')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -25,6 +34,8 @@ jobs:
       - run: node scripts/ci/job.mjs quality
         env:
           GH_TOKEN: ${{ github.token }}
+      - name: Verificar publicación y exclusión
+        run: node scripts/ci/check-publication.mjs quality
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ci-quality-${{ github.run_id }}-${{ github.run_attempt }}
@@ -41,6 +52,8 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-project
       - run: node scripts/ci/job.mjs unit
+      - name: Verificar publicación y exclusión
+        run: node scripts/ci/check-publication.mjs unit
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ci-unit-${{ github.run_id }}-${{ github.run_attempt }}
@@ -57,6 +70,8 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-project
       - run: node scripts/ci/job.mjs integration
+      - name: Verificar publicación y exclusión
+        run: node scripts/ci/check-publication.mjs integration
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ci-integration-${{ github.run_id }}-${{ github.run_attempt }}
@@ -74,6 +89,8 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-project
       - run: node scripts/ci/job.mjs security-source
+      - name: Verificar publicación y exclusión
+        run: node scripts/ci/check-publication.mjs security-source
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ci-security-source-${{ github.run_id }}-${{ github.run_attempt }}
@@ -90,6 +107,8 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/setup-project
       - run: node scripts/ci/job.mjs system
+      - name: Verificar publicación y exclusión
+        run: node scripts/ci/check-publication.mjs system
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: ci-system-${{ github.run_id }}-${{ github.run_attempt }}
@@ -97,35 +116,41 @@ jobs:
           if-no-files-found: error
           retention-days: 7
   ci-required:
-    if: ${{ always() }}
+    if: ${{ always() && !(github.event_name == 'workflow_dispatch' && inputs.profile == 'expanded' && github.ref == 'refs/heads/development') }}
     needs: [quality, unit, integration, security-source, system]
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
+          fetch-depth: 0
           persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38
         with:
           node-version-file: .nvmrc
           package-manager-cache: false
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      - if: ${{ needs.quality.result == 'success' }}
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           name: ci-quality-${{ github.run_id }}-${{ github.run_attempt }}
           path: reports/ci
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      - if: ${{ needs.quality.result == 'success' }}
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           name: ci-unit-${{ github.run_id }}-${{ github.run_attempt }}
           path: reports/ci
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      - if: ${{ needs.quality.result == 'success' }}
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           name: ci-integration-${{ github.run_id }}-${{ github.run_attempt }}
           path: reports/ci
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      - if: ${{ needs.quality.result == 'success' }}
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           name: ci-security-source-${{ github.run_id }}-${{ github.run_attempt }}
           path: reports/ci
-      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+      - if: ${{ needs.quality.result == 'success' }}
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
           name: ci-system-${{ github.run_id }}-${{ github.run_attempt }}
           path: reports/ci
@@ -133,3 +158,20 @@ jobs:
         run: node scripts/ci/gate.mjs
         env:
           NEEDS_JSON: ${{ toJSON(needs) }}
+          GH_TOKEN: ${{ github.token }}
+      - name: Verificar publicación y exclusión
+        if: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/development') }}
+        run: node scripts/ci/check-publication.mjs promotion
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/development') }}
+        with:
+          name: promotion-${{ github.run_id }}-${{ github.run_attempt }}
+          path: reports/promotion/manifest.json
+          if-no-files-found: error
+          retention-days: 7
+  expanded:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.profile == 'expanded' && github.ref == 'refs/heads/development' }}
+    uses: ./.github/workflows/expanded.yml
+    with:
+      source: ${{ github.sha }}
+      stage: final

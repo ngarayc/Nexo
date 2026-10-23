@@ -1,0 +1,50 @@
+# Validación ampliada y candidatura final
+
+La [issue #77](https://github.com/ngarayc/Nexo/issues/77) incorpora un recorrido separado del CI ordinario. El [workflow manual](../.github/workflows/expanded.yml) exige un SHA completo y una etapa explícita: rehearsal para ensayos o final para el candidato vigente de development. [El runner](../scripts/ci/run-expanded.mjs) comprueba checkout limpio, SHA y, en Actions, el SHA efectivo del workflow. Un ensayo local no se acredita como cierre final.
+
+## Fuente, entorno e imágenes
+
+Git exporta únicamente los archivos registrados del candidato mediante git archive y los entrega como contexto a Docker. No necesita otra rama, worktree, checkout o archivos privados. Cada imagen API/web/DB recibe la etiqueta de revisión del SHA; se registran IDs reales y se escanean esas mismas imágenes con inventarios completos. Un HIGH/CRITICAL, escaneo inconcluso, ID cambiado o revisión ajena impide emitir el manifiesto satisfactorio.
+
+El manifiesto identifica Node/npm/Playwright, Docker/Compose, plataforma/arquitectura, motores reales y hashes de los tres fixtures suministrados. Las imágenes instalan/construyen desde el lockfile exportado. Las pruebas crean configuración y volúmenes sintéticos propios; los servicios/datos habituales no se recrean. El caso de arranque verifica salud, login demo, ingesta HTTP, persistencia de datos/credencial al recrear y reset mediante el comando real, con evidencia externa y login posterior.
+
+## Carga y navegadores
+
+El escenario ampliado reutiliza las aserciones del ordinario de10.000 eventos con perfiles explícitos de10.000/100.000 eventos; el smoke de instrumentación admite2.000 sin satisfacer el manifiesto final. Envía lotes de1.000 con dos simultáneos, consulta mientras ingresa y repite todo sin reset:100.000 eventos,100 vehículos,40.000 alertas,200 lotes y200.000 posiciones de recibos tras ambas pasadas. Comprueba latest, historial, alertas, ausencia de efectos nuevos al repetir y presupuesto de16 conexiones runtime. No exige100.000 trabajos simultáneos ni representa capacidad productiva para3.000 vehículos. Solo el cliente de pruebas ampliado admite un plazo mayor; los presupuestos de la aplicación no cambian.
+
+Firefox y WebKit ejecutan todos los archivos de sistema, cada uno con su propio stack. Se verifica el motor de cada caso, inventario no vacío, una ejecución por prueba, cero fallos/omisiones y limpieza satisfactoria. Los recorridos incluyen dos clientes, ambos replays, seguridad, SSE/recuperación, CR-01, mapas, trayectoria, gráfico y precisión temporal. Chromium permanece en el CI ordinario. Los tiles son sintéticos y se bloquean otros orígenes durante las suites; no se afirma disponibilidad del proveedor público.
+
+## Ejecución
+
+Además de los prerrequisitos del README, instalar los motores fijados de Playwright en el entorno de pruebas:
+
+```sh
+npx --no-install playwright install firefox webkit
+npm run test:expanded -- "$(git rev-parse HEAD)" rehearsal
+```
+
+En Linux deben estar presentes las bibliotecas nativas de esos motores. Playwright documenta install-deps; el workflow las prepara en su runner. El script comprueba el lanzamiento real y contenido DOM, no solo la descarga. No se deshabilita la validación nativa.
+
+El recorrido construye y etiqueta las tres imágenes nexo-*:local; ejecutarlo sin otro recorrido que esté usando esas etiquetas. No inicia el proyecto habitual. El informe anterior se retira al comenzar y solo se genera otro si termina todo satisfactoriamente. Ante un fallo, conservar el diagnóstico privado, corregir y repetir el alcance correspondiente antes de emitir otra candidatura.
+
+Para el cierre remoto previo a promover, despachar CI en development con profile igual a expanded. La llamada local al workflow ampliado fija source al SHA del workflow y stage a final; no vuelve a ejecutar las suites ordinarias. El workflow ampliado también conserva despacho explícito para cuando esté disponible en la rama predeterminada. La ejecución ampliada no sustituye los seis jobs/cinco artefactos del [CI ordinario](ci-controls.md), su revisión humana o la verificación de equivalencia posterior al merge. Ambos resultados deben identificar la fuente realmente probada; los merges de promoción deben conservar exactamente ese árbol antes de publicar el tag/release. Los reportes e imágenes mantienen sus revisiones originales: el manifiesto de entrega vincula la fuente probada y el SHA final publicado, sin atribuirle otra ejecución. [La auditoría final #82](https://github.com/ngarayc/Nexo/issues/82) precede al congelamiento de esa entrega: revisar, consolidar, planear y corregir antes del PR final.
+
+## Lista de publicación y límites
+
+El workflow ampliado publica únicamente reports/expanded/manifest.json durante siete días. Su esquema cerrado rechaza campos ajenos, otro SHA/intento/fixture/imagen, carga menor, exceso de conexiones, reset incompleto, navegador/archivo ausente o pruebas omitidas. Las negativas incluyen datos crudos insertados en distintos niveles del reporte. Los cinco informes ordinarios conservan su formato y lista de publicación; el manifiesto pertenece a otra ejecución.
+
+JSON de Playwright, logs de procesos, escaneos crudos, archivos de reset y diagnósticos quedan en reports/raw, fuera del upload. No se publican trace, HAR, storageState, sesiones, claves, archivos de entorno o rutas personales. Solo métricas, versiones, hashes/IDs y resultados permitidos pueden incorporarse después al manifiesto de release.
+
+Este procedimiento describe las comprobaciones implementadas. [Verificación](verification.md), las ejecuciones y el manifiesto final identifican cuáles terminaron y sobre qué SHA; la existencia del script no declara aprobado el candidato final ni cerrada la entrega.
+
+Antes del upload ampliado se ejecuta también la [comprobación de publicación](ci-controls.md): adjunto sintético excluido, contenido sin marcador literal/escapado y revalidación del manifiesto contra checkout, ejecución, fixtures e IDs/revisiones actuales. Es un paso posterior al recorrido y anterior al único upload; no amplía sus archivos permitidos o sustituye la ejecución final del candidato de development y la verificación de su promoción.
+
+## Medición de carga y límites de interpretación
+
+La [corrección #87](https://github.com/ngarayc/Nexo/issues/87) conserva integridad/repetición y añade agregados de observación. El cliente mide cada POST HTTP y el tiempo hasta confirmar el resultado completo del recibo con reloj monótono. Publica número de muestras y percentiles nearest-rank p50/p95/p99, mínimo y máximo en milisegundos. El segundo intervalo incluye el sondeo del recibo cuando hay503 pendiente; no equivale a medir el instante SQL de commit o commit→UI. Se distinguen HTTP200,503 pendiente, consultas de recibo y fallos; un fallo impide un manifiesto satisfactorio.
+
+La memoria se lee dentro del contenedor propio: RSS del Node servidor PID1 y uso del cgroup, en bytes. Se verifica la identidad del servidor y que el cgroup observado pertenezca al contenedor. El segundo contador incluye también al cliente de carga ejecutado mediante compose exec; no se presenta como heap exclusivo del servidor. El máximo es el mayor valor muestreado, con cadencia objetivo de1.000ms y muestras inicial/final; no garantiza capturar picos entre lecturas. RSS es aproximado. No se leen o publican variables de entorno, command line, rutas de procesos o series crudas.
+
+El mismo módulo probado se entrega como ESM al cliente de los runners ordinario/ampliado; no agrega instrumentación a la imagen productiva. Un smoke aislado de2.000 más repetición acredita el mecanismo. El ordinario conserva10.000; el manifiesto final exige100.000 y200 POST completos, con métricas de ese recorrido, sin aceptar un smoke o inventar datos retrospectivos del ensayo anterior. El esquema cerrado rechaza muestras menores, errores, memoria no comprobada, unidades distintas y campos privados.
+
+Estas medidas describen el perfil/entorno ejecutado. No fijan un SLA, umbral arbitrario, capacidad para3.000 vehículos o dedicación humana. [Fuentes](references.md) relaciona las APIs de reloj/memoria y sus límites; [verificación](verification.md) distingue los recorridos realmente terminados.

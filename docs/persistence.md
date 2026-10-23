@@ -1,6 +1,6 @@
 # Persistencia exacta — E1-I01
 
-La migración `0001_ingestion_foundation.sql` añade seis tablas a `users`, sin modificar la migración publicada de E0. Los adaptadores puros de `modules/telemetry/domain/` conservan identidad, instante y JSON. La recepción HTTP, la clasificación transaccional, pg-boss y el despacho SSE se incorporan en los siguientes incrementos; estas tablas todavía no los ejecutan.
+La migración `0001_ingestion_foundation.sql` añade seis tablas a `users`, sin modificar la migración publicada de E0. Los adaptadores puros de `modules/telemetry/domain/` conservan identidad, instante y JSON. Las tablas sostienen la [recepción HTTP](ingestion.md), [clasificación transaccional](classification.md), [recuperación](recovery.md) y [despacho SSE](realtime.md), compuestos en el monolito.
 
 Esta página describe la base E1. La migración0003 incorpora después dos tablas del [diario de replay](replay-journal.md), llevando el total propio a nueve; el esquema interno de pg-boss permanece separado. Esas tablas conservan correlación con recibos sin una FK que exija su existencia antes del envío HTTP.
 

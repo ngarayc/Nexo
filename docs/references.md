@@ -4,7 +4,7 @@
 
 [Velocidad observada](speed-chart.md) relaciona escala lineal, integración modular, opciones de línea y accesibilidad de Chart.js con el adaptador, selección compartida y pruebas reales de canvas. El modelo temporal aproximado para dibujar y sus límites conservan el modelo exacto de Nexo.
 
-[Cartografía](cartography.md) relaciona Leaflet1.9.4, la política de tiles de OpenStreetMap y el soporte TypeScript de Node24 con el adaptador, la configuración común de proveedor/CSP y las pruebas que interceptan imágenes externas. No se copió código de una plataforma de seguimiento ni se atribuye al proveedor la coordinación de estado de Nexo.
+[Cartografía](cartography.md) relaciona Leaflet 1.9.4, la política de tiles de OpenStreetMap y el soporte TypeScript de Node 24 con el adaptador, la configuración común de proveedor/CSP y las pruebas que interceptan imágenes externas. No se copió código de una plataforma de seguimiento ni se atribuye al proveedor la coordinación de estado de Nexo.
 
 La [coordinación de Angular](frontend-sync.md) relaciona las fuentes de Signals y EventSource con las fachadas, captura y recuperación propias de Nexo, sus pruebas y límites.
 
@@ -20,7 +20,7 @@ Los requisitos suministrados se conservan en [requirements](requirements/common-
 | [Skills](https://learn.chatgpt.com/docs/build-skills)                             | Formato y descubrimiento; mantener `skills/` y enlaces relativos no demuestra por sí solo uso real                                 |
 | [Seguridad de Codex](https://learn.chatgpt.com/docs/enterprise/security-cookbook) | Proteger credenciales y comprobar controles efectivos; una regla escrita o un filtro de variables no acreditan una barrera técnica |
 
-La investigación de telemetría, colas, recuperación y cartografía se incorporará a la documentación pública junto al comportamiento realmente implementado: fuente, adaptación, motivo, coste, archivos y prueba observada. El catálogo privado de planeación no forma parte del repositorio.
+Las páginas de persistencia, ingesta, recuperación, tiempo real y cartografía relacionan las fuentes primarias con su adaptación, motivo, coste, archivos y pruebas observadas. El gráfico documenta también sus aproximaciones y alternativa accesible. Estas prácticas son decisiones de Nexo aplicadas al contrato; los resultados de bibliotecas o plataformas externas no se presentan como evidencia propia.
 
 ## Identidad, tiempo y evidencia — E1-I01
 
@@ -82,13 +82,13 @@ La selección de variantes usa [las imágenes oficiales de Node](https://github.
 
 ## Diario del emisor
 
-[Restricciones PostgreSQL18](https://www.postgresql.org/docs/18/ddl-constraints.html), [triggers de restricción diferidos](https://www.postgresql.org/docs/18/sql-createtrigger.html) y [bloqueos asesores transaccionales](https://www.postgresql.org/docs/18/explicit-locking.html#ADVISORY-LOCKS) sustentan la protección al COMMIT y las altas concurrentes del [diario](replay-journal.md). Nexo añade estados, prefijo confirmado, límite reservado y marcador de intención; las pruebas fuerzan un rollback entre respuesta/cursor y compiten desde dos coordinadores. Estas transacciones no incluyen el futuro HTTP del emisor y no reconstruyen una respuesta perdida.
+[Restricciones PostgreSQL18](https://www.postgresql.org/docs/18/ddl-constraints.html), [triggers de restricción diferidos](https://www.postgresql.org/docs/18/sql-createtrigger.html) y [bloqueos asesores transaccionales](https://www.postgresql.org/docs/18/explicit-locking.html#ADVISORY-LOCKS) sustentan la protección al COMMIT y las altas concurrentes del [diario](replay-journal.md). Nexo añade estados, prefijo confirmado, límite reservado y marcador de intención; las pruebas fuerzan un rollback entre respuesta/cursor y compiten desde dos coordinadores. Estas transacciones no incluyen el envío HTTP del emisor y no reconstruyen una respuesta perdida.
 
 ## Preparación y comparación del replay
 
 La [corrección musl #43](security.md) consulta el registro oficial [Alpine3.24](https://secdb.alpinelinux.org/v3.24/main.json) y [su paquete musl](https://pkgs.alpinelinux.org/package/v3.24/main/x86_64/musl) para fijar1.2.6-r3 cuando el feed central del scanner carece de detalles. Nexo añade el bloqueo de escaneo inconcluso incluso con salida0 y comprueba el inventario de las imágenes reales; no atribuye al proveedor la política de promoción ni inventa la severidad ausente.
 
-[Verificador](replay-verification.md) aplica el aislamiento [REPEATABLE READ de PostgreSQL18](https://www.postgresql.org/docs/18/transaction-iso.html#XACT-REPEATABLE-READ) y las APIs públicas de [jobs](https://pgboss.io/api/jobs) y [adaptadores pg-boss](https://pgboss.io/api/adapters). El inventario usa la misma transacción que los recibos/dominio; no depende de estadísticas en caché ni confunde queued con active. Fuentes originales, expectativas, límites de lectura y conservación histórica son decisiones de Nexo. La integración concurrente verifica visibilidad conjunta de una recepción y su job; no acredita el motor HTTP o la evidencia visual todavía pendientes.
+[Verificador](replay-verification.md) aplica el aislamiento [REPEATABLE READ de PostgreSQL18](https://www.postgresql.org/docs/18/transaction-iso.html#XACT-REPEATABLE-READ) y las APIs públicas de [jobs](https://pgboss.io/api/jobs) y [adaptadores pg-boss](https://pgboss.io/api/adapters). El inventario usa la misma transacción que los recibos/dominio; no depende de estadísticas en caché ni confunde queued con active. Fuentes originales, expectativas, límites de lectura y conservación histórica son decisiones de Nexo. La integración concurrente verifica visibilidad conjunta de una recepción y su job; esa comprobación del verificador se complementa con las pruebas propias del [motor HTTP](replay-emitter.md) y el [panel](replay-panel.md), descritas en verificación.
 
 ## Aprovisionamiento del navegador de CI
 
@@ -97,3 +97,15 @@ La [corrección musl #43](security.md) consulta el registro oficial [Alpine3.24]
 ## Reset local acotado
 
 La [identidad de volúmenes Compose](https://docs.docker.com/reference/compose-file/volumes/), la [semántica de down](https://docs.docker.com/reference/cli/docker/compose/down/), el [borrado de un volumen](https://docs.docker.com/reference/cli/docker/volume/rm/) y la [inspección de contexto](https://docs.docker.com/reference/cli/docker/context/inspect/) sustentan el [reset](demo-reset.md). Nexo añade etiqueta sintética, rechazo de consumidores ajenos, archivos privados con checksum y reanudación por manifiesto. No usa down --volumes, force o prune; una interrupción no acredita éxito ni autoriza borrar un reemplazo.
+
+## Candidatura ampliada y fuente limpia
+
+[git archive](https://git-scm.com/docs/git-archive) aporta exportación de un árbol/commit y [el contexto tar de Docker](https://docs.docker.com/build/concepts/context/#local-tarballs) permite construir desde esa exportación por stdin. Nexo añade validación del SHA/checkout, etiquetas de revisión, comparación de IDs e inventarios escaneados, y arranque/persistencia/reset sobre recursos sintéticos propios. El manifiesto declara git-archive; no afirma que se haya ejecutado una clonación nueva.
+
+[Playwright: motores y dependencias](https://playwright.dev/docs/browsers#install-system-dependencies) relaciona la versión de la herramienta con sus binarios y las bibliotecas de Linux. Nexo fija la versión, comprueba lanzamiento/DOM y el motor de cada caso, y rechaza resultados vacíos, omitidos o de otro proyecto. El workflow instala las dependencias en su runner; las suites usan tiles sintéticos, sin afirmar disponibilidad del proveedor. [Validación ampliada](expanded-validation.md) relaciona archivos, reglas de publicación y límites.
+
+## Medición de carga
+
+[performance.now de Node](https://nodejs.org/docs/latest-v24.x/api/perf_hooks.html#performancenow) aporta el reloj de alta resolución del proceso cliente; Nexo calcula duraciones de POST y confirmación del recibo y agrega percentiles nearest-rank, comprobados con datos independientes. El runtime fijado y probado permanece en 24.22.0. No se atribuye a Node la elección del método de percentiles o una métrica commit→UI que no se midió.
+
+[proc del kernel Linux](https://docs.kernel.org/filesystems/proc.html) describe VmRSS y su carácter aproximado; [cgroup v2](https://docs.kernel.org/admin-guide/cgroup-v2.html) define memory.current en bytes e incluye el grupo y sus descendientes. Nexo verifica PID1/ámbito propio, conserva máximos muestreados y distingue servidor de contenedor, que incluye al cliente de carga. La ejecución real observada usa v2; el lector v1 se comprueba con fixtures, sin anunciar otra ejecución nativa. [Validación ampliada](expanded-validation.md) explica adaptación, unidades, pruebas y límites.

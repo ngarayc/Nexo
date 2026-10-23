@@ -4,6 +4,7 @@ import {
   readReplayFrame,
   readReplayReceipt,
   readReplayHistory,
+  readReplayReport,
 } from './replay-contract';
 const id = '00000000-0000-4000-8000-000000000001';
 const initial = () => ({
@@ -115,4 +116,37 @@ it('historial fuera del límite o con cursor no comprobable no se presenta como 
     { items: [{ runId: id }], nextCursor: null },
   ])
     expect(() => readReplayHistory(value)).toThrow();
+});
+it('lee informes con evidencia vigente e histórica y exige los tres campos actuales', () => {
+  const value = {
+    version: 1,
+    scope: 'data-and-replays',
+    phase: 'first',
+    result: 'inconclusive',
+    observedAt: null,
+    attemptedAt: '2026-01-01T00:00:00Z',
+    runId: null,
+    scenarioId: null,
+    runRevision: null,
+    environment: null,
+    sources: {},
+    snapshotFingerprint: null,
+    checks: [],
+    externalEvidence: {
+      twoRenderedClients: 'not_assessed',
+      pauseResume: 'not_assessed',
+      ci: 'not_assessed',
+    },
+  };
+  expect(readReplayReport(value)).toBe(value);
+  const historical = {
+    ...value,
+    externalEvidence: { ...value.externalEvidence, retiredEvidence: 'not_assessed' },
+  };
+  expect(readReplayReport(historical)).toBe(historical);
+  for (const key of ['twoRenderedClients', 'pauseResume', 'ci']) {
+    const evidence: Record<string, unknown> = { ...value.externalEvidence };
+    delete evidence[key];
+    expect(() => readReplayReport({ ...value, externalEvidence: evidence })).toThrow();
+  }
 });

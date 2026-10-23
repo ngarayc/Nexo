@@ -6,12 +6,22 @@ import { join } from 'node:path';
 
 export function testStack({ webPort = 8080, publishWeb = true } = {}) {
   if (![8080, 8081].includes(webPort)) throw new Error('Puerto de stack de pruebas no permitido.');
+  if (![true, false, 'ephemeral'].includes(publishWeb))
+    throw new Error('Publicación web de pruebas no permitida.');
+  if (publishWeb === 'ephemeral' && webPort !== 8081)
+    throw new Error('El intermediario de pruebas requiere el origen canónico 8081.');
   const project = `nexo-e0-check-${randomBytes(6).toString('hex')}`;
   const directory = mkdtempSync(join(tmpdir(), 'nexo-test-config-'));
   const envFile = join(directory, 'environment');
-  const webOverride = join(directory, 'without-published-web.yaml');
-  if (!publishWeb)
-    writeFileSync(webOverride, 'services:\n  web:\n    ports: !reset []\n', { mode: 0o600 });
+  const webOverride = join(directory, 'web-binding.yaml');
+  if (publishWeb !== true)
+    writeFileSync(
+      webOverride,
+      publishWeb === 'ephemeral'
+        ? "services:\n  web:\n    ports: !override ['127.0.0.1::8080']\n"
+        : 'services:\n  web:\n    ports: !reset []\n',
+      { mode: 0o600 },
+    );
   writeFileSync(
     envFile,
     [
@@ -33,7 +43,7 @@ export function testStack({ webPort = 8080, publishWeb = true } = {}) {
     envFile,
     '-f',
     'infra/compose.yaml',
-    ...(!publishWeb ? ['-f', webOverride] : []),
+    ...(publishWeb !== true ? ['-f', webOverride] : []),
   ];
   const composeWithTimeout = (timeout, ...args) => {
     try {
@@ -117,7 +127,16 @@ export function testStack({ webPort = 8080, publishWeb = true } = {}) {
     browserEnvironment() {
       // Solo el proceso Node del runner recibe esta referencia efímera. El
       // productor se ejecuta dentro de API: ninguna clave cruza hacia Angular.
-      return { NEXO_SYSTEM_PROJECT: project, NEXO_SYSTEM_ENV_FILE: envFile };
+      const environment = { NEXO_SYSTEM_PROJECT: project, NEXO_SYSTEM_ENV_FILE: envFile };
+      if (publishWeb === 'ephemeral') {
+        const binding = compose('port', 'web', '8080');
+        const match = /^127\.0\.0\.1:([1-9]\d{3,4})$/.exec(binding);
+        const port = Number(match?.[1]);
+        if (!match || port < 1024 || port > 65535 || port === webPort)
+          throw new Error('El upstream web propio no tiene un puerto efímero de loopback válido.');
+        environment.NEXO_SYSTEM_WEB_UPSTREAM_PORT = String(port);
+      }
+      return environment;
     },
     compose,
     sql,

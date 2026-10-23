@@ -2,8 +2,9 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { test } from 'node:test';
 import { testStack } from '../support/stack.mjs';
+import { queryProbeSource } from '../support/query-probe.mjs';
 
-const source = readFileSync('tests/support/check-queries.mjs', 'utf8');
+const source = queryProbeSource();
 for (const [scenario, description] of Object.entries({
   official:
     'consultas autenticadas y snapshot conservan ambos oráculos, historial, latest y alertas sin efectos de negocio',

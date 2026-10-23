@@ -4,6 +4,7 @@ import {
   observedInstantUtc,
   vehicleState,
   isOverspeed,
+  readObservedInstant,
 } from '@nexo/contracts';
 import type {
   EventView,
@@ -73,14 +74,24 @@ function unique<T>(items: readonly T[], key: (item: T) => string): void {
   if (new Set(items.map(key)).size !== items.length) invalid();
 }
 
+function originalTime(value: Record<string, unknown>, observedAt: string) {
+  if (!Object.hasOwn(value, 'observedAtOriginal')) return {};
+  const original = readObservedInstant(value['observedAtOriginal']);
+  if (!original || observedInstantUtc(original) !== observedAt) return invalid();
+  return { observedAtOriginal: original.original };
+}
+function originalKeys(input: unknown): readonly string[] {
+  return Object.hasOwn(record(input), 'observedAtOriginal') ? ['observedAtOriginal'] : [];
+}
+
 export function readEvent(input: unknown, extra: readonly string[] = []): EventView {
-  const value = exact(input, [...eventKeys, ...extra]);
+  const value = exact(input, [...eventKeys, ...extra, ...originalKeys(input)]);
   const validated = validateEventFields(value);
   if (!validated.valid) return invalid();
   const fields = validated.fields;
   const observedAt = observedInstantUtc(fields.observedAt);
   if (value['observedAt'] !== observedAt) return invalid();
-  return Object.freeze({ ...fields, observedAt });
+  return Object.freeze({ ...fields, observedAt, ...originalTime(value, observedAt) });
 }
 function readVehicle(input: unknown): VehicleView {
   const view = readEvent(input, ['status']);
@@ -89,13 +100,18 @@ function readVehicle(input: unknown): VehicleView {
   return Object.freeze({ ...view, status });
 }
 function readAlert(input: unknown): AlertView {
-  const value = exact(input, [...observationKeys, 'type']);
+  const value = exact(input, [...observationKeys, 'type', ...originalKeys(input)]);
   const validated = validateObservationFields(value);
   if (!validated.valid || value['type'] !== 'OVERSPEED' || !isOverspeed(validated.fields))
     return invalid();
   const observedAt = observedInstantUtc(validated.fields.observedAt);
   if (value['observedAt'] !== observedAt) return invalid();
-  return Object.freeze({ ...validated.fields, observedAt, type: 'OVERSPEED' });
+  return Object.freeze({
+    ...validated.fields,
+    observedAt,
+    ...originalTime(value, observedAt),
+    type: 'OVERSPEED',
+  });
 }
 export function readSnapshot(input: unknown): DomainSnapshot {
   const value = exact(input, ['schemaVersion', 'instanceId', 'vehicles', 'alerts']);

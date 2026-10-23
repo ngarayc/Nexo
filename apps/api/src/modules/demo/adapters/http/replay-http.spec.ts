@@ -10,6 +10,8 @@ import { Authenticate } from '../../../access/application/authenticate.js';
 import { ACCESS_CONFIG } from '../../../access/adapters/http/access-config.js';
 import { IngestionIngress } from '../../../ingestion/public.js';
 import { ReplayAdmissionUnknown } from '../../application/admit-command.js';
+import { ReplayPreconditionsFailed } from '../../application/replay-coordinator.js';
+import type { ReplayReport } from '../../application/verification.js';
 import { readReplayCommand } from '../../domain/command.js';
 import { DemoRuntime } from '../../demo-runtime.js';
 import { ReplayController } from './replay-controller.js';
@@ -40,13 +42,14 @@ describe('frontera HTTP del control compartido', () => {
   const view = vi.fn(async () => ({ instanceId, controlVersion: 0, run: null }));
   const receipt = vi.fn(async () => undefined);
   const history = vi.fn(async () => ({ items: [], nextCursor: null }));
-  const detail = vi.fn(async () => undefined);
+  const detail = vi.fn<DemoRuntime['detail']>(async () => undefined);
+  const inspect = vi.fn<DemoRuntime['inspect']>();
   async function start(demoEnabled = true) {
     const module = await Test.createTestingModule({
       imports: [AccessModule, DatabaseModule],
       controllers: [ReplayController],
       providers: [
-        { provide: DemoRuntime, useValue: { command, view, receipt, history, detail } },
+        { provide: DemoRuntime, useValue: { command, view, receipt, history, detail, inspect } },
         {
           provide: IngestionIngress,
           useValue: {
@@ -203,5 +206,80 @@ describe('frontera HTTP del control compartido', () => {
     expect((await post(fresh).type('json').send('{').expect(429)).body.code).toBe('RATE_LIMITED');
     expect(command).toHaveBeenCalledTimes(60);
     await client.get('/api/demo/replay').expect(200); // Lectura tiene presupuesto independiente.
+  });
+  it('expone solo evidencia vigente en informes históricos y errores sin reescribir el documento', async () => {
+    const date = '2026-01-01T00:00:00Z';
+    const externalEvidence = {
+      twoRenderedClients: 'not_assessed' as const,
+      pauseResume: 'not_assessed' as const,
+      ci: 'not_assessed' as const,
+    };
+    const report: ReplayReport = {
+      version: 1,
+      scope: 'data-and-replays',
+      phase: 'first',
+      result: 'inconclusive',
+      observedAt: null,
+      attemptedAt: date,
+      runId: id,
+      scenarioId: id,
+      runRevision: 1,
+      environment: null,
+      sources: {},
+      snapshotFingerprint: null,
+      checks: [],
+      externalEvidence: {
+        ...externalEvidence,
+        retiredEvidence: 'not_assessed',
+      } as typeof externalEvidence,
+    };
+    const document = JSON.stringify(report);
+    detail.mockResolvedValueOnce({
+      run: {
+        runId: id,
+        scenarioId: id,
+        previousRunId: null,
+        instanceId,
+        fixtureSha256: 'a'.repeat(64),
+        stage: 'first',
+        intervalMs: 750,
+        state: 'interrupted',
+        nextLine: 1,
+        revision: 1,
+        verification: 'inconclusive',
+        verificationDocument: document,
+        scenarioVerification: 'inconclusive',
+        scenarioDocument: document,
+        scenarioClosedAt: date,
+        closeCode: null,
+        intention: null,
+        createdAt: date,
+        updatedAt: date,
+      },
+      attempts: [],
+      progress: {
+        total: 24,
+        accepted: 0,
+        duplicates: 0,
+        rejected: 0,
+        classified: 0,
+        inFlight: 0,
+        uncertain: 0,
+        technicalFailure: 0,
+        unattempted: 24,
+        nextLine: 1,
+      },
+    });
+    inspect.mockResolvedValueOnce({ report, currentState: 'changed', currentObservedAt: date });
+    const { client, login, post } = await start();
+    const csrf = await login();
+    const result = await client.get('/api/demo/replay?runId=' + id).expect(200);
+    expect(result.body.scenario.report.externalEvidence).toEqual(externalEvidence);
+    expect(result.body.inspection.report.externalEvidence).toEqual(externalEvidence);
+    expect(JSON.stringify(report)).toBe(document);
+    command.mockRejectedValueOnce(new ReplayPreconditionsFailed(report));
+    const failed = await post(csrf).send(input()).expect(409);
+    expect(failed.body.report.externalEvidence).toEqual(externalEvidence);
+    expect(JSON.stringify(report)).toBe(document);
   });
 });
