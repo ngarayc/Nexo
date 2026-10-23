@@ -3,6 +3,17 @@ import { Authenticate, HashCapacityError } from './authenticate.js';
 
 describe('autenticación y admisión al trabajo de hashing', () => {
   const account = { id: 'id', username: 'demo' as const, passwordHash: 'hash' };
+  it('autentica el nombre persistido Demo y rechaza el nombre local anterior', async () => {
+    const configured = { ...account, username: 'Demo' as const };
+    const verify = vi.fn(async () => true);
+    const useCase = new Authenticate({ findDemo: async () => configured }, { verify }, true);
+    expect(await useCase.execute({ username: 'Demo', password: 'synthetic' })).toEqual({
+      id: 'id',
+      username: 'Demo',
+    });
+    expect(await useCase.execute({ username: 'demo', password: 'synthetic' })).toBeUndefined();
+    expect(verify).toHaveBeenLastCalledWith(undefined, 'synthetic');
+  });
   it('un usuario desconocido pasa por el verificador de coste equivalente', async () => {
     const verify = vi.fn(async () => true);
     const useCase = new Authenticate({ findDemo: async () => account }, { verify }, true);

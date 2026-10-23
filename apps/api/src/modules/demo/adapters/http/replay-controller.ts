@@ -16,6 +16,7 @@ import type { ReplayRun } from '../../application/journal.js';
 import type { ReplayReport } from '../../application/verification.js';
 import { ReplayCapacity, ReplayConflict, ReplayInputError } from '../../domain/replay.js';
 import { readReplayQuery } from './replay-query.js';
+import { DemoMaintenanceBusy } from '../../../../platform/runtime/demo-maintenance.js';
 
 function runView(run: ReplayRun) {
   return {
@@ -127,11 +128,35 @@ export class ReplayController {
       return this.runtime.command(value);
     });
   }
+  @Post('reset')
+  @HttpCode(200)
+  @RequireAccess('demo-write')
+  async reset(@Req() request: Request) {
+    return this.run(request, async () => {
+      const source = await readJsonBody(request, 4096, Date.now() + 15000);
+      let value: unknown;
+      try {
+        value = JSON.parse(source) as unknown;
+      } catch {
+        throw new JsonBodyError('MALFORMED_JSON');
+      }
+      return this.runtime.reset(value);
+    });
+  }
   private async run<T>(request: Request, operation: () => Promise<T>): Promise<T> {
     try {
       return await operation();
     } catch (error) {
       request.resume();
+      if (
+        error instanceof DemoMaintenanceBusy ||
+        (error instanceof Error && 'code' in error && error.code === '55000')
+      )
+        throw problem(
+          409,
+          'DEMO_BUSY',
+          'Detén la reproducción y espera que terminen las ingestas antes de limpiar.',
+        );
       if (error instanceof JsonBodyError) {
         const status =
           error.code === 'BODY_TOO_LARGE'

@@ -192,7 +192,7 @@ const cases = {
       assert.equal((await send(second, await order(second, 'finishVerification'))).status, 202);
       const closed = await waitFor(first, (v) => Boolean(v.scenario?.closedAt));
       assert.equal(closed.scenario.verification, 'conformant');
-      assert.deepEqual(closed.allowedActions, []);
+      assert.deepEqual(closed.allowedActions, ['restart']);
       const preserved = await read(first, '?runId=' + firstId);
       assert.deepEqual(preserved.inspection.report, original.inspection.report);
       assert.equal(preserved.scenario.report.result, 'conformant');
@@ -226,6 +226,98 @@ const cases = {
         assert.equal(detail.run.intention, undefined);
         assert.equal(detail.run.verificationDocument, undefined);
       }
+      stage = 'explore-after-closure';
+      const rootBefore = (
+        await pool.query(
+          'SELECT verification_document::text,scenario_document::text,scenario_closed_at FROM replay_runs WHERE run_id=$1',
+          [firstId],
+        )
+      ).rows[0];
+      assert.equal(
+        (await send(first, { ...(await order(first, 'start', 100)), runId: null })).status,
+        409,
+      );
+      stage = 'explore-admission';
+      const again = await order(first, 'restart', 100);
+      const extra = await send(first, again);
+      assert.equal(extra.status, 202);
+      assert.equal((await send(first, again)).body.runId, extra.body.runId);
+      const explored = await waitFor(
+        first,
+        (v) =>
+          v.run?.stage === 'exploratory' &&
+          v.run.state === 'completed' &&
+          v.run.verification !== 'pending',
+      );
+      assert.deepEqual(
+        [
+          explored.run.progress.accepted,
+          explored.run.progress.duplicates,
+          explored.run.progress.rejected,
+        ],
+        [0, 22, 2],
+      );
+      stage = 'explore-outcomes';
+      assert.equal(explored.scenario.verification, 'conformant');
+      assert.equal(explored.scenario.closedAt, closed.scenario.closedAt);
+      assert.equal(explored.run.verification, 'inconclusive');
+      assert.deepEqual(await counts(), {
+        events: 20,
+        vehicles: 8,
+        alerts: 4,
+        messages: 43,
+        receipts: 72,
+      });
+      stage = 'explore-sql-flag';
+      const suffix = (
+        await pool.query('SELECT post_closure FROM replay_runs WHERE run_id=$1', [
+          explored.run.runId,
+        ])
+      ).rows[0];
+      assert.equal(suffix.post_closure, true);
+      stage = 'explore-immutable-flag';
+      await assert.rejects(
+        pool.query(
+          'UPDATE replay_runs SET post_closure=false,revision=revision+1,updated_at=clock_timestamp() WHERE run_id=$1',
+          [explored.run.runId],
+        ),
+        (error) => error.code === '23514',
+      );
+      stage = 'explore-no-official-second';
+      await assert.rejects(
+        pool.query(
+          "INSERT INTO replay_runs(run_id,scenario_id,previous_run_id,instance_id,fixture_sha256,stage) SELECT $1,scenario_id,run_id,instance_id,fixture_sha256,'second' FROM replay_runs WHERE run_id=$2",
+          [randomUUID(), explored.run.runId],
+        ),
+        (error) => error.code === '23514',
+      );
+      stage = 'stop-exploration-without-reclosing';
+      assert.equal((await send(first, await order(first, 'restart', 500))).status, 202);
+      await waitFor(
+        first,
+        (v) =>
+          v.run?.stage === 'exploratory' &&
+          v.run.state === 'running' &&
+          v.run.progress.classified >= 1,
+      );
+      assert.equal((await send(second, await order(second, 'finishVerification'))).status, 202);
+      const stopped = await waitFor(
+        first,
+        (v) => v.run?.state === 'stopped' && v.pendingAction === null,
+      );
+      assert.deepEqual(stopped.allowedActions, ['restart']);
+      assert.deepEqual(
+        (
+          await pool.query(
+            'SELECT verification_document::text,scenario_document::text,scenario_closed_at FROM replay_runs WHERE run_id=$1',
+            [firstId],
+          )
+        ).rows[0],
+        rootBefore,
+      );
+      const final = await read(first, '?runId=' + firstId);
+      assert.deepEqual(final.inspection.report, original.inspection.report);
+      assert.deepEqual(final.scenario.report, preserved.scenario.report);
     } finally {
       await one.close();
       await two.close();

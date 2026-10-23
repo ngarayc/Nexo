@@ -51,6 +51,7 @@ function setup() {
     },
   };
   const api = {
+    reset: vi.fn<ReplayApi['reset']>(async () => {}),
     current: vi.fn<ReplayApi['current']>(async () => control()),
     command: vi.fn<ReplayApi['command']>(async () => ({
       commandId: id,
@@ -105,6 +106,41 @@ function setup() {
     invalidated,
   };
 }
+it('limpiar bloquea otros controles, vacía historial local y resincroniza sin repetir el POST', async () => {
+  const { facade, api, ready, monitor } = setup();
+  ready();
+  await flush();
+  expect(facade.canReset()).toBe(true);
+  let finish!: () => void;
+  api.reset.mockReturnValueOnce(
+    new Promise<void>((resolve) => {
+      finish = resolve;
+    }),
+  );
+  const pending = facade.reset();
+  expect(facade.can('start')).toBe(false);
+  await facade.reset();
+  expect(api.reset).toHaveBeenCalledTimes(1);
+  finish();
+  await pending;
+  expect(facade.view()).toBeNull();
+  expect(facade.detail()).toBeNull();
+  expect(facade.history()).toEqual([]);
+  expect(monitor.reconnect).toHaveBeenCalledOnce();
+  expect(facade.notice()).toContain('Demostración limpia');
+});
+it('no repite una limpieza con respuesta perdida ni la presenta como completada', async () => {
+  const { facade, api, ready, monitor } = setup();
+  ready();
+  await flush();
+  api.reset.mockRejectedValueOnce(new HttpErrorResponse({ status: 0 }));
+  await facade.reset();
+  await flush();
+  expect(api.reset).toHaveBeenCalledTimes(1);
+  expect(facade.error()).toContain('No se pudo confirmar');
+  expect(monitor.reconnect).toHaveBeenCalledOnce();
+  expect(facade.resetting()).toBe(false);
+});
 it('registra manejadores antes del GET y una respuesta vieja no reemplaza la vista SSE nueva', async () => {
   const { facade, api, ready, replay } = setup();
   let resolve!: (view: ReplayControl) => void;

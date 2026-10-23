@@ -14,7 +14,7 @@ function readSnapshot(value: unknown): SessionSnapshot {
     !('id' in user) ||
     typeof user.id !== 'string' ||
     !('username' in user) ||
-    user.username !== 'demo' ||
+    (user.username !== 'demo' && user.username !== 'Demo') ||
     typeof data['expiresAt'] !== 'string' ||
     !Number.isFinite(Date.parse(data['expiresAt'])) ||
     typeof data['csrfToken'] !== 'string' ||
@@ -22,7 +22,7 @@ function readSnapshot(value: unknown): SessionSnapshot {
   )
     throw new Error('Respuesta de acceso inválida.');
   return {
-    user: { id: user.id, username: 'demo' },
+    user: { id: user.id, username: user.username },
     expiresAt: data['expiresAt'],
     csrfToken: data['csrfToken'],
   };

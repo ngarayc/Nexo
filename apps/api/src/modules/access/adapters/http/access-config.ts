@@ -1,3 +1,5 @@
+import { isCanonicalPublicOrigin } from '@nexo/contracts';
+
 export interface AccessConfig {
   readonly origin: string;
   readonly secret: string;
@@ -11,8 +13,8 @@ export interface AccessConfig {
 
 export function readAccessConfig(env: NodeJS.ProcessEnv): AccessConfig {
   const origin = env['PUBLIC_ORIGIN'];
-  if (!origin || !/^http:\/\/localhost:(8080|8081)$/.test(origin)) {
-    throw new Error('PUBLIC_ORIGIN debe identificar el origen local canónico.');
+  if (!isCanonicalPublicOrigin(origin)) {
+    throw new Error('PUBLIC_ORIGIN debe identificar un origen canónico local o HTTPS.');
   }
   const secret = env['SESSION_SECRET'];
   if (!secret || !/^[a-f0-9]{64}$/.test(secret)) throw new Error('SESSION_SECRET inválido.');
@@ -24,7 +26,7 @@ export function readAccessConfig(env: NodeJS.ProcessEnv): AccessConfig {
     demoEnabled: env['DEMO_ENABLED'] === 'true',
     sessionMilliseconds: 4 * 60 * 60 * 1000,
     maximumSessions: 32,
-    loginLimit: 10,
+    loginLimit: origin.startsWith('https://') ? 5 : 10,
     readLimit: 600,
     windowMilliseconds: 60000,
   };

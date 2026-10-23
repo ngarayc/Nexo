@@ -39,7 +39,7 @@ export class DatabaseService implements OnModuleInit, OnModuleDestroy {
         }>(`SELECT
         (SELECT hash FROM drizzle.__drizzle_migrations ORDER BY id DESC LIMIT 1) AS hash,
         (SELECT count(*) FROM public.users) AS count,
-        (SELECT bool_and(username = 'demo' AND password_hash LIKE '$argon2id$%') FROM public.users) AS valid`),
+        (SELECT bool_and(username IN ('demo', 'Demo') AND password_hash LIKE '$argon2id$%') FROM public.users) AS valid`),
       );
       const current = result.rows[0];
       return (

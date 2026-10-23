@@ -5,6 +5,8 @@ import { LeafletMapSurface } from '../../../platform/maps/leaflet-map-surface';
 import { formatIdentity, identityPreview } from '../../../platform/presentation/identity-text';
 import { formatTime } from '../../../platform/presentation/format-time';
 import { stateLabels } from '../../../platform/presentation/vehicle-state-label';
+import { geofenceStatus, geofenceLabels } from '../geofence';
+import { addGeofenceLayer, fitGeofence } from './geofence-layer';
 import type { FleetMapFactory, FleetMapRenderer, TilePhase } from './fleet-map-renderer';
 
 const symbols = { MOVING: '▶', STOPPED: '■', OFF: '○' } as const;
@@ -20,6 +22,9 @@ function tooltip(vehicle: VehicleView): HTMLElement {
   const details = document.createElement('p');
   details.textContent = description(vehicle);
   node.append(identity, details);
+  const location = document.createElement('p');
+  location.textContent = 'Geocerca: ' + geofenceLabels[geofenceStatus(vehicle)];
+  node.append(location);
   return node;
 }
 
@@ -42,6 +47,7 @@ class LeafletFleetMap implements FleetMapRenderer {
   ) {
     this.surface = new LeafletMapSurface(host, provider, tiles);
     this.map = this.surface.map;
+    addGeofenceLayer(this.map);
   }
 
   sync(vehicles: readonly VehicleView[], selected: string | null): void {
@@ -107,6 +113,9 @@ class LeafletFleetMap implements FleetMapRenderer {
       L.latLngBounds(this.vehicles.map((v) => L.latLng(v.latitude, v.longitude))),
       { padding: [24, 24], maxZoom: Math.min(16, this.provider.maxZoom), animate: false },
     );
+  }
+  fitGeofence(): void {
+    fitGeofence(this.map);
   }
   focusVehicle(vehicleId: string): void {
     const entry = this.markers.get(vehicleId);

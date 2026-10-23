@@ -6,7 +6,7 @@ El [ciclo EP-03](agent-cycles/EP-03.md) registra la historia funcional de alerta
 
 Solicitud: comenzar la implementación del plan, relacionar commits con issues y preparar PR, continuando hasta un bloqueo que requiera intervención, preservando los controles del reto.
 
-El agente contrastó la solicitud con los requisitos y el flujo de bootstrap. Encontró un repositorio sin commits, Node 22.23.1/npm 12.2.0 disponibles, ausencia de Docker en PATH y falta de conexión autenticada de GitHub para Issues. La selección de Node para el proyecto sigue siendo 24.22.0.
+El agente contrastó la solicitud con los requisitos y el flujo de bootstrap. Encontró un repositorio sin commits, Node 22.23.1/npm 12.2.0 disponibles, ausencia de Docker en PATH y falta de conexión autenticada de GitHub para Issues. La selección inicial fue Node 24.22.0; la issue #100 actualiza su parche a 24.22.1 por los avisos de seguridad publicados el 21 de octubre de 2026.
 
 Se prepararon externamente el cuerpo de la issue E0-I01, reglas, tres procedimientos y archivos candidatos de NestJS/Angular. La issue [#1](https://github.com/ngarayc/Nexo/issues/1) se publicó antes de incorporar los archivos al repositorio. Se resolvió el lockfile y se ejecutaron instalación limpia, calidad, compilación, 13 pruebas y arranque HTTP de las dos aplicaciones.
 

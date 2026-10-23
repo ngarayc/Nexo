@@ -638,7 +638,7 @@ describe('coordinación corta de inicio, pausa y reanudación (sin rutas públic
     await vi.advanceTimersByTimeAsync(0);
     expect(await coordinator.view()).toMatchObject({
       pendingAction: null,
-      allowedActions: [],
+      allowedActions: ['restart'],
       run: {
         state: 'stopped',
         verification: 'inconclusive',
@@ -688,7 +688,7 @@ describe('coordinación corta de inicio, pausa y reanudación (sin rutas públic
     expect(await coordinator.view()).toMatchObject({
       run: { runId: secondId, stage: 'second', verification: 'conformant' },
       scenario: { scenarioId: firstId, verification: 'conformant' },
-      allowedActions: [],
+      allowedActions: ['restart'],
     });
     expect((await journal.find(firstId))?.run.verificationDocument).toBe(firstDocument);
     expect(current().run.verificationDocument).toBe(secondDocument);
@@ -700,6 +700,45 @@ describe('coordinación corta de inicio, pausa y reanudación (sin rutas públic
     );
     expect(coordinator.admissions.receipts.get(finish.commandId)?.resolution).toBe('completed');
     expect(producer.send).toHaveBeenCalledTimes(48);
+  });
+  it('reiniciar después del cierre crea un exploratorio y detenerlo no modifica los informes oficiales', async () => {
+    const { coordinator, journal, current, verifier, producer } = setup();
+    await start(coordinator);
+    await vi.advanceTimersByTimeAsync(23 * 750);
+    const firstId = current().run.runId;
+    const firstDocument = current().run.verificationDocument;
+    await coordinator.command(await order(coordinator, 'finishVerification'));
+    await vi.advanceTimersByTimeAsync(0);
+    const saved = await journal.find(firstId);
+    expect(await coordinator.view()).toMatchObject({ allowedActions: ['restart'] });
+    await coordinator.command(await order(coordinator, 'restart', 100));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(current().run).toMatchObject({
+      stage: 'exploratory',
+      previousRunId: firstId,
+      scenarioId: firstId,
+    });
+    expect(verifier.prepareSecond).not.toHaveBeenCalled();
+    expect(verifier.prepareContinuation).toHaveBeenCalledWith(firstId, true);
+    await coordinator.command(await order(coordinator, 'pause'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(current().run.state).toBe('paused');
+    await coordinator.command(await order(coordinator, 'finishVerification'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(await coordinator.view()).toMatchObject({
+      allowedActions: ['restart'],
+      run: { stage: 'exploratory', state: 'stopped' },
+    });
+    const retained = await journal.find(firstId);
+    expect(retained?.run.verificationDocument).toBe(firstDocument);
+    expect(retained?.run.scenarioDocument).toBe(saved?.run.scenarioDocument);
+    expect(retained?.run.scenarioClosedAt).toBe(saved?.run.scenarioClosedAt);
+    expect(journal.closeScenario).toHaveBeenCalledTimes(1);
+    expect(verifier.evaluateScenario).toHaveBeenCalledTimes(1);
+    const before = producer.send.mock.calls.length;
+    await coordinator.command(await order(coordinator, 'restart', 100));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(producer.send.mock.calls.length).toBe(before + 1);
   });
   it('finalizar con la última línea pendiente completa y verifica antes de cerrar el escenario', async () => {
     const { coordinator, producer, verifier, current } = setup();

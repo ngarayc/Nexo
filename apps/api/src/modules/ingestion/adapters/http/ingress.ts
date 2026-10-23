@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { Injectable, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, OnModuleDestroy, Optional } from '@nestjs/common';
+import { DemoMaintenance } from '../../../../platform/runtime/demo-maintenance.js';
 import { rateLimit, MemoryStore } from 'express-rate-limit';
 import type { Request, Response, RequestHandler } from 'express';
 import {
@@ -14,6 +15,7 @@ interface IngestionContext {
   readonly requestId: string;
   readonly deadline: number;
   readonly signal: AbortSignal;
+  readonly generation: number;
 }
 class ProducerQuotaError extends Error {}
 
@@ -27,7 +29,7 @@ export class IngestionIngress implements OnModuleDestroy {
   private readonly readQuota: RequestHandler;
   private active = 0;
 
-  constructor() {
+  constructor(@Optional() private readonly maintenance: DemoMaintenance = new DemoMaintenance()) {
     const value = process.env['INGEST_API_KEY'];
     if (!value || !/^[a-f0-9]{64}$/.test(value))
       throw new Error('Configuración de ingesta inválida.');
@@ -65,6 +67,10 @@ export class IngestionIngress implements OnModuleDestroy {
     const context = this.contexts.get(request);
     if (!context) throw new Error('Canalización de ingesta no aplicada.');
     return context;
+  }
+
+  run<T>(request: Request, operation: () => Promise<T>): Promise<T> {
+    return this.maintenance.ingestion(this.context(request).generation, operation);
   }
 
   readonly middleware: RequestHandler = (request, response, next) => {
@@ -108,7 +114,10 @@ export class IngestionIngress implements OnModuleDestroy {
     deadline: number,
   ): Promise<void> {
     authenticateProducer(request, this.expected);
+    const generation = this.maintenance.generation;
     const post = request.method === 'POST';
+    if (post && this.maintenance.active)
+      throw ingestionProblem('INGESTION_CAPACITY_EXCEEDED', requestId);
     await new Promise<void>((resolve, reject) => {
       const result = (post ? this.postQuota : this.readQuota)(request, response, (error) =>
         error ? reject(error) : resolve(),
@@ -116,6 +125,8 @@ export class IngestionIngress implements OnModuleDestroy {
       Promise.resolve(result).catch(reject);
     });
     if (response.destroyed) return;
+    if (post && (this.maintenance.active || generation !== this.maintenance.generation))
+      throw ingestionProblem('INGESTION_CAPACITY_EXCEEDED', requestId);
     if (post && this.active >= 16) throw ingestionProblem('INGESTION_CAPACITY_EXCEEDED', requestId);
     if (post) this.active += 1;
     const controller = new AbortController();
@@ -130,7 +141,7 @@ export class IngestionIngress implements OnModuleDestroy {
       response.off('close', release);
       request.off('aborted', release);
     };
-    this.contexts.set(request, { requestId, deadline, signal: controller.signal });
+    this.contexts.set(request, { requestId, deadline, signal: controller.signal, generation });
     response.once('finish', release).once('close', release);
     request.once('aborted', release);
     if (request.aborted || response.destroyed) release();

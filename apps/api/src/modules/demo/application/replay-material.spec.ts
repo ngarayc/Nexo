@@ -32,4 +32,11 @@ describe('identidad del perfil no secreto de la reproducción', () => {
     invalid.publicOrigin = 'http://untrusted.invalid';
     expect(() => replayConfigurationFingerprint(invalid)).toThrow('No se pudo identificar');
   });
+  it('identifica el origen HTTPS del despliegue sin confundirlo con localhost', () => {
+    const cloud = { ...config(), publicOrigin: 'https://nexo.example.com' };
+    expect(replayConfigurationFingerprint(cloud)).toMatch(/^[a-f0-9]{64}$/);
+    expect(replayConfigurationFingerprint(cloud)).not.toEqual(
+      replayConfigurationFingerprint(config()),
+    );
+  });
 });

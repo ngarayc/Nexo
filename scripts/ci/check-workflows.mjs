@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { parse } from 'yaml';
 import { validateWorkflows } from './workflow-policy.mjs';
+import { validateCdWorkflow } from '../cd/policy.mjs';
 
 const files = [
   '.github/workflows/ci.yml',
@@ -11,6 +12,7 @@ const files = [
 validateWorkflows(
   ...(await Promise.all(files.map(async (file) => parse(await readFile(file, 'utf8'))))),
 );
+validateCdWorkflow(parse(await readFile('.github/workflows/cd.yml', 'utf8')));
 console.log(
   'Workflows: controles obligatorios, revisión separada, pins y lista de artefactos válidos.',
 );

@@ -101,6 +101,9 @@ export class ReplayCoordinator {
     this.waiting?.reject(new ReplayAdmissionUnknown());
     this.waiting = undefined;
   }
+  async whenIdle(): Promise<void> {
+    await this.emitter.whenIdle();
+  }
   async view(): Promise<ReplayControlView> {
     return this.coordination.run(async () => {
       await this.confirmAdmission();
@@ -157,7 +160,7 @@ export class ReplayCoordinator {
         const second = this.secondEligible(snapshot);
         const prepared = second
           ? await this.verifier.prepareSecond(snapshot.run.runId)
-          : await this.verifier.prepareContinuation(snapshot.run.runId);
+          : await this.prepareContinuation(snapshot.run.runId);
         if (prepared.result !== 'conformant') throw new ReplayPreconditionsFailed(prepared);
         this.pendingAdmission = command;
         try {
@@ -263,7 +266,7 @@ export class ReplayCoordinator {
         ? await this.verifier.prepare(runId)
         : run.stage === 'second'
           ? await this.verifier.prepareSecond(run.previousRunId!, runId)
-          : await this.verifier.prepareContinuation(run.previousRunId!);
+          : await this.prepareContinuation(run.previousRunId!);
     await this.coordination.run(async () => {
       const snapshot = this.current!;
       if (this.closed || snapshot.run.runId !== runId || snapshot.run.state !== 'preparing') return;
@@ -520,10 +523,14 @@ export class ReplayCoordinator {
     )
       return [];
     if (!this.current) return ['start'];
-    if (this.scenario?.scenarioClosedAt) return [];
     if (['completed', 'stopped', 'error', 'interrupted'].includes(this.current.run.state))
-      return this.current.run.verification === 'pending' ? [] : ['restart', 'finishVerification'];
+      return this.current.run.verification === 'pending'
+        ? []
+        : this.scenario?.scenarioClosedAt
+          ? ['restart']
+          : ['restart', 'finishVerification'];
     if (this.current.run.instanceId !== this.instanceId) return [];
+    if (this.scenario?.scenarioClosedAt && this.current.run.stage !== 'exploratory') return [];
     if (this.current.run.state === 'running') return ['pause', 'restart', 'finishVerification'];
     if (this.current.run.state === 'paused') return ['resume', 'restart', 'finishVerification'];
     return [];
@@ -698,8 +705,14 @@ export class ReplayCoordinator {
       .then(operation)
       .catch(() => this.block());
   }
+  private prepareContinuation(runId: string): Promise<ReplayReport> {
+    return this.scenario?.scenarioClosedAt
+      ? this.verifier.prepareContinuation(runId, true)
+      : this.verifier.prepareContinuation(runId);
+  }
   private secondEligible(snapshot: ReplaySnapshot): boolean {
     return (
+      !this.scenario?.scenarioClosedAt &&
       snapshot.run.stage === 'first' &&
       snapshot.run.state === 'completed' &&
       snapshot.run.verification === 'conformant'
@@ -761,7 +774,7 @@ export class ReplayCoordinator {
     do {
       report = second
         ? await this.verifier.prepareSecond(prior.run.runId)
-        : await this.verifier.prepareContinuation(prior.run.runId);
+        : await this.prepareContinuation(prior.run.runId);
       if (
         report.result !== 'inconclusive' ||
         !report.checks.some((check) => check.state === 'pending') ||
@@ -836,6 +849,18 @@ export class ReplayCoordinator {
       return this.current!;
     });
     if (!snapshot) return;
+    if (this.scenario?.scenarioClosedAt) {
+      // Detener un sufijo exploratorio no reescribe ni vuelve a evaluar el par.
+      if (snapshot.run.stage !== 'exploratory') throw new ReplayConflict();
+      await this.coordination.run(async () => {
+        if (this.closed || this.failed || this.pendingFinish !== commandId) return;
+        this.resolveFinish();
+        this.controlVersion++;
+        this.viewRevision++;
+        this.notify();
+      });
+      return;
+    }
     const report =
       snapshot.run.state === 'completed'
         ? await this.verifier.evaluateScenario(snapshot.run.runId)

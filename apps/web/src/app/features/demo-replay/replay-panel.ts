@@ -1,9 +1,21 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import type { IconName } from '../../platform/presentation/icon';
+import { Icon } from '../../platform/presentation/icon';
+import { ActionTooltip } from '../../platform/presentation/action-tooltip';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  inject,
+  signal,
+  viewChild,
+} from '@angular/core';
 import type { ReplayAction, ReplayState, ReplayVerification, ReplayStage } from '@nexo/contracts';
 import { formatTime } from '../../platform/presentation/format-time';
 import { ReplayFacade } from './replay-facade';
+import { summarizeReplayReport } from './replay-report-summary';
 
 @Component({
+  imports: [Icon, ActionTooltip],
   selector: 'nexo-replay-panel',
   templateUrl: './replay-panel.html',
   styleUrl: './replay-panel.css',
@@ -16,6 +28,18 @@ export class ReplayPanel {
   readonly intervalMs = signal(750);
   readonly lines = Array.from({ length: 24 }, (_, index) => index + 1);
   readonly formatTime = formatTime;
+  readonly summarize = summarizeReplayReport;
+  private readonly resetDialog = viewChild<ElementRef<HTMLDialogElement>>('resetDialog');
+  requestReset(): void {
+    if (this.replay.canReset()) this.resetDialog()?.nativeElement.showModal();
+  }
+  cancelReset(): void {
+    this.resetDialog()?.nativeElement.close();
+  }
+  confirmReset(): void {
+    this.cancelReset();
+    void this.replay.reset();
+  }
   tabsKey(event: KeyboardEvent): void {
     const tabs = ['control', 'deliveries', 'verification'] as const;
     const index = tabs.indexOf(this.tab());
@@ -35,13 +59,18 @@ export class ReplayPanel {
     this.tab.set(tab);
     document.getElementById('replay-' + tab + '-tab')?.focus();
   }
-  readonly actions: readonly { action: ReplayAction; label: string }[] = [
-    { action: 'start', label: 'Iniciar reproducción' },
-    { action: 'pause', label: 'Pausar' },
-    { action: 'resume', label: 'Reanudar' },
-    { action: 'restart', label: 'Reiniciar reproducción' },
-    { action: 'finishVerification', label: 'Finalizar verificación' },
+  readonly actions: readonly { action: ReplayAction; label: string; icon: IconName }[] = [
+    { action: 'start', label: 'Iniciar reproducción', icon: 'play' },
+    { action: 'pause', label: 'Pausar', icon: 'pause' },
+    { action: 'resume', label: 'Reanudar', icon: 'play' },
+    { action: 'restart', label: 'Reiniciar reproducción', icon: 'restart' },
+    { action: 'finishVerification', label: 'Finalizar verificación', icon: 'check' },
   ];
+  actionLabel(action: ReplayAction, label: string): string {
+    return action === 'finishVerification' && this.replay.view()?.scenario?.closedAt
+      ? 'Detener reproducción'
+      : label;
+  }
   act(action: ReplayAction) {
     void this.replay.execute(action, this.intervalMs());
   }

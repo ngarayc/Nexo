@@ -6,6 +6,7 @@ export type { TilePhase } from '../../../platform/maps/leaflet-map-surface';
 export interface FleetMapRenderer {
   sync(vehicles: readonly VehicleView[], selected: string | null): void;
   fit(): void;
+  fitGeofence(): void;
   focusVehicle(vehicleId: string): void;
   retryTiles(): void;
   destroy(): void;

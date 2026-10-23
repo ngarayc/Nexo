@@ -31,6 +31,7 @@ function setup(items: readonly EventView[] = [event]) {
   const renderer = {
     sync: vi.fn(),
     fit: vi.fn(),
+    fitGeofence: vi.fn(),
     focusEvent: vi.fn(),
     retryTiles: vi.fn(),
     destroy: vi.fn(),
@@ -106,4 +107,27 @@ it('fallo y reintento de tiles no borran muestras; acciones y destrucción usan 
   expect(renderer.sync).toHaveBeenLastCalledWith('B', [], null);
   fixture.destroy();
   expect(renderer.destroy).toHaveBeenCalledTimes(1);
+});
+it('un cambio observado selecciona su muestra original y no inventa la hora de cruce', async () => {
+  const after = {
+    ...event,
+    eventId: 'E2',
+    latitude: 14.612,
+    longitude: -90.538,
+    observedAt: '2026-01-01T05:01:00Z',
+  };
+  const { fixture, root, renderer } = setup([after, event]);
+  const selection = vi.fn();
+  fixture.componentInstance.selectEvent.subscribe(selection);
+  await fixture.whenStable();
+  expect(root.textContent).toContain('Entrada observada');
+  expect(root.textContent).toContain('no determina el punto ni la hora exacta');
+  [...root.querySelectorAll('button')]
+    .find((b) => b.textContent?.includes('Ver observación E2'))!
+    .click();
+  expect(selection).toHaveBeenCalledWith('E2');
+  [...root.querySelectorAll('button')]
+    .find((b) => b.textContent?.includes('Ver geocerca en trayectoria'))!
+    .click();
+  expect(renderer.fitGeofence).toHaveBeenCalledTimes(1);
 });

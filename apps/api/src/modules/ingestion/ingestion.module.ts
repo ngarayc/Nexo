@@ -15,6 +15,7 @@ import { RecoverItem } from './adapters/postgres/recover-item.js';
 import { ReconcileIngestion } from './application/reconcile.js';
 import { IngestionReconciler } from './adapters/queue/ingestion-reconciler.js';
 import { RuntimeModule } from '../../platform/runtime/runtime.module.js';
+import { DemoMaintenance } from '../../platform/runtime/demo-maintenance.js';
 
 @Module({
   imports: [DatabaseModule, RuntimeModule, ProcessingModule],
@@ -42,9 +43,13 @@ import { RuntimeModule } from '../../platform/runtime/runtime.module.js';
     },
     {
       provide: AdmissionStore,
-      inject: [WriteDatabase, DatabaseService, QueueConnection],
-      useFactory: (write: WriteDatabase, read: DatabaseService, queue: QueueConnection) =>
-        new AdmissionStore(write.pool, read.pool, queue.boss, read.querySlots),
+      inject: [WriteDatabase, DatabaseService, QueueConnection, DemoMaintenance],
+      useFactory: (
+        write: WriteDatabase,
+        read: DatabaseService,
+        queue: QueueConnection,
+        maintenance: DemoMaintenance,
+      ) => new AdmissionStore(write.pool, read.pool, queue.boss, read.querySlots, maintenance),
     },
     {
       provide: ReceiptReader,

@@ -1,33 +1,59 @@
 <section aria-labelledby="fleet-title">
-  <h2 id="fleet-title">Flota</h2>
-  <fieldset class="state-filters">
-    <legend>Filtrar por estado (totales generales)</legend>
-    @for (filter of stateFilters; track filter.value) {
-    <button
-      type="button"
-      [attr.aria-pressed]="fleet.statusFilter() === filter.value"
-      [disabled]="!monitor.hasBase()"
-      (click)="fleet.setStatus(filter.value)"
-    >
-      {{ filter.label }} @if (monitor.hasBase()) { ({{ filter.value ? fleet.summary()[filter.value]
-      : fleet.total() }}) }
-    </button>
-    }
-  </fieldset>
-  <div class="search">
-    <label for="vehicle-search">Buscar vehículo</label>
-    <input
-      #search
-      id="vehicle-search"
-      type="search"
-      [value]="fleet.search()"
-      (input)="fleet.setSearch(search.value)"
-      autocomplete="off"
-      spellcheck="false"
-      [disabled]="!monitor.hasBase()"
-    />
-    @if (fleet.search()) {
-    <button type="button" (click)="fleet.setSearch('')">Limpiar búsqueda</button> }
+  <div class="section-heading">
+    <div>
+      <p class="section-eyebrow">VISIBILIDAD EN TIEMPO REAL</p>
+      <h2 id="fleet-title">Flota</h2>
+    </div>
+    <span class="section-mark" aria-hidden="true"><nexo-icon name="fleet" /></span>
+  </div>
+  <div class="toolbar">
+    <fieldset class="state-filters">
+      <legend>Filtrar por estado (totales generales)</legend>
+      @for (filter of stateFilters; track filter.value) {
+      <button
+        class="state-filter"
+        [nexoTooltip]="filter.label + (monitor.hasBase() ? ' (' + (filter.value ? fleet.summary()[filter.value] : fleet.total()) + ')' : '')"
+        type="button"
+        [attr.aria-pressed]="fleet.statusFilter() === filter.value"
+        [disabled]="!monitor.hasBase()"
+        (click)="fleet.setStatus(filter.value)"
+      >
+        <nexo-icon [name]="filter.icon" /><span class="sr-only">{{ filter.label }}</span> @if
+        (monitor.hasBase()) {
+        <strong aria-hidden="true"
+          >{{ filter.value ? fleet.summary()[filter.value] : fleet.total() }}</strong
+        >
+        }
+      </button>
+      }
+    </fieldset>
+    <div class="search">
+      <label for="vehicle-search">Buscar vehículo</label>
+      <div class="search-control">
+        <nexo-icon name="search" />
+        <input
+          #search
+          id="vehicle-search"
+          type="search"
+          placeholder="Buscar por identificador…"
+          [value]="fleet.search()"
+          (input)="fleet.setSearch(search.value)"
+          autocomplete="off"
+          spellcheck="false"
+          [disabled]="!monitor.hasBase()"
+        />
+        @if (fleet.search()) {
+        <button
+          class="icon-button is-quiet"
+          type="button"
+          (click)="fleet.setSearch('')"
+          nexoTooltip="Limpiar búsqueda"
+        >
+          <nexo-icon name="close" /><span class="sr-only">Limpiar búsqueda</span>
+        </button>
+        }
+      </div>
+    </div>
   </div>
   @if (monitor.hasBase()) {
   <p class="summary">
@@ -66,20 +92,36 @@
 >
   <div class="history-heading">
     <h2 id="history-title">Historial del vehículo</h2>
-    <button type="button" (click)="close()">Cerrar historial</button>
+    <button class="icon-button" nexoTooltip="Cerrar historial" type="button" (click)="close()">
+      <nexo-icon name="close" /><span class="sr-only">Cerrar historial</span>
+    </button>
   </div>
   <nexo-identity [value]="vehicleId" />
   @if (hiddenSelection()) {
   <p>El vehículo seleccionado está oculto por los filtros de la flota.</p>
-  <button type="button" (click)="clearFilters()">Limpiar filtros de flota</button>
+  <button
+    class="icon-button"
+    nexoTooltip="Limpiar filtros de flota"
+    type="button"
+    (click)="clearFilters()"
+  >
+    <nexo-icon name="filter" /><span class="sr-only">Limpiar filtros de flota</span>
+  </button>
   } @switch (detail.phase()) { @case ('loading') {
   <p role="status">Cargando historial…</p>
   } @case ('waiting') {
   <p role="status">Esperando para actualizar el historial.</p>
   } @case ('error') {
   <p role="alert">No fue posible cargar el historial. Vuelve a intentarlo.</p>
-  <button type="button" (click)="detail.retry()">Reintentar historial</button> } } @if
-  (detail.hasBase()) { @if (detail.phase() !== 'ready') {
+  <button
+    class="icon-button"
+    nexoTooltip="Reintentar historial"
+    type="button"
+    (click)="detail.retry()"
+  >
+    <nexo-icon name="refresh" /><span class="sr-only">Reintentar historial</span>
+  </button>
+  } } @if (detail.hasBase()) { @if (detail.phase() !== 'ready') {
   <p>Los datos de este historial pueden estar desactualizados.</p>
   }
   <p>{{ detail.total() }} observaciones confirmadas.</p>

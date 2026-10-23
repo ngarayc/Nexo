@@ -28,7 +28,7 @@ const fixture = () => {
     environment: {
       os: 'linux',
       arch: 'x64',
-      node: '24.22.0',
+      node: '24.22.1',
       npm: '12.2.0',
       docker: '29.9.2',
       compose: '5.3.0',

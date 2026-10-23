@@ -26,6 +26,12 @@ scenarioId referencia la primera ejecución y previousRunId una ejecución anter
 
 ingestionId se registra **antes** de enviar HTTP y puede no tener todavía recibo. Su relación con ingestion_batches es una correlación, sin FK inmediata. Un rechazo tampoco exige telemetry_events. La identidad del evento usa la misma representación binaria exacta del núcleo; NUL/sustitutos no se reparan al leer el diario.
 
+## Continuación tras el cierre
+
+La migración aditiva [0005](../apps/api/migrations/0005_exploratory_after_closure.sql) añade `post_closure` a replay_runs. El trigger calcula su valor al insertar desde el estado real de la raíz: solo puede ser verdadero para un hijo exploratorio de un escenario ya cerrado. El cliente no decide esa clasificación y la marca no puede actualizarse. La API no expone otro endpoint ni un parámetro para reabrir escenarios.
+
+Las restricciones permiten actividad de ese sufijo sin modificar los documentos, estados de verificación o fecha del cierre anterior. Un exploratorio anterior al cierre sigue impidiendo declarar conforme el par oficial. Tras cerrar se rechaza crear otro segundo oficial. Detener una exploración finaliza su ejecución sin volver a evaluar ni sobrescribir el escenario. La capacidad de 1.000 ejecuciones y la independencia del receptor permanecen vigentes.
+
 ## Confirmación y límites
 
 PostgresReplayJournal recibe los pools y turnos de acceso; no crea otro pool o broker. Usa transacciones breves y un bloqueo asesor propio, distinto del de admisión de ingesta. No realiza HTTP ni conserva una conexión/exclusión esperando red.

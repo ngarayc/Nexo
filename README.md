@@ -6,13 +6,15 @@ La API admite lotes por HTTP y conserva su trabajo en una cola durable PostgreSQ
 
 Angular muestra flota, búsqueda, estados, historial y alertas mediante snapshot y SSE compartido, con recuperación de conexión y sesión. CR-01 añade filtro exacto por vehículo con selección propia de cada cliente. Tabla, mapa, trayectoria y gráfico comparten selección por evento; el historial permite inspeccionar la fecha recibida y el UTC exacto. Los datos siguen disponibles ante un fallo cartográfico. [Dashboard](docs/dashboard.md), [cartografía](docs/cartography.md) y [velocidad](docs/speed-chart.md) explican comportamiento y accesibilidad.
 
+Una [geocerca fija](docs/geofence.md) clasifica las posiciones Dentro/Fuera y muestra cambios observados entre muestras del historial, sin alterar las alertas del contrato. Es un extra de consulta, con bordes incluidos y sin editor de zonas.
+
 El [reproductor HTTP](docs/replay-emitter.md), controlado desde un [panel flotante](docs/replay-panel.md), envía progresivamente las 24 líneas originales con intervalo, inicio, pausa, reanudación y reinicio. Su [diario](docs/replay-journal.md) y [verificador](docs/replay-verification.md) conservan resultados e incertidumbre. La pausa actúa sobre nuevos envíos; el servidor sigue procesando lo admitido. La [guía](docs/demo-guide.md) demuestra 20/2/2 y 0/22/2 sin reset intermedio, con 20 eventos/8 vehículos/4 alertas. El [reset local](docs/demo-reset.md) identifica el volumen sintético y conserva evidencia antes de recrearlo.
 
 [Verificación](docs/verification.md) registra resultados y promociones por candidato; la [auditoría final](docs/final-audit.md) reúne hallazgos y correcciones. La validación del SHA definitivo y los artefactos de entrega conservan su evidencia propia.
 
 ## Arranque
 
-Requisitos: Git, Docker Engine y Compose, Bash y OpenSSL. El reset y las comprobaciones de fuentes requieren además Node.js 24.22.0 y npm 12.2.0 en el host; la construcción de API/web usa sus herramientas dentro de Docker. Desde la raíz, generar la configuración solo la primera vez:
+Requisitos: Git, Docker Engine y Compose, Bash y OpenSSL. El reset y las comprobaciones de fuentes requieren además Node.js 24.22.1 y npm 12.2.0 en el host; la construcción de API/web usa sus herramientas dentro de Docker. Desde la raíz, generar la configuración solo la primera vez:
 
 ```sh
 bash scripts/configure-local.sh
@@ -32,7 +34,7 @@ La detención conserva el volumen. Para descartar explícitamente la demo sinté
 
 ## Fuentes y comprobaciones
 
-Herramientas para reset y desarrollo: **Node.js 24.22.0 y npm 12.2.0**, fijadas también en las imágenes de build y el lockfile.
+Herramientas para reset y desarrollo: **Node.js 24.22.1 y npm 12.2.0**, fijadas también en las imágenes de build y el lockfile.
 
 ```sh
 npm ci
@@ -105,3 +107,5 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 **Destino del paquete:** [release entrega-final](https://github.com/ngarayc/Nexo/releases/tag/entrega-final). La entrega está publicada únicamente cuando esa página ofrece un manifiesto cuyos SHA y controles coinciden con el tag. Las ejecuciones de CI y el manifiesto externo determinan el estado de cada candidatura; el enlace previsto por sí solo no acredita publicación.
 
 La [auditoría y correcciones](docs/final-audit.md) contrasta implementación, planeación y obligaciones iniciales. La revisión del candidato corregido precede al cierre. El manifiesto vincula el SHA probado en development con el SHA publicado en main mediante su árbol Git idéntico. Conserva los reportes ordinarios/ampliados y sus revisiones originales, sin volver a ejecutar las pruebas por promover una rama.
+
+El [despliegue continuo en Azure](docs/cd.md) usa Actions, identidad federada OIDC y Docker. Se activa desde main después de verificar su promoción; conserva la revisión humana de la PR y los datos persistentes.

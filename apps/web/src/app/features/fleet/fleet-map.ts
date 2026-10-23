@@ -1,3 +1,5 @@
+import { Icon } from '../../platform/presentation/icon';
+import { ActionTooltip } from '../../platform/presentation/action-tooltip';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -16,17 +18,50 @@ import { MapProviderStore } from '../../platform/maps/map-provider-store';
 import { hasProjectionLimit } from '../../platform/maps/projection';
 import { FLEET_MAP_FACTORY } from './adapters/fleet-map-factory';
 import type { FleetMapRenderer, TilePhase } from './adapters/fleet-map-renderer';
+import { demoGeofence, geofenceStatus } from './geofence';
 
 @Component({
+  imports: [Icon, ActionTooltip],
   selector: 'nexo-fleet-map',
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <section aria-labelledby="fleet-map-title">
-      <h3 id="fleet-map-title">Últimas posiciones</h3>
+      <div class="map-heading">
+        <h3 id="fleet-map-title">Últimas posiciones</h3>
+        <button
+          class="icon-button"
+          nexoTooltip="Ver flota visible"
+          type="button"
+          (click)="fit()"
+          [disabled]="!rendered() || items().length === 0"
+        >
+          <nexo-icon name="focus" /><span class="sr-only">Ver flota visible</span>
+        </button>
+      </div>
       <p>Selecciona un vehículo en el mapa o en la tabla para abrir su historial.</p>
-      <button type="button" (click)="fit()" [disabled]="!rendered() || items().length === 0">
-        Ver flota visible
-      </button>
+      <div class="geofence-summary" aria-label="Resumen de geocerca">
+        <div>
+          <strong>Geocerca · {{ geofence.name }}</strong>
+          <p data-testid="geofence-summary">
+            {{ geofenceSummary().inside }} dentro · {{ geofenceSummary().outside }} fuera
+            @if (geofenceSummary().unknown) {
+              · {{ geofenceSummary().unknown }} sin posición válida
+            }
+            · flota visible
+          </p>
+          <span>El rectángulo azul incluye sus bordes. No modifica las alertas.</span>
+        </div>
+        <button
+          class="icon-button"
+          nexoTooltip="Ver geocerca"
+          type="button"
+          [disabled]="!rendered()"
+          (click)="fitGeofence()"
+        >
+          <nexo-icon name="pin" /><span class="sr-only">Ver geocerca</span>
+        </button>
+      </div>
+
       @if (provider.phase() === 'loading') {
         <p role="status">Preparando mapa…</p>
       }
@@ -34,7 +69,9 @@ import type { FleetMapRenderer, TilePhase } from './adapters/fleet-map-renderer'
         <p role="status">
           No fue posible cargar la cartografía. La tabla y el historial siguen disponibles.
         </p>
-        <button type="button" (click)="retry()">Reintentar mapa</button>
+        <button class="icon-button" nexoTooltip="Reintentar mapa" type="button" (click)="retry()">
+          <nexo-icon name="refresh" /><span class="sr-only">Reintentar mapa</span>
+        </button>
       }
       @if (items().length === 0) {
         <p>No hay posiciones de vehículos visibles en el mapa.</p>
@@ -67,42 +104,7 @@ import type { FleetMapRenderer, TilePhase } from './adapters/fleet-map-renderer'
       </p>
     </section>
   `,
-  styles: `
-    :host {
-      display: block;
-      min-width: 0;
-      margin-block: 1.5rem;
-    }
-    .map-wrap {
-      position: relative;
-      margin-block: 0.75rem;
-    }
-    .map {
-      height: clamp(16rem, 42vh, 28rem);
-      width: 100%;
-      background: #e7efec;
-    }
-    .attribution {
-      position: absolute;
-      right: 0;
-      bottom: 0;
-      z-index: 900;
-      max-width: 90%;
-      margin: 0;
-      padding: 0.3rem;
-      background: white;
-      font-size: 0.75rem;
-      overflow-wrap: anywhere;
-    }
-    .external {
-      color: #526970;
-      font-size: 0.875rem;
-    }
-    button {
-      padding: 0.6rem;
-      font: inherit;
-    }
-  `,
+  styleUrl: './map-panel.css',
 })
 export class FleetMap {
   readonly items = input.required<readonly VehicleView[]>();
@@ -112,6 +114,12 @@ export class FleetMap {
   readonly rendered = signal(false);
   readonly tiles = signal<TilePhase>('loading');
   readonly projectionLimited = computed(() => hasProjectionLimit(this.items()));
+  readonly geofence = demoGeofence;
+  readonly geofenceSummary = computed(() => {
+    const counts = { inside: 0, outside: 0, unknown: 0 };
+    for (const vehicle of this.items()) counts[geofenceStatus(vehicle)]++;
+    return counts;
+  });
   private readonly host = viewChild<ElementRef<HTMLElement>>('mapHost');
   private readonly factory = inject(FLEET_MAP_FACTORY);
   private renderer?: FleetMapRenderer;
@@ -142,6 +150,9 @@ export class FleetMap {
   }
   focusVehicle(id: string): void {
     this.renderer?.focusVehicle(id);
+  }
+  fitGeofence(): void {
+    this.renderer?.fitGeofence();
   }
   retry(): void {
     if (this.provider.phase() === 'error') this.provider.load();

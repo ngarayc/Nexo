@@ -238,12 +238,12 @@ test('dos paneles controlan el motor real, conservan ambos oráculos y muestran 
     ).toBeEnabled();
     await first.getByRole('button', { name: 'Finalizar verificación', exact: true }).click();
     for (const page of [first, second]) {
-      await page.getByRole('tab', { name: 'Verificación', exact: true }).click();
+      await page.getByRole('tab', { name: 'Informe', exact: true }).click();
       await expect(
-        page.getByRole('heading', { name: 'Informe individual conservado: Conforme', exact: true }),
+        page.getByRole('heading', { name: 'Segunda pasada correcta', exact: true }),
       ).toBeVisible();
       await expect(
-        page.getByRole('heading', { name: 'Cierre del escenario: Conforme', exact: true }),
+        page.getByRole('heading', { name: 'Las dos pasadas coinciden', exact: true }),
       ).toBeVisible({ timeout: 15000 });
       await page.getByRole('button', { name: 'Cargar historial', exact: true }).click();
       await expect(
@@ -269,9 +269,28 @@ test('dos paneles controlan el motor real, conservan ambos oráculos y muestran 
     await second.getByRole('button', { name: /^Reproductor ·/ }).click();
     await expect(second.getByTestId('replay-accepted')).toHaveText('0');
     await expect(second.getByTestId('replay-duplicates')).toHaveText('22');
+    const closedProof = replayProof();
     await expect(
       second.getByRole('button', { name: 'Reiniciar reproducción', exact: true }),
-    ).toBeDisabled();
+    ).toBeEnabled();
+    await second.getByLabel('Intervalo entre líneas (milisegundos)', { exact: true }).fill('100');
+    await second.getByRole('button', { name: 'Reiniciar reproducción', exact: true }).click();
+    await expect(
+      second.getByText('Recorrido exploratorio, fuera del par oficial', { exact: true }),
+    ).toBeVisible();
+    await expect(second.getByTestId('replay-state')).toHaveText('Recorrido completado', {
+      timeout: 60000,
+    });
+    await expect(second.getByTestId('replay-accepted')).toHaveText('0');
+    await expect(second.getByTestId('replay-duplicates')).toHaveText('22');
+    await expect(second.getByTestId('replay-rejected')).toHaveText('2');
+    await expect.poll(() => replayProof().runs.length).toBe(3);
+    const exploredProof = replayProof();
+    expect(exploredProof.runs.slice(0, 2)).toEqual(closedProof.runs);
+    expect(exploredProof.domainFingerprint).toBe(closedProof.domainFingerprint);
+    await expect(
+      second.getByRole('button', { name: 'Reiniciar reproducción', exact: true }),
+    ).toBeEnabled();
     expect(
       await second.evaluate(() => document.documentElement.scrollWidth <= globalThis.innerWidth),
     ).toBe(true);

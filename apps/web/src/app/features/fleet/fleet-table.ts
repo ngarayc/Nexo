@@ -1,3 +1,5 @@
+import { Icon } from '../../platform/presentation/icon';
+import { ActionTooltip } from '../../platform/presentation/action-tooltip';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -11,9 +13,10 @@ import { IdentityText, identityPreview } from '../../platform/presentation/ident
 import { formatTime } from '../../platform/presentation/format-time';
 
 import { stateLabels } from '../../platform/presentation/vehicle-state-label';
+import { geofenceStatus, geofenceLabels } from './geofence';
 @Component({
   selector: 'nexo-fleet-table',
-  imports: [IdentityText],
+  imports: [IdentityText, Icon, ActionTooltip],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div
@@ -33,6 +36,7 @@ import { stateLabels } from '../../platform/presentation/vehicle-state-label';
             <th scope="col">Velocidad (km/h)</th>
             <th scope="col">Encendido</th>
             <th scope="col">Estado</th>
+            <th scope="col">Geocerca</th>
             <th scope="col">Acciones</th>
           </tr>
         </thead>
@@ -53,7 +57,14 @@ import { stateLabels } from '../../platform/presentation/vehicle-state-label';
                 }}</span>
               </td>
               <td>
+                <span class="geofence-state" [attr.data-geofence]="geofenceStatus(vehicle)">{{
+                  geofenceLabels[geofenceStatus(vehicle)]
+                }}</span>
+              </td>
+              <td>
                 <button
+                  class="icon-button"
+                  [nexoTooltip]="'Ver historial de ' + preview(vehicle.vehicleId)"
                   #historyButton
                   type="button"
                   (click)="selectVehicle.emit(vehicle.vehicleId)"
@@ -61,7 +72,7 @@ import { stateLabels } from '../../platform/presentation/vehicle-state-label';
                   [attr.aria-expanded]="vehicle.vehicleId === selected()"
                   [attr.aria-controls]="vehicle.vehicleId === selected() ? 'vehicle-history' : null"
                 >
-                  Ver historial
+                  <nexo-icon name="history" /><span class="sr-only">Ver historial</span>
                 </button>
               </td>
             </tr>
@@ -79,6 +90,8 @@ export class FleetTable {
   readonly formatTime = formatTime;
   readonly preview = identityPreview;
   readonly labels = stateLabels;
+  readonly geofenceStatus = geofenceStatus;
+  readonly geofenceLabels = geofenceLabels;
   private readonly buttons = viewChildren<ElementRef<HTMLButtonElement>>('historyButton');
   focusVehicle(vehicleId: string): boolean {
     const index = this.items().findIndex((vehicle) => vehicle.vehicleId === vehicleId);

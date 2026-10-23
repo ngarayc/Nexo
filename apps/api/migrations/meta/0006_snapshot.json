@@ -1,0 +1,1220 @@
+{
+  "id": "424e26d1-6d47-4ce4-a787-38d1af7c803b",
+  "prevId": "2b3761ab-17b5-42d1-b052-c0e6732eb720",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.alerts": {
+      "name": "alerts",
+      "schema": "",
+      "columns": {
+        "event_pk": {
+          "name": "event_pk",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "alerts_event_pk_telemetry_events_event_pk_fk": {
+          "name": "alerts_event_pk_telemetry_events_event_pk_fk",
+          "tableFrom": "alerts",
+          "tableTo": "telemetry_events",
+          "columnsFrom": ["event_pk"],
+          "columnsTo": ["event_pk"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "alerts_type_valid": {
+          "name": "alerts_type_valid",
+          "value": "\"alerts\".\"type\" = 'OVERSPEED'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.ingestion_batches": {
+      "name": "ingestion_batches",
+      "schema": "",
+      "columns": {
+        "ingestion_id": {
+          "name": "ingestion_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "request_document": {
+          "name": "request_document",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "total": {
+          "name": "total",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "input_bytes": {
+          "name": "input_bytes",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'active'"
+        },
+        "next_index": {
+          "name": "next_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "revision": {
+          "name": "revision",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        },
+        "received_at": {
+          "name": "received_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "failed_index": {
+          "name": "failed_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failure_code": {
+          "name": "failure_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ingestion_batches_active_cursor": {
+          "name": "ingestion_batches_active_cursor",
+          "columns": [
+            {
+              "expression": "received_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "ingestion_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"ingestion_batches\".\"state\" = 'active'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "ingestion_batches_total_valid": {
+          "name": "ingestion_batches_total_valid",
+          "value": "\"ingestion_batches\".\"total\" BETWEEN 1 AND 1000"
+        },
+        "ingestion_batches_input_bytes_positive": {
+          "name": "ingestion_batches_input_bytes_positive",
+          "value": "\"ingestion_batches\".\"input_bytes\" > 0"
+        },
+        "ingestion_batches_revision_valid": {
+          "name": "ingestion_batches_revision_valid",
+          "value": "\"ingestion_batches\".\"revision\" >= 0"
+        },
+        "ingestion_batches_cursor_valid": {
+          "name": "ingestion_batches_cursor_valid",
+          "value": "\"ingestion_batches\".\"next_index\" BETWEEN 0 AND \"ingestion_batches\".\"total\""
+        },
+        "ingestion_batches_failure_code_valid": {
+          "name": "ingestion_batches_failure_code_valid",
+          "value": "\"ingestion_batches\".\"failure_code\" IS NULL OR \"ingestion_batches\".\"failure_code\" ~ '^[A-Z][A-Z0-9_]{0,63}$'"
+        },
+        "ingestion_batches_state_consistent": {
+          "name": "ingestion_batches_state_consistent",
+          "value": "\n    (\"ingestion_batches\".\"state\" = 'active' AND \"ingestion_batches\".\"next_index\" < \"ingestion_batches\".\"total\" AND \"ingestion_batches\".\"failed_index\" IS NULL AND \"ingestion_batches\".\"failure_code\" IS NULL)\n    OR (\"ingestion_batches\".\"state\" = 'complete' AND \"ingestion_batches\".\"next_index\" = \"ingestion_batches\".\"total\" AND \"ingestion_batches\".\"failed_index\" IS NULL AND \"ingestion_batches\".\"failure_code\" IS NULL)\n    OR (\"ingestion_batches\".\"state\" = 'failed' AND \"ingestion_batches\".\"next_index\" < \"ingestion_batches\".\"total\" AND \"ingestion_batches\".\"failed_index\" = \"ingestion_batches\".\"next_index\" AND \"ingestion_batches\".\"failed_index\" IS NOT NULL AND \"ingestion_batches\".\"failure_code\" IS NOT NULL)\n  "
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.ingestion_items": {
+      "name": "ingestion_items",
+      "schema": "",
+      "columns": {
+        "ingestion_id": {
+          "name": "ingestion_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "item_index": {
+          "name": "item_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "input_document": {
+          "name": "input_document",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'waiting'"
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reason_code": {
+          "name": "reason_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "resolved_event_pk": {
+          "name": "resolved_event_pk",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "generation": {
+          "name": "generation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "opportunities_reserved": {
+          "name": "opportunities_reserved",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "attempt_limit": {
+          "name": "attempt_limit",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 3
+        },
+        "policy_version": {
+          "name": "policy_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "job_id": {
+          "name": "job_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "not_before": {
+          "name": "not_before",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "failure_code": {
+          "name": "failure_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_failure_generation": {
+          "name": "last_failure_generation",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_failure_at": {
+          "name": "last_failure_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "finalized_at": {
+          "name": "finalized_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "ingestion_items_one_scheduled_per_batch": {
+          "name": "ingestion_items_one_scheduled_per_batch",
+          "columns": [
+            {
+              "expression": "ingestion_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"ingestion_items\".\"state\" = 'scheduled'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "ingestion_items_ingestion_id_ingestion_batches_ingestion_id_fk": {
+          "name": "ingestion_items_ingestion_id_ingestion_batches_ingestion_id_fk",
+          "tableFrom": "ingestion_items",
+          "tableTo": "ingestion_batches",
+          "columnsFrom": ["ingestion_id"],
+          "columnsTo": ["ingestion_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "ingestion_items_resolved_event_pk_telemetry_events_event_pk_fk": {
+          "name": "ingestion_items_resolved_event_pk_telemetry_events_event_pk_fk",
+          "tableFrom": "ingestion_items",
+          "tableTo": "telemetry_events",
+          "columnsFrom": ["resolved_event_pk"],
+          "columnsTo": ["event_pk"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "ingestion_items_ingestion_id_item_index_pk": {
+          "name": "ingestion_items_ingestion_id_item_index_pk",
+          "columns": ["ingestion_id", "item_index"]
+        }
+      },
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "ingestion_items_index_valid": {
+          "name": "ingestion_items_index_valid",
+          "value": "\"ingestion_items\".\"item_index\" BETWEEN 0 AND 999"
+        },
+        "ingestion_items_budget_valid": {
+          "name": "ingestion_items_budget_valid",
+          "value": "\"ingestion_items\".\"attempt_limit\" > 0 AND \"ingestion_items\".\"policy_version\" > 0 AND \"ingestion_items\".\"opportunities_reserved\" BETWEEN 0 AND \"ingestion_items\".\"attempt_limit\" AND \"ingestion_items\".\"generation\" = \"ingestion_items\".\"opportunities_reserved\""
+        },
+        "ingestion_items_reason_valid": {
+          "name": "ingestion_items_reason_valid",
+          "value": "\"ingestion_items\".\"reason_code\" IS NULL OR \"ingestion_items\".\"reason_code\" ~ '^[A-Z][A-Z0-9_]{0,63}$'"
+        },
+        "ingestion_items_failure_code_valid": {
+          "name": "ingestion_items_failure_code_valid",
+          "value": "\"ingestion_items\".\"failure_code\" IS NULL OR \"ingestion_items\".\"failure_code\" ~ '^[A-Z][A-Z0-9_]{0,63}$'"
+        },
+        "ingestion_items_result_consistent": {
+          "name": "ingestion_items_result_consistent",
+          "value": "\n    (\"ingestion_items\".\"state\" = 'classified' AND \"ingestion_items\".\"outcome\" IS NOT NULL AND (\n      (\"ingestion_items\".\"outcome\" IN ('accepted', 'duplicate') AND \"ingestion_items\".\"outcome\" IS NOT NULL AND \"ingestion_items\".\"resolved_event_pk\" IS NOT NULL AND \"ingestion_items\".\"reason_code\" IS NULL)\n      OR (\"ingestion_items\".\"outcome\" = 'rejected' AND \"ingestion_items\".\"resolved_event_pk\" IS NULL AND \"ingestion_items\".\"reason_code\" IS NOT NULL)\n    )) OR (\"ingestion_items\".\"state\" <> 'classified' AND \"ingestion_items\".\"outcome\" IS NULL AND \"ingestion_items\".\"reason_code\" IS NULL AND \"ingestion_items\".\"resolved_event_pk\" IS NULL)\n  "
+        },
+        "ingestion_items_state_consistent": {
+          "name": "ingestion_items_state_consistent",
+          "value": "\n    (\"ingestion_items\".\"state\" = 'waiting' AND \"ingestion_items\".\"generation\" = 0 AND \"ingestion_items\".\"job_id\" IS NULL AND \"ingestion_items\".\"not_before\" IS NULL AND \"ingestion_items\".\"finalized_at\" IS NULL AND \"ingestion_items\".\"failure_code\" IS NULL)\n    OR (\"ingestion_items\".\"state\" = 'scheduled' AND \"ingestion_items\".\"generation\" > 0 AND \"ingestion_items\".\"job_id\" IS NOT NULL AND \"ingestion_items\".\"not_before\" IS NOT NULL AND \"ingestion_items\".\"finalized_at\" IS NULL)\n    OR (\"ingestion_items\".\"state\" = 'classified' AND \"ingestion_items\".\"generation\" > 0 AND \"ingestion_items\".\"job_id\" IS NOT NULL AND \"ingestion_items\".\"not_before\" IS NOT NULL AND \"ingestion_items\".\"finalized_at\" IS NOT NULL)\n    OR (\"ingestion_items\".\"state\" = 'failed' AND (\n      \"ingestion_items\".\"opportunities_reserved\" = \"ingestion_items\".\"attempt_limit\"\n      OR \"ingestion_items\".\"failure_code\" IN ('QUEUE_CANCELLED','QUEUE_PROTOCOL_VIOLATION','SCHEMA_INCOMPATIBLE','INGESTION_INVARIANT')\n    ) AND \"ingestion_items\".\"generation\" > 0 AND \"ingestion_items\".\"job_id\" IS NOT NULL AND \"ingestion_items\".\"not_before\" IS NOT NULL AND \"ingestion_items\".\"finalized_at\" IS NOT NULL AND \"ingestion_items\".\"failure_code\" IS NOT NULL)\n    OR (\"ingestion_items\".\"state\" = 'blocked' AND \"ingestion_items\".\"generation\" = 0 AND \"ingestion_items\".\"job_id\" IS NULL AND \"ingestion_items\".\"not_before\" IS NULL AND \"ingestion_items\".\"finalized_at\" IS NOT NULL AND \"ingestion_items\".\"failure_code\" IS NOT NULL)\n  "
+        },
+        "ingestion_items_failure_metadata_consistent": {
+          "name": "ingestion_items_failure_metadata_consistent",
+          "value": "\n    (\"ingestion_items\".\"state\" = 'blocked' AND \"ingestion_items\".\"last_failure_generation\" IS NULL AND \"ingestion_items\".\"last_failure_at\" IS NULL)\n    OR (\"ingestion_items\".\"state\" <> 'blocked' AND (\n      (\"ingestion_items\".\"failure_code\" IS NULL AND \"ingestion_items\".\"last_failure_generation\" IS NULL AND \"ingestion_items\".\"last_failure_at\" IS NULL)\n      OR (\"ingestion_items\".\"failure_code\" IS NOT NULL AND \"ingestion_items\".\"last_failure_generation\" IS NOT NULL AND \"ingestion_items\".\"last_failure_generation\" BETWEEN 1 AND \"ingestion_items\".\"generation\" AND \"ingestion_items\".\"last_failure_at\" IS NOT NULL)\n    ))\n  "
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.outbox_messages": {
+      "name": "outbox_messages",
+      "schema": "",
+      "columns": {
+        "message_id": {
+          "name": "message_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "event_pk": {
+          "name": "event_pk",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "name": "type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "schema_version": {
+          "name": "schema_version",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "payload": {
+          "name": "payload",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frame_bytes": {
+          "name": "frame_bytes",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "available_at": {
+          "name": "available_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "attempts": {
+          "name": "attempts",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "last_error_code": {
+          "name": "last_error_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "outbox_messages_event_type_unique": {
+          "name": "outbox_messages_event_type_unique",
+          "columns": [
+            {
+              "expression": "event_pk",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "type",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "outbox_messages_unpublished": {
+          "name": "outbox_messages_unpublished",
+          "columns": [
+            {
+              "expression": "available_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "message_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"outbox_messages\".\"published_at\" IS NULL",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "outbox_messages_event_pk_telemetry_events_event_pk_fk": {
+          "name": "outbox_messages_event_pk_telemetry_events_event_pk_fk",
+          "tableFrom": "outbox_messages",
+          "tableTo": "telemetry_events",
+          "columnsFrom": ["event_pk"],
+          "columnsTo": ["event_pk"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "outbox_messages_type_valid": {
+          "name": "outbox_messages_type_valid",
+          "value": "\"outbox_messages\".\"type\" IN ('telemetry.accepted', 'vehicle.updated', 'alert.created')"
+        },
+        "outbox_messages_shape_valid": {
+          "name": "outbox_messages_shape_valid",
+          "value": "\"outbox_messages\".\"schema_version\" > 0 AND \"outbox_messages\".\"frame_bytes\" > 0 AND \"outbox_messages\".\"attempts\" >= 0"
+        },
+        "outbox_messages_error_valid": {
+          "name": "outbox_messages_error_valid",
+          "value": "\"outbox_messages\".\"last_error_code\" IS NULL OR \"outbox_messages\".\"last_error_code\" ~ '^[A-Z][A-Z0-9_]{0,63}$'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.replay_attempts": {
+      "name": "replay_attempts",
+      "schema": "",
+      "columns": {
+        "run_id": {
+          "name": "run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "line_number": {
+          "name": "line_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "batch_index": {
+          "name": "batch_index",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "ingestion_id": {
+          "name": "ingestion_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_key": {
+          "name": "event_key",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'in_flight'"
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reason_code": {
+          "name": "reason_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "http_status": {
+          "name": "http_status",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "diagnostic_document": {
+          "name": "diagnostic_document",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "finalized_at": {
+          "name": "finalized_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "replay_attempts_one_in_flight": {
+          "name": "replay_attempts_one_in_flight",
+          "columns": [
+            {
+              "expression": "run_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"replay_attempts\".\"state\" = 'in_flight'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "replay_attempts_run_id_replay_runs_run_id_fk": {
+          "name": "replay_attempts_run_id_replay_runs_run_id_fk",
+          "tableFrom": "replay_attempts",
+          "tableTo": "replay_runs",
+          "columnsFrom": ["run_id"],
+          "columnsTo": ["run_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "replay_attempts_run_id_line_number_pk": {
+          "name": "replay_attempts_run_id_line_number_pk",
+          "columns": ["run_id", "line_number"]
+        }
+      },
+      "uniqueConstraints": {
+        "replay_attempts_ingestion_id_unique": {
+          "name": "replay_attempts_ingestion_id_unique",
+          "nullsNotDistinct": false,
+          "columns": ["ingestion_id"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "replay_attempts_line_valid": {
+          "name": "replay_attempts_line_valid",
+          "value": "\"replay_attempts\".\"line_number\" BETWEEN 1 AND 24 AND \"replay_attempts\".\"batch_index\" = 0"
+        },
+        "replay_attempts_identity_valid": {
+          "name": "replay_attempts_identity_valid",
+          "value": "\"replay_attempts\".\"event_key\" IS NULL OR nexo_identity_is_canonical(\"replay_attempts\".\"event_key\")"
+        },
+        "replay_attempts_http_valid": {
+          "name": "replay_attempts_http_valid",
+          "value": "\"replay_attempts\".\"http_status\" IS NULL OR \"replay_attempts\".\"http_status\" BETWEEN 100 AND 599"
+        },
+        "replay_attempts_reason_valid": {
+          "name": "replay_attempts_reason_valid",
+          "value": "\"replay_attempts\".\"reason_code\" IS NULL OR \"replay_attempts\".\"reason_code\" ~ '^[A-Z][A-Z0-9_]{0,63}$'"
+        },
+        "replay_attempts_time_valid": {
+          "name": "replay_attempts_time_valid",
+          "value": "\"replay_attempts\".\"finalized_at\" IS NULL OR \"replay_attempts\".\"finalized_at\" >= \"replay_attempts\".\"started_at\""
+        },
+        "replay_attempts_diagnostic_valid": {
+          "name": "replay_attempts_diagnostic_valid",
+          "value": "\n      \"replay_attempts\".\"diagnostic_document\" IS NULL OR (json_typeof(\"replay_attempts\".\"diagnostic_document\") = 'object'\n        AND octet_length(\"replay_attempts\".\"diagnostic_document\"::text) <= 4096)\n    "
+        },
+        "replay_attempts_result_valid": {
+          "name": "replay_attempts_result_valid",
+          "value": "\n      (\"replay_attempts\".\"state\" = 'in_flight' AND \"replay_attempts\".\"outcome\" IS NULL AND \"replay_attempts\".\"reason_code\" IS NULL\n        AND \"replay_attempts\".\"http_status\" IS NULL AND \"replay_attempts\".\"diagnostic_document\" IS NULL AND \"replay_attempts\".\"finalized_at\" IS NULL)\n      OR (\"replay_attempts\".\"state\" = 'classified' AND \"replay_attempts\".\"outcome\" IS NOT NULL AND \"replay_attempts\".\"http_status\" = 200\n        AND \"replay_attempts\".\"http_status\" IS NOT NULL AND \"replay_attempts\".\"finalized_at\" IS NOT NULL AND (\n          (\"replay_attempts\".\"outcome\" IN ('accepted','duplicate') AND \"replay_attempts\".\"reason_code\" IS NULL)\n          OR (\"replay_attempts\".\"outcome\" = 'rejected' AND \"replay_attempts\".\"reason_code\" IS NOT NULL)))\n      OR (\"replay_attempts\".\"state\" IN ('uncertain','technical_failure') AND \"replay_attempts\".\"outcome\" IS NULL\n        AND \"replay_attempts\".\"reason_code\" IS NULL AND \"replay_attempts\".\"diagnostic_document\" IS NOT NULL AND \"replay_attempts\".\"finalized_at\" IS NOT NULL)\n    "
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.replay_runs": {
+      "name": "replay_runs",
+      "schema": "",
+      "columns": {
+        "run_id": {
+          "name": "run_id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "scenario_id": {
+          "name": "scenario_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "previous_run_id": {
+          "name": "previous_run_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instance_id": {
+          "name": "instance_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fixture_sha256": {
+          "name": "fixture_sha256",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stage": {
+          "name": "stage",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "interval_ms": {
+          "name": "interval_ms",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 750
+        },
+        "state": {
+          "name": "state",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'preparing'"
+        },
+        "next_line": {
+          "name": "next_line",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "revision": {
+          "name": "revision",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "0"
+        },
+        "verification": {
+          "name": "verification",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "verification_document": {
+          "name": "verification_document",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scenario_verification": {
+          "name": "scenario_verification",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "scenario_document": {
+          "name": "scenario_document",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scenario_closed_at": {
+          "name": "scenario_closed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "post_closure": {
+          "name": "post_closure",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "close_code": {
+          "name": "close_code",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_command_id": {
+          "name": "last_command_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_command_instance": {
+          "name": "last_command_instance",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_command_expected_version": {
+          "name": "last_command_expected_version",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "last_command_document": {
+          "name": "last_command_document",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "replay_runs_one_current": {
+          "name": "replay_runs_one_current",
+          "columns": [
+            {
+              "expression": "(true)",
+              "asc": true,
+              "isExpression": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"replay_runs\".\"state\" IN\n      ('preparing','running','pausing','paused','restarting','finalizing')",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "replay_runs_one_second": {
+          "name": "replay_runs_one_second",
+          "columns": [
+            {
+              "expression": "scenario_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"replay_runs\".\"stage\" = 'second'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "replay_runs_history": {
+          "name": "replay_runs_history",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            },
+            {
+              "expression": "run_id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "replay_runs_scenario_id_replay_runs_run_id_fk": {
+          "name": "replay_runs_scenario_id_replay_runs_run_id_fk",
+          "tableFrom": "replay_runs",
+          "tableTo": "replay_runs",
+          "columnsFrom": ["scenario_id"],
+          "columnsTo": ["run_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "replay_runs_previous_run_id_replay_runs_run_id_fk": {
+          "name": "replay_runs_previous_run_id_replay_runs_run_id_fk",
+          "tableFrom": "replay_runs",
+          "tableTo": "replay_runs",
+          "columnsFrom": ["previous_run_id"],
+          "columnsTo": ["run_id"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "replay_runs_post_closure_valid": {
+          "name": "replay_runs_post_closure_valid",
+          "value": "NOT \"replay_runs\".\"post_closure\" OR (\"replay_runs\".\"stage\" = 'exploratory' AND \"replay_runs\".\"previous_run_id\" IS NOT NULL)"
+        },
+        "replay_runs_fixture_valid": {
+          "name": "replay_runs_fixture_valid",
+          "value": "\"replay_runs\".\"fixture_sha256\" ~ '^[a-f0-9]{64}$'"
+        },
+        "replay_runs_interval_valid": {
+          "name": "replay_runs_interval_valid",
+          "value": "\"replay_runs\".\"interval_ms\" BETWEEN 100 AND 5000"
+        },
+        "replay_runs_revision_valid": {
+          "name": "replay_runs_revision_valid",
+          "value": "\"replay_runs\".\"revision\" BETWEEN 0 AND 9007199254740991"
+        },
+        "replay_runs_cursor_valid": {
+          "name": "replay_runs_cursor_valid",
+          "value": "\"replay_runs\".\"next_line\" BETWEEN 1 AND 25"
+        },
+        "replay_runs_time_valid": {
+          "name": "replay_runs_time_valid",
+          "value": "\"replay_runs\".\"updated_at\" >= \"replay_runs\".\"created_at\""
+        },
+        "replay_runs_stage_valid": {
+          "name": "replay_runs_stage_valid",
+          "value": "\n      (\"replay_runs\".\"stage\" = 'first' AND \"replay_runs\".\"previous_run_id\" IS NULL AND \"replay_runs\".\"scenario_id\" = \"replay_runs\".\"run_id\")\n      OR (\"replay_runs\".\"stage\" IN ('second','exploratory') AND \"replay_runs\".\"previous_run_id\" IS NOT NULL\n          AND \"replay_runs\".\"previous_run_id\" <> \"replay_runs\".\"run_id\" AND \"replay_runs\".\"scenario_id\" <> \"replay_runs\".\"run_id\")\n    "
+        },
+        "replay_runs_state_valid": {
+          "name": "replay_runs_state_valid",
+          "value": "\n      (\"replay_runs\".\"state\" = 'preparing' AND \"replay_runs\".\"next_line\" = 1)\n      OR (\"replay_runs\".\"state\" IN ('running','pausing','paused','restarting','finalizing') AND \"replay_runs\".\"next_line\" <= 24)\n      OR (\"replay_runs\".\"state\" = 'completed' AND \"replay_runs\".\"next_line\" = 25)\n      OR (\"replay_runs\".\"state\" IN ('stopped','error','interrupted') AND \"replay_runs\".\"next_line\" <= 24)\n    "
+        },
+        "replay_runs_verification_valid": {
+          "name": "replay_runs_verification_valid",
+          "value": "\n      (\"replay_runs\".\"verification\" = 'pending' AND \"replay_runs\".\"verification_document\" IS NULL\n        AND \"replay_runs\".\"state\" NOT IN ('stopped','error','interrupted'))\n      OR (\"replay_runs\".\"verification\" = 'inconclusive' AND \"replay_runs\".\"state\" IN ('completed','stopped','error','interrupted'))\n      OR (\"replay_runs\".\"verification\" = 'conformant' AND \"replay_runs\".\"verification_document\" IS NOT NULL AND \"replay_runs\".\"state\" = 'completed')\n      OR (\"replay_runs\".\"verification\" = 'non_conformant' AND \"replay_runs\".\"verification_document\" IS NOT NULL\n        AND \"replay_runs\".\"state\" IN ('completed','stopped','error','interrupted'))\n    "
+        },
+        "replay_runs_report_object": {
+          "name": "replay_runs_report_object",
+          "value": "\n      \"replay_runs\".\"verification_document\" IS NULL OR json_typeof(\"replay_runs\".\"verification_document\") = 'object'\n    "
+        },
+        "replay_runs_scenario_result_valid": {
+          "name": "replay_runs_scenario_result_valid",
+          "value": "\n      (\"replay_runs\".\"scenario_verification\" = 'pending' AND \"replay_runs\".\"scenario_document\" IS NULL AND \"replay_runs\".\"scenario_closed_at\" IS NULL)\n      OR (\"replay_runs\".\"stage\" = 'first' AND \"replay_runs\".\"scenario_closed_at\" IS NOT NULL AND \"replay_runs\".\"scenario_closed_at\" >= \"replay_runs\".\"created_at\"\n        AND ((\"replay_runs\".\"scenario_verification\" = 'inconclusive')\n          OR (\"replay_runs\".\"scenario_verification\" IN ('conformant','non_conformant') AND \"replay_runs\".\"scenario_document\" IS NOT NULL))\n        AND (\"replay_runs\".\"scenario_document\" IS NULL OR json_typeof(\"replay_runs\".\"scenario_document\") = 'object'))\n    "
+        },
+        "replay_runs_close_code_valid": {
+          "name": "replay_runs_close_code_valid",
+          "value": "\n      \"replay_runs\".\"close_code\" IS NULL OR \"replay_runs\".\"close_code\" IN ('TRANSPORT_UNCERTAIN','RESPONSE_PENDING',\n      'RESPONSE_INVALID','JOURNAL_UNCERTAIN','NOT_ADMITTED','PROCESSING_FAILED','API_RESTARTED',\n      'USER_RESTARTED','VERIFICATION_CLOSED')\n    "
+        },
+        "replay_runs_intention_valid": {
+          "name": "replay_runs_intention_valid",
+          "value": "\n      (\"replay_runs\".\"last_command_id\" IS NULL AND \"replay_runs\".\"last_command_instance\" IS NULL\n        AND \"replay_runs\".\"last_command_expected_version\" IS NULL AND \"replay_runs\".\"last_command_document\" IS NULL)\n      OR (\"replay_runs\".\"last_command_id\" IS NOT NULL AND \"replay_runs\".\"last_command_instance\" IS NOT NULL\n        AND \"replay_runs\".\"last_command_expected_version\" IS NOT NULL AND \"replay_runs\".\"last_command_document\" IS NOT NULL\n        AND \"replay_runs\".\"last_command_expected_version\" BETWEEN 0 AND 9007199254740990\n        AND json_typeof(\"replay_runs\".\"last_command_document\") = 'object'\n        AND octet_length(\"replay_runs\".\"last_command_document\"::text) <= 4096)\n    "
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.telemetry_events": {
+      "name": "telemetry_events",
+      "schema": "",
+      "columns": {
+        "event_pk": {
+          "name": "event_pk",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "telemetry_events_event_pk_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "event_key": {
+          "name": "event_key",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "vehicle_key": {
+          "name": "vehicle_key",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observed_at_original": {
+          "name": "observed_at_original",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observed_epoch_second": {
+          "name": "observed_epoch_second",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "observed_fraction": {
+          "name": "observed_fraction",
+          "type": "text COLLATE \"C\"",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "latitude": {
+          "name": "latitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "longitude": {
+          "name": "longitude",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "speed_kph": {
+          "name": "speed_kph",
+          "type": "double precision",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ignition_on": {
+          "name": "ignition_on",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "payload_extra": {
+          "name": "payload_extra",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "telemetry_events_vehicle_key_hash": {
+          "name": "telemetry_events_vehicle_key_hash",
+          "columns": [
+            {
+              "expression": "vehicle_key",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "hash",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "telemetry_events_event_key_canonical": {
+          "name": "telemetry_events_event_key_canonical",
+          "value": "nexo_identity_is_canonical(\"telemetry_events\".\"event_key\")"
+        },
+        "telemetry_events_vehicle_key_canonical": {
+          "name": "telemetry_events_vehicle_key_canonical",
+          "value": "nexo_identity_is_canonical(\"telemetry_events\".\"vehicle_key\")"
+        },
+        "telemetry_events_observed_original_present": {
+          "name": "telemetry_events_observed_original_present",
+          "value": "length(\"telemetry_events\".\"observed_at_original\") > 0"
+        },
+        "telemetry_events_fraction_canonical": {
+          "name": "telemetry_events_fraction_canonical",
+          "value": "\"telemetry_events\".\"observed_fraction\" ~ '^(|[0-9]*[1-9])$'"
+        },
+        "telemetry_events_latitude_valid": {
+          "name": "telemetry_events_latitude_valid",
+          "value": "\"telemetry_events\".\"latitude\" BETWEEN -90 AND 90 AND \"telemetry_events\".\"latitude\" NOT IN ('NaN'::float8, 'Infinity'::float8, '-Infinity'::float8)"
+        },
+        "telemetry_events_longitude_valid": {
+          "name": "telemetry_events_longitude_valid",
+          "value": "\"telemetry_events\".\"longitude\" BETWEEN -180 AND 180 AND \"telemetry_events\".\"longitude\" NOT IN ('NaN'::float8, 'Infinity'::float8, '-Infinity'::float8)"
+        },
+        "telemetry_events_speed_valid": {
+          "name": "telemetry_events_speed_valid",
+          "value": "\"telemetry_events\".\"speed_kph\" >= 0 AND \"telemetry_events\".\"speed_kph\" NOT IN ('NaN'::float8, 'Infinity'::float8, '-Infinity'::float8)"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.users": {
+      "name": "users",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "username": {
+          "name": "username",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "password_hash": {
+          "name": "password_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "users_username_unique": {
+          "name": "users_username_unique",
+          "nullsNotDistinct": false,
+          "columns": ["username"]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "users_demo_only": {
+          "name": "users_demo_only",
+          "value": "\"users\".\"username\" IN ('demo', 'Demo')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.vehicle_latest": {
+      "name": "vehicle_latest",
+      "schema": "",
+      "columns": {
+        "vehicle_pk": {
+          "name": "vehicle_pk",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "vehicle_latest_vehicle_pk_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "vehicle_key": {
+          "name": "vehicle_key",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "event_pk": {
+          "name": "event_pk",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "vehicle_latest_event_pk_telemetry_events_event_pk_fk": {
+          "name": "vehicle_latest_event_pk_telemetry_events_event_pk_fk",
+          "tableFrom": "vehicle_latest",
+          "tableTo": "telemetry_events",
+          "columnsFrom": ["event_pk"],
+          "columnsTo": ["event_pk"],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "vehicle_latest_key_canonical": {
+          "name": "vehicle_latest_key_canonical",
+          "value": "nexo_identity_is_canonical(\"vehicle_latest\".\"vehicle_key\")"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

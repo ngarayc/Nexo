@@ -560,3 +560,74 @@ El recorrido local rehearsal de d88b05b36a54be56a48d736a3d2351afc51893d3 termin�
 La carga verificó100.000 eventos/100 vehículos/40.000 alertas y, tras repetir sin efectos nuevos,200 lotes/200.000 posiciones. Pico runtime13 dentro del presupuesto16; escritura3, consultas4, cola y listener5, outbox1. Los200 POST y sus confirmaciones tienen métricas propias:198 respuestas completas y2 pendientes503 resueltas consultando recibos, sin fallos de petición o respuestas inesperadas. El p95 observado de POST fue34.375,238ms; no representa latencia por evento, commit→UI o un SLA. La memoria muestreada del proceso API alcanzó736.727.040 bytes RSS; el cgroup, que incluye al cliente de carga,945.434.624 bytes. Los agregados conservan su fuente y límites de medición.
 
 Este ensayo completo resuelve la repetición local de los fallos del harness anteriores y comprueba la instrumentación de #87 sobre100.000. No se transforma en ejecución remota final, no acredita el protocolo posterior de #91 ni su promoción y conserva los resultados fallidos anteriores. Los servicios/datos habituales permanecieron intactos; solo se retiraron los recursos sintéticos de esta ejecución.
+
+## Presentación y repetición tras cierre — #93/#94
+
+La revisión visual conserva el orden funcional, las fachadas y el transporte existente. Incorpora iconos SVG locales, tooltips con nombres accesibles, navegación adaptable, superficies compartidas y controles del reproductor siempre visibles al pie del panel. Ambos mapas desactivan rueda y repetición horizontal del mundo; sus tooltips conservan ancho legible y sus capas quedan por debajo del panel flotante.
+
+Pasaron las 130 pruebas Angular del primer incremento y, tras ajustar la barra fija y el resumen de ayudas extensas, seis comprobaciones focalizadas de panel/tooltip. Pasaron las 81 pruebas API de coordinador y verificador, tipos de ambas aplicaciones, lint del diff, coherencia ORM/migraciones, enlaces internos y fronteras. Esta es verificación local focalizada; no acredita un nuevo CI remoto ni sustituye los resultados históricos de otras fuentes.
+
+Los tres casos de control real HTTP/PostgreSQL verificaron el par 20/2/2→0/22/2, pausa/reanudación, recuperación tras reinicio de API y cierre inconcluso. La regresión de continuación añadió otro recorrido 0/22/2 tras cerrar, conservando 20 eventos, 8 vehículos, 4 alertas y 43 mensajes. Comprobó la marca SQL derivada, rechazo de reclasificarla o crear otro segundo oficial y conservación exacta de documentos/fecha de cierre al detener una exploración. Una aserción inicial enviaba un start con runId incompatible con el contrato: se corrigió el comando de prueba a runId nulo y se confirmó su rechazo por conflicto, sin cambiar el validador ni los oráculos.
+
+Chromium verificó tres recorridos focalizados: mapas/filtros con ambos oráculos en dos clientes; reproductor real en dos sesiones con repetición tras cierre; y presentación/teclado, tooltips horizontales, rueda sin zoom, una sola imagen mundial, panel sobre cartografía y anchos 768/360 px. El chequeo de ancho espera a los observadores de tamaño después del resize. Los tiles de estas pruebas son sintéticos y API/SSE/SQL/proxy son reales.
+
+La actualización aditiva sobre el volumen local conservó una huella coherente de telemetría, proyección, alertas, outbox, ejecuciones e intentos existentes; no hubo reset. Las capturas de revisión visual se mantienen fuera del repositorio.
+
+# Despliegue Azure de la revisión local
+
+La issue #95 añade un despliegue de demostración con los cambios locales de
+presentación y acceso, sin publicar esos cambios en Git. Usa Docker para API,
+web, PostgreSQL y gateway HTTPS; conserva los oráculos originales.
+
+Las comprobaciones focalizadas aprobaron 46 casos de acceso/configuración y
+material del replay; un ajuste posterior de compatibilidad de configuración
+repitió los 27 casos afectados. Pasaron tipos de API/Angular, fronteras,
+coherencia de esquema y enlaces documentales. No se ejecutó el CI local completo
+ni se atribuyeron a este diff los verdes de la release anterior.
+
+La prueba real con dos navegadores HTTPS observó 20/2/2 y 0/22/2, 20 eventos,
+8 vehículos, 4 alertas y los mismos 43 mensajes de dominio en ambos clientes,
+sin efectos nuevos en segunda. Pasaron pausa/reanudación compartidas, informes
+conformes, GET de CR-01, mapas, continuidad exploratoria después del cierre,
+cookies Secure, origen/CSRF, rechazo de la credencial local anterior, cuota
+global con 429/Retry-After y logout independiente.
+
+El escaneo bloqueó el gateway inicial por Go/x/net vulnerables. Caddy 2.11.7 se
+reconstruyó con Go 1.27.3 y x/net 0.60.0, fijando módulos/checksums. Las cuatro
+imágenes finales completaron inventarios y escaneos sin HIGH/CRITICAL ni avisos
+de detalles ausentes; los cuatro Dockerfiles pasaron 20 controles cada uno sin
+fallos. No se añadieron excepciones. La prueba inicial también detectó el nombre
+local fijo en la comprobación de preparación del verificador; se corrigió y se
+repitió el recorrido funcional, manteniendo los oráculos.
+
+La rotación administrativa preservó UUID y datos. Recrear los cuatro contenedores
+y reiniciar completamente la VM conservaron eventos, proyecciones, alertas,
+recibos e informes; Compose arrancó automáticamente sobre el disco persistente.
+Después del reinicio se comprobaron login, SSE e identidades del oráculo sin
+reenviar eventos. Los registros y entornos administrativos permanecen privados.
+
+Es una instancia de demostración: no acredita alta disponibilidad, carga
+productiva, restauración de copias o aprobación humana del candidato en Git.
+Consultar el [perfil cloud](cloud-deployment.md) para red, operación y límites.
+
+## Interfaz, nube e informes de demostración
+
+Las issues [#95](https://github.com/ngarayc/Nexo/issues/95), [#96](https://github.com/ngarayc/Nexo/issues/96) y [#97](https://github.com/ngarayc/Nexo/issues/97) reúnen el perfil Azure/Docker, la limpieza explícita y la explicación del informe. La interfaz conserva los contratos de consulta, el emisor HTTP y los fixtures originales. El zoom por rueda está desactivado en los mapas; se limita a una sola copia del mundo, y las acciones usan iconos con nombres accesibles y tooltips fuera de los contenedores que recortan texto.
+
+La verificación focalizada de limpieza usó PostgreSQL y Chromium reales con dos sesiones. Comprobó rechazo durante reproducción, cancelación sin efectos, rollback SQL, limpieza atómica, cuenta y permisos conservados, cero trabajos/recibos/ejecuciones, resincronización de ambas pantallas y un nuevo par 20/2/2 y 0/22/2. El reenvío de una intención de limpieza antigua devuelve conflicto y conserva los datos nuevos. El informe presenta primero el resultado y el siguiente paso; la auditoría permanece plegada.
+
+Las pruebas de API afectadas comprobaron modo demo, sesión, origen/CSRF, exclusión de admisiones, generaciones, respuesta SQL perdida y publicación SSE. Las pruebas de presentación comprobaron estados incompletos, diferencias, expectativas de ambas pasadas y ausencia de repetición automática del borrado. El recorrido nuevo está en [demo-reset.spec.mjs](../tests/system/demo-reset.spec.mjs); la regresión del par original permanece en [replay-panel.spec.mjs](../tests/system/replay-panel.spec.mjs). La evidencia CI y la revisión de promoción se acreditan por el candidato de su PR; los resultados históricos no sustituyen sus checks.
+
+## Geocerca fija de consulta — #102
+
+La [issue #102](https://github.com/ngarayc/Nexo/issues/102) añade una zona fija sin dependencias, tablas, endpoints o alertas nuevos. Pasaron tipos de Angular, 16 pruebas seleccionadas en cuatro archivos de flota/geocerca, lint afectado, fronteras, enlaces y conservación de los cuatro fixtures.
+
+La imagen web reconstruida pasó el recorrido geofence con API, PostgreSQL y proxy reales: clasificación por SSE desde cero, posición del rectángulo contrastada con marcadores originales, dos vehículos dentro y seis fuera, selección de la muestra posterior a una entrada y repetición sin nuevos cambios. Se conservaron 20 eventos, 8 vehículos, 4 alertas y 43 mensajes; primera pasada 20/2/2, segunda 0/22/2. También pasó el recorrido presentation de iconos/tooltips, rueda, mundo único, capas y adaptación de pantalla. Las coordenadas y oráculos originales permanecen intactos.
+
+Las pruebas puras incluyen bordes/esquinas, posiciones inválidas, orden por fracciones temporales exactas, separación por vehículo, deduplicación de muestras y ruptura de continuidad desconocida. Los cambios entre muestras no acreditan el instante o punto exacto del cruce ni se convierten en alertas persistidas. El CI de cada candidato y su promoción conservan evidencia propia; estas comprobaciones locales no sustituyen el CI remoto ni la primera ejecución de CD en Azure.
+
+## Dependencia HTTP corregida — #103
+
+El gate de seguridad de CI 40033846207 detectó body-parser 2.3.0 por GHSA-27r3-jxmh-p828. Se actualizó a 2.4.0 dentro del rango de Express; cambió un único paquete instalado y su registro de lockfile. El audit local posterior devolvió cero vulnerabilidades y npm ls confirmó la resolución única 2.4.0. Pasaron las 53 pruebas de cinco archivos HTTP de ingesta/lectura de cuerpo, sesión, consultas y reproductor. No se añadieron excepciones; el nuevo candidato conserva su CI propio. Nexo mantiene deshabilitado el parser predeterminado y su lectura acotada existente.
+
+La ejecución posterior detectó dos selectores de trayectoria que contaban todos los paths del mapa, incluido el nuevo contorno. Se identifica la polilínea con nexo-trajectory-line y se verifican por separado trayectoria y geocerca. Pasaron los recorridos trajectory-live y trajectory-oracles con navegador/API/DB/proxy reales: muestra única sin segmento, geometría cronológica, tardío y precisión, foco, respuesta antigua descartada, selección y ambos replays en dos clientes. Se mantienen las aserciones originales de datos y se exige además un único contorno de geocerca; no se cambian oráculos ni se admiten reintentos de pruebas.

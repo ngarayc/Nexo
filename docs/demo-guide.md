@@ -4,7 +4,7 @@ Esta guía reproduce el par obligatorio con datos originales, dos clientes y con
 
 ## Preparar un destino propio
 
-Requisitos: Docker/Compose, Bash/OpenSSL y Node.js 24.22.0 y npm 12.2.0 para el reset local. Desde la raíz, generar `.env.local` solo si todavía no existe. Conservarlo privado y usar un puerto disponible; 8081 es el ejemplo para no modificar el entorno habitual de 8080.
+Requisitos: Docker/Compose, Bash/OpenSSL y Node.js 24.22.1 y npm 12.2.0 para el reset local. Desde la raíz, generar `.env.local` solo si todavía no existe. Conservarlo privado y usar un puerto disponible; 8081 es el ejemplo para no modificar el entorno habitual de 8080.
 
 ```sh
 bash scripts/configure-local.sh
