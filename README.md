@@ -61,7 +61,7 @@ Integración y navegador necesitan Docker e imágenes construidas mediante el ar
 
 Cada cambio requiere issue y commits con referencia real. Después del bootstrap revisado, las ramas permanentes son `development`, `test` y `main`. El agente publica y promueve por PR a test tras revisión QA y CI; las PR hacia main quedan abiertas para revisión del autor mientras continúa el desarrollo. Consultar [AGENTS.md](AGENTS.md), [gobierno](AGENT-GOVERNANCE.md) y [flujo de IA](docs/AI-WORKFLOW.md).
 
-Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de CI](https://github.com/ngarayc/Nexo/actions/runs/39552267643), promovido por [PR #7](https://github.com/ngarayc/Nexo/pull/7). Cada candidato nuevo repite los controles. Las [demostraciones negativas y recuperación](docs/control-demonstrations.md) están comprobadas; la revisión humana de main conserva su estado propio. Backend y dos sesiones independientes de Angular verifican 20/2/2 y 0/22/2 sin reset entre pasadas, 20 eventos/8 vehículos/4 alertas e identidades originales. El recorrido integral desde reset acredita los controles del reproductor y ambos replays mediante dos interfaces reales; el video y la evidencia definitivos se localizan mediante el apartado de entrega.
+Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de CI](https://github.com/ngarayc/Nexo/actions/runs/39552267643), promovido por [PR #7](https://github.com/ngarayc/Nexo/pull/7). Cada candidato nuevo repite los controles. Las [demostraciones negativas y recuperación](docs/control-demonstrations.md) están comprobadas; la revisión humana de main conserva su estado propio. Backend y dos sesiones independientes de Angular verifican 20/2/2 y 0/22/2 sin reset entre pasadas, 20 eventos/8 vehículos/4 alertas e identidades originales. El recorrido integral desde reset acredita los controles del reproductor y ambos replays mediante dos interfaces reales; la evidencia definitiva se localiza mediante el apartado de entrega.
 
 ## Documentación
 
@@ -83,7 +83,7 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 - [Diario durable del reproductor](docs/replay-journal.md).
 - [Preparación y verificación del par oficial](docs/replay-verification.md).
 - [Reset local con evidencia y reanudación](docs/demo-reset.md).
-- [Demostración reproducible y guion de video](docs/demo-guide.md).
+- [Demostración funcional reproducible](docs/demo-guide.md).
 - [Emisor HTTP, temporización e intenciones](docs/replay-emitter.md).
 - [API y contrato OpenAPI versionado](docs/api.md).
 - [Comprobación desde copia limpia](docs/reproducibility.md).
@@ -102,6 +102,6 @@ Los cinco controles remotos y `ci-required` pasaron en [el primer candidato de C
 
 **Dedicación estimada por el autor para el alcance entregado: 25 horas.** Es una estimación confirmada por el autor.
 
-**Destino del paquete:** [release entrega-final](https://github.com/ngarayc/Nexo/releases/tag/entrega-final). La entrega está publicada únicamente cuando esa página ofrece el video MP4 y un manifiesto cuyos SHA y controles coinciden con el tag. Las ejecuciones de CI y el manifiesto externo determinan el estado de cada candidatura; el enlace previsto por sí solo no acredita publicación.
+**Destino del paquete:** [release entrega-final](https://github.com/ngarayc/Nexo/releases/tag/entrega-final). La entrega está publicada únicamente cuando esa página ofrece un manifiesto cuyos SHA y controles coinciden con el tag. Las ejecuciones de CI y el manifiesto externo determinan el estado de cada candidatura; el enlace previsto por sí solo no acredita publicación.
 
-La [auditoría y correcciones](docs/final-audit.md) contrasta implementación, planeación y obligaciones iniciales. La revisión del candidato corregido precede al cierre; el libreto y la grabación se preparan sobre ese resultado. La validación final ordinaria/ampliada y los artefactos corresponden al SHA de main identificado en el manifiesto.
+La [auditoría y correcciones](docs/final-audit.md) contrasta implementación, planeación y obligaciones iniciales. La revisión del candidato corregido precede al cierre. La validación final ordinaria/ampliada y los artefactos corresponden al SHA de main identificado en el manifiesto.

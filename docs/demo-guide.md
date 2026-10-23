@@ -1,6 +1,6 @@
 # Demostración del núcleo
 
-Esta guía reproduce el par obligatorio con datos originales, dos clientes y controles reales. Separa la conformidad de los datos del video, CI, revisión humana y demás entregables. El [contrato](requirements/DEMO-REPLAY.md) y los oráculos [resumido](../fixtures/expected_sample.json) y [detallado](../fixtures/expected_detailed.json) permanecen sin cambios.
+Esta guía reproduce el par obligatorio con datos originales, dos clientes y controles reales. Separa la conformidad de los datos del CI, la revisión humana y demás entregables. El [contrato](requirements/DEMO-REPLAY.md) y los oráculos [resumido](../fixtures/expected_sample.json) y [detallado](../fixtures/expected_detailed.json) permanecen sin cambios.
 
 ## Preparar un destino propio
 
@@ -55,8 +55,6 @@ El runner crea un proyecto sintético propio por archivo. [El recorrido del pane
 
 El [inventario de verificación](verification.md) identifica lo efectivamente ejecutado y sus límites. Durante desarrollo se usan pruebas locales focalizadas; la batería local completa se ejecuta al cerrar cada épica y GitHub conserva sus controles completos por candidato.
 
-## Guion del video de entrega
+## Alcance de esta comprobación
 
-El video accesible corresponde a E6: 8–12 minutos y máximo 15. Mostrar en este orden: commit/destino y reset, dos clientes, replay progresivo/pausa/reanudación, estados/historial/alertas, segundo replay, informes, resultadosCI y decisiones/workflows de IA con revisión humana real. Añadir después CR-01 y desafío especializado implementados. Este guion no acredita que el video exista.
-
-Mostrar solo comandos, interfaz y reportes permitidos. Mantener fuera de la grabación configuración expandida, `.env.local`, claves/cookies y logs crudos. Mapa, gráfica y resumen de E5, comparación CR-01 de E4 y entrega final de E6 conservan su alcance pendiente; no quedan acreditados por coincidir 20/2/2.
+Los resultados de los replays acreditan los datos y controles demostrados. Mapa, gráfica y resumen de E5 y comparación CR-01 de E4 conservan pruebas y evidencias propias; no quedan acreditados solo por coincidir 20/2/2. El cierre definitivo de E6 requiere además el SHA final verificado y la publicación accesible de su evidencia.

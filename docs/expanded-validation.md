@@ -27,7 +27,7 @@ En Linux deben estar presentes las bibliotecas nativas de esos motores. Playwrig
 
 El recorrido construye y etiqueta las tres imágenes nexo-*:local; ejecutarlo sin otro recorrido que esté usando esas etiquetas. No inicia el proyecto habitual. El informe anterior se retira al comenzar y solo se genera otro si termina todo satisfactoriamente. Ante un fallo, conservar el diagnóstico privado, corregir y repetir el alcance correspondiente antes de emitir otra candidatura.
 
-Para el cierre remoto, ejecutar el workflow desde main con source igual al SHA final y stage igual a final. La ejecución ampliada no sustituye los seis jobs/cinco artefactos del [CI ordinario](ci-controls.md), su revisión humana o la comprobación posterior al merge. Ambos resultados deben corresponder al SHA definitivo antes de publicar el tag/release. [La auditoría final #82](https://github.com/ngarayc/Nexo/issues/82) precede al congelamiento de esa entrega: revisar, consolidar, planear y corregir antes del PR final y el libreto.
+Para el cierre remoto, ejecutar el workflow desde main con source igual al SHA final y stage igual a final. La ejecución ampliada no sustituye los seis jobs/cinco artefactos del [CI ordinario](ci-controls.md), su revisión humana o la comprobación posterior al merge. Ambos resultados deben corresponder al SHA definitivo antes de publicar el tag/release. [La auditoría final #82](https://github.com/ngarayc/Nexo/issues/82) precede al congelamiento de esa entrega: revisar, consolidar, planear y corregir antes del PR final.
 
 ## Lista de publicación y límites
 

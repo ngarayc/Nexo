@@ -76,7 +76,7 @@ npm run test:ci-controls
 npm run test:e2e
 ```
 
-El recorrido de navegador crea un stack sintético nuevo por archivo en `127.0.0.1:8081`, con origen canónico `http://localhost:8081`, manteniendo `8080` para la aplicación local. Comprueba Angular compilado, dos contextos independientes, flota/historial/alertas, oráculos, carreras, cortes, recuperación, logout, proxy, cabeceras y CSP en Chromium. No guarda trace, HAR, vídeo, capturas o storageState. Los reportes crudos de cada invocación permanecen en reports/raw/system y solo se generan métricas para publicación, según [CI](ci-controls.md).
+El recorrido de navegador crea un stack sintético nuevo por archivo en `127.0.0.1:8081`, con origen canónico `http://localhost:8081`, manteniendo `8080` para la aplicación local. Comprueba Angular compilado, dos contextos independientes, flota/historial/alertas, oráculos, carreras, cortes, recuperación, logout, proxy, cabeceras y CSP en Chromium. No guarda trace, HAR, capturas o storageState. Los reportes crudos de cada invocación permanecen en reports/raw/system y solo se generan métricas para publicación, según [CI](ci-controls.md).
 
 El dashboard muestra conexión, totales y [flota/historial/alertas](dashboard.md) mediante [sincronización Angular](frontend-sync.md). Mientras recupera conserva la base previa señalada como posiblemente desactualizada; tras agotar cinco reintentos ofrece Reconectar. Esa acción respeta Retry-After y no reinicia la API o PostgreSQL. El productor auxiliar del recorrido de sistema usa HTTP por NGINX y mantiene la clave dentro del contenedor API, sin entregarla a la página. El [panel compartido](replay-panel.md) usa el mismo stream y controla el motor real; la clave del productor permanece en API.
 

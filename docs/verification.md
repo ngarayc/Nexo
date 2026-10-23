@@ -124,7 +124,7 @@ La primera publicación db75242 de esta API tuvo [CI propio39828497893](https://
 
 [PR51](https://github.com/ngarayc/Nexo/pull/51#issuecomment-6347135921) integró ese árbol en main `e0f298f8960f8f8baf35dd783ac227f882d32c85`, después de aprobación efectiva de ngarayc en [main-review39820865479](https://github.com/ngarayc/Nexo/actions/runs/39820865479). [CI propio39820865413](https://github.com/ngarayc/Nexo/actions/runs/39820865413), intento1, pasó con cinco artefactos revalidados para checkout `9839e93507c67140b921135bb3432049e74cef06`, fuente99912bf y los mismos inventarios.
 
-[Post-main39823965751](https://github.com/ngarayc/Nexo/actions/runs/39823965751), intento1, también pasó sobre el merge e0f298f; sus cinco artefactos se descargaron/revalidaron con458API/90Angular/123PostgreSQL/14Chromium, sin fallos u omisiones y con los seis jobs aprobados. Acredita motor, panel, reset, aceptación integral y corrección de metadatos de #56. Se cerraron #42/#49/#52/#55/#56 y el milestone E3, con sus nueve issues completadas. E4/E5/E6 conservan trabajo propio; no existe todavía video final ni tag entrega-final.
+[Post-main39823965751](https://github.com/ngarayc/Nexo/actions/runs/39823965751), intento1, también pasó sobre el merge e0f298f; sus cinco artefactos se descargaron/revalidaron con458API/90Angular/123PostgreSQL/14Chromium, sin fallos u omisiones y con los seis jobs aprobados. Acredita motor, panel, reset, aceptación integral y corrección de metadatos de #56. Se cerraron #42/#49/#52/#55/#56 y el milestone E3, con sus nueve issues completadas. E4/E5/E6 conservan trabajo propio; no existe todavía el tag entrega-final.
 
 ## Aceptación integral del núcleo — E3-I06 / #55
 
@@ -144,7 +144,7 @@ El [recorrido ampliado](../tests/system/replay-panel.spec.mjs) crea una observac
 
 La revisión agregó una protección de configuración: el manifiesto vincula también el Compose expandido, por lo que cambiar WEB_PORT heredado del proceso impide reanudar antes de tocar el destino. La integración completa probó ese rechazo y la posterior recuperación con la configuración original. Los servicios habituales permanecieron intactos; los ensayos usaron y limpiaron exclusivamente recursos sintéticos propios.
 
-La promoción y revisión humana de este cierre E3 están acreditadas arriba. Cada candidato posterior conserva sus propios checks y revisión. E4 mantiene selección visual/aceptación/revisión del filtro, E5 visualizaciones y E6 video/copia limpia/tag y el total estimado del autor pendientes. No existe todavía el video accesible ni tag entrega-final.
+La promoción y revisión humana de este cierre E3 están acreditadas arriba. Cada candidato posterior conserva sus propios checks y revisión. E4 mantiene selección visual/aceptación/revisión del filtro, E5 visualizaciones y E6 copia limpia/tag y el total estimado del autor pendientes. No existe todavía el tag entrega-final.
 
 ## Panel compartido — E3-I04 / #49
 
@@ -538,3 +538,11 @@ La corrección documental mueve la retrospectiva a la ruta exigida por el PDF, a
 Antes de ese cambio documental, el [CI de 5c821a3](https://github.com/ngarayc/Nexo/actions/runs/39881999395) completó sus seis jobs. Los cinco artefactos reales se descargaron y revalidaron contra SHA/ejecución/checkout: 465 API, 127 Angular, 127 PostgreSQL y 25 Chromium, sin fallos u omisiones. Los cinco pasos previos al upload concluyeron correctamente; el conjunto descargado respeta nombres/contenido y excluye el marcador sensible ficticio. Esta es la demostración remota de #86 para ese candidato, no una atribución retrospectiva a otros runs.
 
 Las promociones conservan CI propio y revisión de su diff. El cierre integral local de las correcciones y la verificación ampliada/final se acreditan por sus ejecuciones, sin repetir la batería local completa por cada issue documental.
+
+## Alcance vigente de evidencia y contratos — #90
+
+La [issue #90](https://github.com/ngarayc/Nexo/issues/90) ajusta la documentación y las tareas al alcance vigente de entrega. Los extractos de requisitos afectados están identificados como abreviados; el kit original se conserva por separado y no se presenta como modificado. Los fixtures, oráculos, reproductor HTTP y controles de promoción permanecen.
+
+El informe expone únicamente twoRenderedClients, pauseResume y ci como evidencia externa no evaluada por el comparador de datos. Backend, contratos, lector Angular, panel y OpenAPI comparten esos campos. La proyección HTTP también filtra metadatos retirados de informes históricos sin reescribir sus documentos persistidos; se comprueba en escenario, inspección y error de precondiciones.
+
+Pasaron 85 pruebas focalizadas de API y diez de Angular, incluidas compatibilidad histórica y campos obligatorios. También pasaron tipos, lint, formato, enlaces y los cuatro fixtures. La ejecución local integral anterior se interrumpió al pausar el objetivo general: conserva su prefijo aprobado como evidencia parcial de 15a25c3, sin declarar aprobado el recorrido completo. Este ajuste no repite esa batería; el CI remoto conserva sus workflows.

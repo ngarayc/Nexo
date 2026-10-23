@@ -2831,7 +2831,7 @@
           "externalEvidence": {
             "type": "object",
             "additionalProperties": false,
-            "required": ["twoRenderedClients", "pauseResume", "ci", "video"],
+            "required": ["twoRenderedClients", "pauseResume", "ci"],
             "properties": {
               "twoRenderedClients": {
                 "const": "not_assessed"
@@ -2840,9 +2840,6 @@
                 "const": "not_assessed"
               },
               "ci": {
-                "const": "not_assessed"
-              },
-              "video": {
                 "const": "not_assessed"
               }
             }

@@ -48,7 +48,7 @@ El llamador conserva el informe mediante la operación cercada verify del diario
 
 Un envío incierto no se suma como rechazado o aceptado. Resolver un recibo después no convierte retrospectivamente un recorrido inconcluso en un replay conforme. Trabajos pendientes, outbox sin drenar, origen desconocido o inventario incompleto impiden declarar conformidad.
 
-El alcance es **datos y respuestas del par**. Dos clientes renderizados, pausa/reanudación, CI y video figuran not_assessed en este informe y requieren evidencia propia; no aparece una declaración de aprobación de toda la prueba técnica.
+El alcance es **datos y respuestas del par**. Dos clientes renderizados, pausa/reanudación y CI figuran not_assessed en este informe y requieren evidencia propia; no aparece una declaración de aprobación de toda la prueba técnica.
 
 ## Comprobación y procedencia
 

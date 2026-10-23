@@ -246,7 +246,6 @@ describe('comparación oficial de datos y respuestas, sin sustituir evidencia vi
       twoRenderedClients: 'not_assessed',
       pauseResume: 'not_assessed',
       ci: 'not_assessed',
-      video: 'not_assessed',
     });
     expect(result.snapshotFingerprint).toMatch(/^[a-f0-9]{64}$/);
   });
