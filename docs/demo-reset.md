@@ -1,6 +1,6 @@
 # Reset local de la demo
 
-`npm run demo:reset` descarta la base sintética del proyecto indicado para poder repetir una primera reproducción. Es una operación local explícita y no se ejecuta al arrancar. La interfaz ofrece además una [limpieza de datos en modo demo](replay-panel.md#limpiar-demostracion) que conserva la cuenta y no sustituye volúmenes ni crea respaldos. Reiniciar servicios conserva la base; reiniciar el reproductor conserva datos y diario.
+`npm run demo:reset` descarta la base sintética del proyecto indicado para poder repetir una primera reproducción. Es una operación local explícita y no se ejecuta al arrancar. La interfaz ofrece además una [limpieza de datos en modo demo](replay-panel.md#limpiar-demostración) que conserva la cuenta y no sustituye volúmenes ni crea respaldos. Reiniciar servicios conserva la base; reiniciar el reproductor conserva datos y diario.
 
 Desde la raíz, con Node/npm fijados, Docker accesible y los tres servicios ya construidos:
 

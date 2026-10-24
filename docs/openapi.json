@@ -3,12 +3,16 @@
   "info": {
     "title": "Nexo API",
     "version": "0.1.0",
-    "description": "Contratos efectivos de Nexo: backend, dashboard SSE y motor HTTP compartido de demo. Monolito NestJS y perfil HTTP local. CR-01 incorpora filtro exacto de alertas por GET y POST JSON; la selección Angular conserva filtros por cliente sobre la colección global sincronizada. Ver api.md, realtime.md y replay-emitter.md para límites, incertidumbre y recuperación."
+    "description": "Contratos de Nexo: backend, dashboard SSE y motor HTTP de demo. Perfiles HTTP local y HTTPS en Azure con origen canónico. Incluye filtro CR-01 y limpieza autenticada en modo demo. Ver api.md, realtime.md y replay-emitter.md para límites y recuperación."
   },
   "servers": [
     {
       "url": "http://localhost:8080/api",
-      "description": "Demo local predeterminada; usar el origen configurado en otras copias."
+      "description": "Perfil local predeterminado."
+    },
+    {
+      "url": "/api",
+      "description": "Mismo origen del despliegue configurado, incluido HTTPS en Azure."
     }
   ],
   "security": [
@@ -101,8 +105,8 @@
     "/session": {
       "post": {
         "operationId": "createSession",
-        "summary": "Acceder con demo/demo",
-        "description": "Regenera el SID y revoca el anterior. No requiere CSRF de una sesión previa. Diez solicitudes/minuto y dos hashes simultáneos; hasta 32 sesiones. DEMO_ENABLED=false devuelve 404.",
+        "summary": "Acceder con la cuenta de demostración configurada",
+        "description": "Regenera el SID y revoca el anterior. No requiere CSRF de una sesión previa. Diez solicitudes/minuto en HTTP local o cinco en HTTPS, con dos hashes simultáneos y hasta 32 sesiones. La cuenta predeterminada local es demo; HTTPS exige Demo y contraseña privada. DEMO_ENABLED=false devuelve 404.",
         "responses": {
           "200": {
             "description": "Sesión nueva; SID solo en Set-Cookie",
@@ -114,7 +118,7 @@
                 }
               },
               "Set-Cookie": {
-                "description": "Cookie nexo.sid firmada, HttpOnly, SameSite=Strict, Path=/, cuatro horas absolutas. Perfil HTTP local: Secure=false.",
+                "description": "Cookie nexo.sid firmada, HttpOnly, SameSite=Strict, Path=/ y cuatro horas absolutas. Secure=false en HTTP local y Secure=true en HTTPS.",
                 "schema": {
                   "type": "string"
                 }
@@ -749,7 +753,7 @@
       "get": {
         "operationId": "streamCommittedChanges",
         "summary": "Notificaciones SSE de cambios confirmados",
-        "description": "Sesión vigente; si Origin existe debe coincidir con el canónico. Ready primero, heartbeat cada quince segundos. Cuatro conexiones por SID, dieciséis globales y treinta aperturas/minuto por cuenta. Sin replay histórico por Last-Event-ID; resincronizar snapshot al reconectar/cambiar generación. La API key no autoriza. Ver realtime.md. El mismo stream incorpora demo.replay.updated: schemaVersion1, streamInstanceId de época SSE y representación ReplayControl completa, cuyo instanceId es estable durante la vida de API. Se publica tras cambios durables y cada2s con suscriptores; no tiene eventId de dominio ni fila en outbox. Una lectura fallida no emite una copia vieja como recién verificada.",
+        "description": "Sesión vigente; si Origin existe debe coincidir con el canónico. Ready primero, heartbeat cada quince segundos. Cuatro conexiones por SID, dieciséis globales y treinta aperturas/minuto por cuenta. Sin replay histórico por Last-Event-ID; resincronizar snapshot al reconectar/cambiar generación. La API key no autoriza. Ver realtime.md. El mismo stream incorpora demo.replay.updated: schemaVersion 1, streamInstanceId de época SSE y representación ReplayControl completa, cuyo instanceId cambia al reiniciar API o limpiar la demo. Se publica tras cambios durables y cada 2 s con suscriptores; no tiene eventId de dominio ni fila en outbox. Una lectura fallida no emite una copia vieja como recién verificada.",
         "parameters": [
           {
             "name": "Origin",
@@ -792,6 +796,9 @@
                     },
                     {
                       "$ref": "#/components/schemas/StreamChange"
+                    },
+                    {
+                      "$ref": "#/components/schemas/ReplayStreamFrame"
                     }
                   ]
                 }
@@ -1000,6 +1007,81 @@
             "$ref": "#/components/responses/Failure"
           },
           "415": {
+            "$ref": "#/components/responses/Failure"
+          }
+        }
+      }
+    },
+    "/demo/replay/reset": {
+      "post": {
+        "operationId": "resetDemo",
+        "summary": "Limpiar datos sintéticos e informes con confirmación",
+        "description": "Modo demo, sesión, Origin, CSRF y cuota compartida de controles 60/min. JSON UTF-8 sin compresión, hasta 4 KiB y recepción de 15 segundos. Exige confirmación, instancia y versión actuales; no admite commandId ni campos adicionales. Rechaza reproducción no terminal, orden pendiente o ingesta activa con 409. Borra ocho tablas de datos/demo y trabajos de ingesta, conserva cuenta/esquema/volumen y no genera respaldo. Renueva control y SSE. Ante una respuesta perdida recuperar estado; no reenviar automáticamente. No es el reset local por CLI.",
+        "security": [
+          {
+            "sessionCookie": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/Origin"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "x-max-body-bytes": 4096,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReplayResetInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Limpieza confirmada; clientes recuperan el estado mediante snapshot",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayResetResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "403": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "404": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "408": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "409": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "413": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "415": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "429": {
+            "$ref": "#/components/responses/Failure"
+          },
+          "503": {
             "$ref": "#/components/responses/Failure"
           }
         }
@@ -1284,7 +1366,7 @@
           },
           "speedKph": {
             "type": "number",
-            "minimum": 0
+            "exclusiveMinimum": 80
           },
           "observedAtOriginal": {
             "type": "string",
@@ -1422,13 +1504,13 @@
           "username": {
             "type": "string",
             "minLength": 1,
-            "description": "Entre 1 y 64 bytes UTF-8; cuenta local demo."
+            "description": "Entre 1 y 64 bytes UTF-8; cuenta demo en el perfil local predeterminado o Demo en HTTPS."
           },
           "password": {
             "type": "string",
             "minLength": 1,
             "writeOnly": true,
-            "description": "Entre 1 y 256 bytes UTF-8. Credencial local pública acordada: demo."
+            "description": "Entre 1 y 256 bytes UTF-8. Valor demo solo para el perfil local predeterminado; contraseña privada en HTTPS."
           }
         },
         "additionalProperties": true
@@ -1446,7 +1528,8 @@
                 "format": "uuid"
               },
               "username": {
-                "const": "demo"
+                "type": "string",
+                "enum": ["demo", "Demo"]
               }
             },
             "additionalProperties": false
@@ -1910,6 +1993,12 @@
                   },
                   "ignitionOn": {
                     "type": "boolean"
+                  },
+                  "observedAtOriginal": {
+                    "type": "string",
+                    "minLength": 1,
+                    "readOnly": true,
+                    "description": "Metadato de salida: cadena observedAt recibida al aceptar el evento, conservada sin reconstruirla desde UTC. Representa el mismo instante exacto. Las consultas actuales y notificaciones nuevas lo incluyen; puede faltar en notificaciones históricas conservadas anteriores."
                   }
                 },
                 "additionalProperties": false
@@ -2001,6 +2090,12 @@
                   },
                   "state": {
                     "enum": ["OFF", "MOVING", "STOPPED"]
+                  },
+                  "observedAtOriginal": {
+                    "type": "string",
+                    "minLength": 1,
+                    "readOnly": true,
+                    "description": "Metadato de salida: cadena observedAt recibida al aceptar el evento, conservada sin reconstruirla desde UTC. Representa el mismo instante exacto. Las consultas actuales y notificaciones nuevas lo incluyen; puede faltar en notificaciones históricas conservadas anteriores."
                   }
                 },
                 "additionalProperties": false
@@ -2092,6 +2187,12 @@
                   },
                   "type": {
                     "const": "OVERSPEED"
+                  },
+                  "observedAtOriginal": {
+                    "type": "string",
+                    "minLength": 1,
+                    "readOnly": true,
+                    "description": "Metadato de salida: cadena observedAt recibida al aceptar el evento, conservada sin reconstruirla desde UTC. Representa el mismo instante exacto. Las consultas actuales y notificaciones nuevas lo incluyen; puede faltar en notificaciones históricas conservadas anteriores."
                   }
                 },
                 "additionalProperties": false
@@ -3094,6 +3195,207 @@
             ]
           }
         }
+      },
+      "ReplayResetInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["confirmation", "instanceId", "expectedControlVersion"],
+        "properties": {
+          "confirmation": {
+            "const": "CLEAR_DEMO"
+          },
+          "instanceId": {
+            "type": "string",
+            "description": "Identificador del control actual, obtenido de GET /demo/replay; un valor distinto produce 409."
+          },
+          "expectedControlVersion": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991,
+            "description": "Entero seguro igual a controlVersion del control actual; una versión diferente produce 409."
+          }
+        }
+      },
+      "ReplayResetResult": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["cleared"],
+        "properties": {
+          "cleared": {
+            "const": true
+          }
+        }
+      },
+      "ReplayStreamFrame": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "schemaVersion",
+          "streamInstanceId",
+          "instanceId",
+          "controlVersion",
+          "viewRevision",
+          "observedAt",
+          "blockedReason",
+          "allowedActions",
+          "pendingAction",
+          "scenario",
+          "run"
+        ],
+        "properties": {
+          "type": {
+            "const": "demo.replay.updated"
+          },
+          "schemaVersion": {
+            "const": 1
+          },
+          "streamInstanceId": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+          },
+          "instanceId": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+          },
+          "controlVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "viewRevision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "observedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "blockedReason": {
+            "anyOf": [
+              {
+                "enum": ["RECOVERING", "JOURNAL_UNCERTAIN", "SHUTTING_DOWN"]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "allowedActions": {
+            "type": "array",
+            "items": {
+              "enum": ["start", "pause", "resume", "restart", "finishVerification"]
+            },
+            "maxItems": 5
+          },
+          "pendingAction": {
+            "anyOf": [
+              {
+                "enum": ["start", "pause", "resume", "restart", "finishVerification"]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReplayScenario"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "run": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "runId",
+                  "scenarioId",
+                  "stage",
+                  "state",
+                  "verification",
+                  "intervalMs",
+                  "nextLine",
+                  "closeCode",
+                  "progress"
+                ],
+                "properties": {
+                  "runId": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+                  },
+                  "scenarioId": {
+                    "type": "string",
+                    "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$"
+                  },
+                  "stage": {
+                    "enum": ["first", "second", "exploratory"]
+                  },
+                  "state": {
+                    "enum": [
+                      "preparing",
+                      "running",
+                      "pausing",
+                      "paused",
+                      "restarting",
+                      "finalizing",
+                      "completed",
+                      "stopped",
+                      "error",
+                      "interrupted"
+                    ]
+                  },
+                  "verification": {
+                    "enum": ["pending", "conformant", "non_conformant", "inconclusive"]
+                  },
+                  "intervalMs": {
+                    "type": "integer",
+                    "minimum": 100,
+                    "maximum": 5000
+                  },
+                  "nextLine": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 25
+                  },
+                  "closeCode": {
+                    "anyOf": [
+                      {
+                        "enum": [
+                          "TRANSPORT_UNCERTAIN",
+                          "RESPONSE_PENDING",
+                          "RESPONSE_INVALID",
+                          "JOURNAL_UNCERTAIN",
+                          "NOT_ADMITTED",
+                          "PROCESSING_FAILED",
+                          "API_RESTARTED",
+                          "USER_RESTARTED",
+                          "VERIFICATION_CLOSED"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "progress": {
+                    "$ref": "#/components/schemas/ReplayProgress"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "description": "Vista completa del control compartido: event demo.replay.updated, sin campo id de SSE ni fila de outbox. streamInstanceId identifica la época del stream; instanceId identifica el control y se renueva al reiniciar API o limpiar la demo. No contiene eventId de telemetría."
       }
     }
   }

@@ -27,9 +27,23 @@ async function wheelLeavesZoom(page, map) {
   const before = await tileSources(map);
   const box = await map.boundingBox();
   const scrollBefore = await page.evaluate(() => globalThis.scrollY);
+  const maximum = await page.evaluate(
+    () => document.scrollingElement.scrollHeight - globalThis.innerHeight,
+  );
+  // Firefox puede dejar este mapa al final de la página al hacerlo visible.
+  // Exigir desplazamiento en una dirección que todavía tenga recorrido real.
+  const direction = maximum > scrollBefore ? 1 : -1;
+  expect(direction > 0 ? maximum - scrollBefore : scrollBefore).toBeGreaterThan(0);
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.wheel(0, 180);
-  await expect.poll(() => page.evaluate(() => globalThis.scrollY)).toBeGreaterThan(scrollBefore);
+  await page.mouse.wheel(0, direction * 180);
+  await expect
+    .poll(() =>
+      page.evaluate(({ start, direction }) => (globalThis.scrollY - start) * direction, {
+        start: scrollBefore,
+        direction,
+      }),
+    )
+    .toBeGreaterThan(0);
   await page.waitForTimeout(350); // La rueda de Leaflet aplica su zoom con debounce.
   expect(await tileSources(map)).toEqual(before);
 }

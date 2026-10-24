@@ -45,7 +45,9 @@ binario oficial detectó vulnerabilidades HIGH en Go 1.26.8/x/net 0.59.0; se cor
 las versiones, sin excepciones del escáner. `infra/gateway/go.mod` y `go.sum`
 conservan las dependencias; el runtime no incluye compilador ni herramientas Go.
 
-## Configuración y operación
+## Configuración inicial antes de activar CD
+
+Los comandos de esta sección corresponden al aprovisionamiento inicial, antes de instalar el operador de CD. Después, usar [la operación de la release activa](cd.md#reinicios-operación-y-evidencia): sus imágenes están fijadas por release y ejecutar solo los dos Compose base puede seleccionar etiquetas distintas.
 
 Guardar el entorno real en un archivo 600 fuera del checkout, nunca en Git ni en
 el contexto Docker. Debe contener las variables del perfil local y además:
@@ -95,6 +97,8 @@ docker compose --env-file /opt/nexo-private/.env.azure \
 docker compose --env-file /opt/nexo-private/.env.azure \
   -f infra/compose.yaml -f infra/compose.azure.yaml up -d --wait
 ```
+
+El ejemplo de rotación anterior usa las etiquetas del aprovisionamiento inicial. Con CD activo, el mantenimiento debe usar además el override `/opt/nexo-private/releases/<release>.compose.json` de la release registrada y coordinarse fuera de cualquier despliegue. El modo `boot` no ofrece un comando de rotación; no reutilizar el ejemplo base sobre una release activa sin ese override.
 
 La rotación conserva UUID y telemetría; detener/recrear API revoca las sesiones
 anteriores. El rol HTTP sigue sin permiso para modificar credenciales. El entrypoint

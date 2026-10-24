@@ -1,8 +1,8 @@
 # Persistencia exacta — E1-I01
 
-La migración `0001_ingestion_foundation.sql` añade seis tablas a `users`, sin modificar la migración publicada de E0. Los adaptadores puros de `modules/telemetry/domain/` conservan identidad, instante y JSON. Las tablas sostienen la [recepción HTTP](ingestion.md), [clasificación transaccional](classification.md), [recuperación](recovery.md) y [despacho SSE](realtime.md), compuestos en el monolito.
+La migración `0001_ingestion_foundation.sql` añade seis tablas a `users`, sin modificar la migración publicada de E0. El dominio de telemetría reutiliza identidad e instante desde `packages/contracts` y conserva su lector de JSON original. Las tablas sostienen la [recepción HTTP](ingestion.md), [clasificación transaccional](classification.md), [recuperación](recovery.md) y [despacho SSE](realtime.md), compuestos en el monolito.
 
-Esta página describe la base E1. La migración0003 incorpora después dos tablas del [diario de replay](replay-journal.md), llevando el total propio a nueve; el esquema interno de pg-boss permanece separado. Esas tablas conservan correlación con recibos sin una FK que exija su existencia antes del envío HTTP.
+Esta página describe la base E1. La migración 0003 incorpora dos tablas del [diario de replay](replay-journal.md), llevando el total propio a nueve; las ocho migraciones actuales (0000–0007) también cubren continuación exploratoria y cuenta local/cloud única; el esquema interno de pg-boss permanece separado. Esas tablas conservan correlación con recibos sin una FK que exija su existencia antes del envío HTTP.
 
 ## Relaciones y garantías
 
@@ -56,10 +56,10 @@ La regresión SQL comprueba que el dato está comprimido, reproduce el timeout a
 
 La revisión bigint usa `default(sql\`0\`)`: Kit 0.31.11 no serializa `default(0n)` en el snapshot y puede devolver cero tras ese fallo. Se comprobó el rechazo del control frente a ese defecto y su recuperación al restaurar la definición. Las migraciones ya publicadas se conservan; cualquier cambio posterior añade una nueva.
 
-`nexo_owner` prepara el esquema antes de servir. `nexo_app` lee/añade las seis tablas, cambia solo `event_pk` en la proyección y solo metadatos de publicación en outbox. No modifica/elimina eventos, usuarios, IDs o payloads; carece de DDL y tablas temporales. Los triggers se ejecutan con permisos del invocador. La FK y la inmutabilidad del evento permiten comprobar su vehículo con SELECT sin conceder UPDATE para un bloqueo explícito adicional.
+`nexo_owner` prepara el esquema antes de servir. `nexo_app` lee/añade las seis tablas, cambia solo `event_pk` en la proyección y solo metadatos de publicación en outbox. Sus permisos ordinarios no permiten modificar/eliminar eventos, usuarios, IDs o payloads; carece de DDL y tablas temporales. En modo demo puede ejecutar una función fija que limpia datos sintéticos con las [barreras del panel](replay-panel.md#limpiar-demostración), conservando la cuenta y el esquema. Los triggers se ejecutan con permisos del invocador. La FK y la inmutabilidad del evento permiten comprobar su vehículo con SELECT sin conceder UPDATE para un bloqueo explícito adicional.
 
 ## Verificación reproducible y límites
 
 Construir las imágenes y ejecutar `npm run test:unit` y `npm run test:integration` según [operación](operations.md). `tests/integration/persistence.test.mjs` usa la API compilada, Drizzle y PostgreSQL reales en un proyecto sintético propio. Comprueba catálogo, restricciones, Unicode, colisiones, concurrencia, precisión, JSON, privilegios, upgrade desde la migración E0 y repetición conservando cuenta/hash. También compara las seis tablas antes/después de recrear API y PostgreSQL con su volumen. Los valores sensibles se comparan en memoria.
 
-Estas pruebas escriben fixtures mediante adaptadores y SQL. No demuestran aún admisión HTTP, transacción de clasificación, reintentos de cola, resultados 20/2/2 o SSE; [verificación](verification.md) mantiene sus resultados y pendientes separados.
+Estas pruebas escriben fixtures mediante adaptadores y SQL. Por sí solas no demuestran admisión HTTP, transacción de clasificación, recuperación de cola, resultados 20/2/2 o SSE; esas garantías tienen suites propias y [verificación](verification.md) mantiene sus resultados y pendientes separados.

@@ -4,8 +4,8 @@ El panel flotante de la [issue #49](https://github.com/ngarayc/Nexo/issues/49) e
 
 ## Recorrido
 
-1. Iniciar sesión como demo y abrir el botón Reproductor. Recuperar control si no hay una lectura vigente.
-2. Elegir un intervalo entero de 100 a 5.000 ms (750 por defecto). Iniciar comprueba que la base esté preparada y comunica los motivos si falla. La primera ejecución oficial requiere una base sintética limpia; el [comando de reset seguro](demo-reset.md) prepara ese destino local explícitamente.
+1. Iniciar sesión como `demo` en el perfil local o `Demo` con su contraseña privada en Azure, y abrir el botón Reproductor. Recuperar control si no hay una lectura vigente.
+2. Elegir un intervalo entero de 100 a 5.000 ms (750 por defecto). Iniciar comprueba que la base esté preparada y comunica los motivos si falla. La primera ejecución oficial requiere una base sintética limpia; la papelera Limpiar demostración prepara ese destino con confirmación; el [reset por CLI](demo-reset.md) ofrece otra opción exclusivamente local.
 3. Control muestra estado operativo y resultados confirmados de las 24 líneas. Aceptados, duplicados, rechazados, en curso, inciertos, fallos técnicos y sin intentar permanecen separados. Un despacho no incrementa resultados confirmados.
 4. Pausar espera el envío previo; Reanudar continúa desde la línea siguiente. Reiniciar conserva la base y crea otro recorrido; solo el servidor puede identificarlo como segunda ejecución oficial.
 5. Envíos muestra línea original, evento, resultado y motivo. La correlación conserva índice de lote 0, ingestionId y fechas Bogotá en 24 horas. Seleccionar una ejecución histórica no la reactiva.

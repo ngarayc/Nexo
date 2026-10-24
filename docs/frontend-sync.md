@@ -29,7 +29,7 @@ CaptureBudget permite hasta 1.000 mensajes y 2 MiB de tramas UTF-8 completas ret
 
 El detalle tiene una selección activa. Captura telemetry.accepted del vehículo antes de HTTP, combina por eventId y orden ascendente exacto, e inserta tardíos en su lugar. Cambiar/cerrar selección aborta HTTP y descarta respuestas antiguas. Un corte conserva datos anteriores pendientes y recarga historial después de la nueva base global. Revocar sesión limpia también la selección.
 
-El adaptador usa GET codificado si la ruta no supera 4.096 caracteres ASCII y el ID no contiene NUL, cuyo escape %00 rechaza NGINX. Un ID largo, con NUL o una unidad sustituta aislada usa el POST JSON complementario, con el interceptor CSRF del mismo origen. Ambas variantes comparten captura/cancelación y comprueban el vehículo exacto. Un fallo de detalle no borra flota ni abre otro stream.
+El adaptador usa GET codificado si la ruta no supera 4.096 caracteres ASCII y el ID no contiene NUL, cuyo escape %00 rechaza NGINX. Un ID largo, con NUL, una unidad sustituta aislada o que cambie al interpretarse como URL (por ejemplo `.` o `..`) usa el POST JSON complementario, con el interceptor CSRF del mismo origen. Ambas variantes comparten captura/cancelación y comprueban el vehículo exacto. Un fallo de detalle no borra flota ni abre otro stream.
 
 ## Recuperación y sesión
 

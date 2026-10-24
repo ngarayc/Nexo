@@ -1,21 +1,21 @@
 # Demostración del núcleo
 
-Esta guía reproduce el par obligatorio con datos originales, dos clientes y controles reales. Separa la conformidad de los datos del CI, la revisión humana y demás entregables. El [contrato](requirements/DEMO-REPLAY.md) y los oráculos [resumido](../fixtures/expected_sample.json) y [detallado](../fixtures/expected_detailed.json) permanecen sin cambios.
+Esta guía reproduce el par obligatorio con datos originales, dos clientes y controles reales. Separa la conformidad de los datos del CI, la revisión humana y demás entregables. Se conservan los resultados del contrato original y los oráculos [resumido](../fixtures/expected_sample.json) y [detallado](../fixtures/expected_detailed.json), sin modificar sus archivos. El [extracto de demo](requirements/DEMO-REPLAY.md) identifica su alcance de consulta.
 
 ## Preparar un destino propio
 
-Requisitos: Docker/Compose, Bash/OpenSSL y Node.js 24.22.1 y npm 12.2.0 para el reset local. Desde la raíz, generar `.env.local` solo si todavía no existe. Conservarlo privado y usar un puerto disponible; 8081 es el ejemplo para no modificar el entorno habitual de 8080.
+Requisitos: Docker/Compose, Bash y OpenSSL. Node.js 24.22.1 y npm 12.2.0 se necesitan si se utiliza el reset por CLI o se ejecutan pruebas desde el host. Desde la raíz, generar `.env.local` solo si todavía no existe. Conservarlo privado y usar un puerto disponible; 8081 es el ejemplo para no modificar el entorno habitual de 8080.
 
 ```sh
 bash scripts/configure-local.sh
 WEB_PORT=8081 docker compose --project-name nexo-demo --env-file .env.local -f infra/compose.yaml up --build -d --wait
-WEB_PORT=8081 npm run demo:reset -- --project nexo-demo --inspect
-WEB_PORT=8081 npm run demo:reset -- --project nexo-demo
 ```
 
-El generador rechaza sobrescribir la configuración; no regenerarla si ya existe. El proyecto indicado debe ser sintético y propio. El reset verifica identidad, guarda evidencia en reports/ y comprueba base vacía; consultar [fallos y reanudación](demo-reset.md). Mantener el mismo WEB_PORT en todos los comandos de ese proyecto; la huella del Compose expandido también protege los valores heredados del proceso.
+El generador rechaza sobrescribir la configuración; no regenerarla si ya existe. El proyecto indicado debe ser sintético y propio. Mantener el mismo WEB_PORT en todos sus comandos. Para una instalación ya iniciada en 8080, se puede utilizar directamente esa URL y preparar sus datos desde el panel, sin crear otro proyecto.
 
-Abrir http://localhost:8081 en dos sesiones independientes, por ejemplo ventana normal y privada, e ingresar con demo/demo. Ambas deben mostrar En vivo, cero vehículos y cero alertas. Abrir Reproductor. El ingreso, recarga o apertura del panel no inicia una reproducción.
+Abrir http://localhost:8081 en dos sesiones independientes, por ejemplo ventana normal y privada, e ingresar con demo/demo. Ambas deben mostrar En vivo. Abrir Reproductor → Control. Si hay datos anteriores, finalizar cualquier reproducción activa, esperar las ingestas y pulsar la papelera Limpiar demostración; confirmar el borrado sin respaldo. Deben quedar cero vehículos y cero alertas. El ingreso, recarga o apertura del panel no inicia una reproducción.
+
+El [reset por CLI](demo-reset.md) es una alternativa local: identifica el volumen, conserva evidencia técnica y lo recrea. La limpieza del panel conserva cuenta/esquema/volumen y funciona también en la demo HTTPS. En Azure, ingresar como Demo con la contraseña privada y usar el panel; los comandos locales anteriores no operan sobre la nube.
 
 ## Primer recorrido y pausa
 
@@ -57,4 +57,4 @@ El [inventario de verificación](verification.md) identifica lo efectivamente ej
 
 ## Alcance de esta comprobación
 
-Los resultados de los replays acreditan los datos y controles demostrados. Mapa, gráfica y resumen de E5 y comparación CR-01 de E4 conservan pruebas y evidencias propias; no quedan acreditados solo por coincidir 20/2/2. El cierre definitivo de E6 requiere además el SHA final verificado y la publicación accesible de su evidencia.
+Los resultados de los replays acreditan los datos y controles demostrados. Mapa, gráfica y resumen de E5 y comparación CR-01 de E4 conservan pruebas y evidencias propias; no quedan acreditados solo por coincidir 20/2/2. El [estado de entrega](verification.md#estado-de-entrega-y-despliegue) distingue la release publicada, el main desplegado y la evidencia correspondiente.

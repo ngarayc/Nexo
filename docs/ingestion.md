@@ -28,19 +28,19 @@ NGINX admite 2 MiB, transmite sin buffering completo y conserva los errores JSON
 
 Se fija pg-boss 12.38.0 con su esquema 46 separado en `pgboss`; sus objetos pertenecen a la biblioteca. El preparador propietario inicia la migración, crea `telemetry.ingest` y actualiza sus ajustes mutables antes de servir HTTP. El backend carece de contraseña de propietario. No se añaden servicios permanentes ni FK desde recibos a jobs.
 
-| Ajuste                               | Valor                                                                          |
-| ------------------------------------ | ------------------------------------------------------------------------------ |
-| Política y partición                 | standard, sin partición dedicada                                               |
-| Reintentos automáticos               | retryLimit 0 en cola y publicación                                             |
-| Expiración de ejecución              | 30 segundos                                                                    |
-| Retención de jobs pendientes         | 7 días                                                                         |
-| Limpieza de completados              | Después de 24 horas                                                            |
-| Aviso de trabajo                     | NOTIFY habilitado; listener con polling de respaldo al incorporar consumidores |
-| Supervisión, monitor y mantenimiento | 5 segundos en la instancia de ejecución                                        |
+| Ajuste                               | Valor                                                              |
+| ------------------------------------ | ------------------------------------------------------------------ |
+| Política y partición                 | standard, sin partición dedicada                                   |
+| Reintentos automáticos               | retryLimit 0 en cola y publicación                                 |
+| Expiración de ejecución              | 30 segundos                                                        |
+| Retención de jobs pendientes         | 7 días                                                             |
+| Limpieza de completados              | Después de 24 horas                                                |
+| Aviso de trabajo                     | NOTIFY habilitado; listener con polling de respaldo del consumidor |
+| Supervisión, monitor y mantenimiento | 5 segundos en la instancia de ejecución                            |
 
 Estas cantidades son elecciones de Nexo. No garantizan tiempo de finalización. Las tablas propias conservan entrada/resultados hasta reset; limpiar un job no elimina un recibo. El consumidor comprueba generación/jobId/cursor/notBefore y reserva la primera oportunidad de cada posición siguiente. La [recuperación](recovery.md) conserva tres oportunidades con backoff y reconciliación tras reinicio. No se utiliza el contador de jobs como contador de eventos.
 
-`platform/queue/prepare.ts` usa el propietario; `policy.ts` y `QueueConnection` distinguen esa preparación de la instancia runtime con `migrate: false`, `createSchema: false`, pool máximo 4 y listener dedicado. Se inicia antes de servir HTTP, con `nexo_app` y sin CREATE en el esquema. Puede leer/escribir/eliminar los objetos internos de la biblioteca y ejecutar sus funciones; los permisos de las tablas de dominio continúan separados. Esto no concede DDL o borrado de eventos/recibos al runtime.
+`platform/queue/prepare.ts` usa el propietario; `policy.ts` y `QueueConnection` distinguen esa preparación de la instancia runtime con `migrate: false`, `createSchema: false`, pool máximo 4 y listener dedicado. Se inicia antes de servir HTTP, con `nexo_app` y sin CREATE en el esquema. Puede leer/escribir/eliminar los objetos internos de la biblioteca y ejecutar sus funciones; los permisos de las tablas de dominio continúan separados. Estos permisos de pg-boss no conceden DDL o borrado general de eventos/recibos. La limpieza del modo demo usa una función SQL fija con [controles propios](replay-panel.md#limpiar-demostración).
 
 Fuentes: [instalación](https://pgboss.io/install), [constructor](https://pgboss.io/api/constructor), [opciones de jobs](https://pgboss.io/api/jobs). El coste de compartir PostgreSQL es coordinar migraciones, permisos, mantenimiento y conexiones con las operaciones de dominio; no se afirma aislamiento de recursos entre ambas cargas.
 

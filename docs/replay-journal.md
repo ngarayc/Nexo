@@ -1,6 +1,6 @@
 # Diario durable del reproductor
 
-La [issue #38](https://github.com/ngarayc/Nexo/issues/38) incorpora persistencia y operaciones del diario del emisor simulado. El [verificador #40](replay-verification.md) añade su comparación con los oráculos. El [motor HTTP](replay-emitter.md), los controles y el [panel](replay-panel.md) usan ese diario; el [reset](demo-reset.md) permanece como operación local explícita. El receptor conserva su cola y procesamiento independientes.
+La [issue #38](https://github.com/ngarayc/Nexo/issues/38) incorpora persistencia y operaciones del diario del emisor simulado. El [verificador #40](replay-verification.md) añade su comparación con los oráculos. El [motor HTTP](replay-emitter.md), los controles y el [panel](replay-panel.md) usan ese diario; el [reset por CLI](demo-reset.md) es una operación local explícita y la [limpieza del panel](replay-panel.md#limpiar-demostración) conserva la cuenta y el volumen. El receptor conserva su cola y procesamiento independientes.
 
 ## Datos y relaciones
 

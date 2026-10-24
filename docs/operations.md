@@ -23,11 +23,11 @@ Repetir el arranque conserva ID y hash. En una base inicializada, una cuenta aus
 
 Las migraciones usan `nexo_owner`. HTTP usa `nexo_app`, sin superusuario, creación de bases/roles, DDL o modificación de credenciales. Lee usuarios y metadatos de migración; E1 añade escritura acotada de sus seis tablas, con inmutabilidad de eventos, evidencia y payloads según [persistencia](persistence.md). El entrypoint elimina `DB_OWNER_PASSWORD` del entorno heredado por HTTP. La configuración administrativa de Docker contiene las variables necesarias para preparar el contenedor y no debe publicarse.
 
-E3 añade SELECT/INSERT y UPDATE por columnas del [diario](replay-journal.md), manteniendo identidades, evidencia y borrado protegidos. La migración no inicia el emisor ni inserta fixture/oráculos. El [motor](replay-emitter.md) añade controles autenticados del replay sin conceder permisos de borrado.
+E3 añade SELECT/INSERT y UPDATE por columnas del [diario](replay-journal.md), manteniendo identidades, evidencia y borrado protegidos. La migración no inicia el emisor ni inserta fixture/oráculos. El [motor](replay-emitter.md) añade controles autenticados del replay. La [limpieza del panel](replay-panel.md#limpiar-demostración) usa una función SQL fija habilitada solo en modo demo; el rol HTTP conserva restricciones y no recibe permiso general de borrado o DDL.
 
 La imagen API incorpora únicamente los tres archivos originales que utiliza el [verificador](replay-verification.md), además del lockfile necesario para identificar el material ejecutado. Son archivos de solo lectura, sin precarga de base; no proceden del navegador. Carga, comparación e inspección forman parte de la composición del motor HTTP y del panel.
 
-La preparación incorpora también el esquema interno de pg-boss y la cola, antes de servir. Sus permisos DML se limitan a ese esquema; no habilitan borrado de datos propios. [Admisión](ingestion.md) describe las rutas y [recuperación](recovery.md) describe reintentos acotados, reconciliación y cierres técnicos. No modificar manualmente sus tablas internas para operar la aplicación.
+La preparación incorpora también el esquema interno de pg-boss y la cola, antes de servir. Sus permisos DML se limitan a ese esquema; la limpieza de datos propios se realiza exclusivamente mediante la función demo acotada descrita arriba. [Admisión](ingestion.md) describe las rutas y [recuperación](recovery.md) describe reintentos acotados, reconciliación y cierres técnicos. No modificar manualmente sus tablas internas para operar la aplicación.
 
 El productor usa X-API-Key de entorno para POST /api/events/batch y GET /api/ingestions/:id; Angular no recibe esa credencial. El panel puede leer el mismo recibo con sesión en GET /api/demo/ingestions/:id. El POST devuelve 200 cuando todas sus posiciones quedan clasificadas dentro del plazo; si continúa pendiente responde 503 con recibo. Consultar no crea ni reenvía trabajo. El reconciliador conserva el presupuesto tras reinicio; agotar tres oportunidades o detectar una invariante conocida cierra técnicamente el lote sin contar rechazos de dominio. Un POST que observa ese cierre devuelve 500; leer el recibo mediante GET sigue siendo 200. Reiniciar no reactiva un lote terminal. Conservar ingestionId, especialmente si la primera respuesta se perdió.
 
@@ -51,7 +51,7 @@ docker compose --env-file .env.local -f infra/compose.yaml up -d --wait
 
 ## Desarrollo y comprobación
 
-Para herramientas de fuentes usar Node.js 24.22.1 y npm 12.2.0:
+Para herramientas de fuentes usar Node.js 24.22.1 y npm 12.2.0. Los controles de CI indicados más abajo también requieren Python 3 para probar el operador de CD; consultar los [requisitos del host](../README.md#desarrollo-y-pruebas).
 
 ```sh
 npm ci
@@ -71,7 +71,7 @@ La integración necesita las imágenes locales construidas y Docker. Crea su sta
 ## Navegador y CI
 
 ```sh
-npx --no-install playwright install chromium
+npx --no-install playwright install chromium --only-shell
 npm run test:ci-controls
 npm run test:e2e
 ```
