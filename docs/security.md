@@ -59,3 +59,9 @@ Node incorpora su propia copia de Brotli: actualizar el APK no corrige ese binar
 El audit remoto detectó HIGH en body-parser 2.3.0 por [GHSA-27r3-jxmh-p828](https://github.com/expressjs/body-parser/security/advisories/GHSA-27r3-jxmh-p828), publicado en la base de avisos durante la preparación de esta entrega. Se resolvió a 2.4.0 en el lockfile, versión corregida por el [mantenedor](https://github.com/expressjs/body-parser/releases/tag/v2.4.0) y compatible con el rango de Express. Solo cambió ese paquete instalado; no se añadieron overrides, excepciones o cambios de framework.
 
 Nexo ya inicia Nest con bodyParser deshabilitado y su lectura JSON acotada rechaza compresión. Eso limita la exposición de la ruta descrita por el aviso, pero no sustituye actualizar la dependencia ni permite omitir el gate. La corrección mantiene validación, límites, origen/CSRF y autenticación; [#103](https://github.com/ngarayc/Nexo/issues/103) identifica el cambio y [verificación](verification.md) registra los controles focalizados.
+
+## Corrección de multer — #106
+
+El CI de cierre detectó [GHSA-q7qp-rjg7-q26m](https://github.com/advisories/GHSA-q7qp-rjg7-q26m), HIGH, en multer 2.4.0. El mantenedor corrige la denegación de servicio asociada a un filtro asíncrono de archivos en 2.5.0. Nest 12.2.0 aún declara 2.4.0 exacto; el override raíz, limitado a `@nestjs/platform-express`, fija **multer 2.5.0** y el lockfile conserva esa resolución. Revisar y retirar el override cuando Nest incorpore una versión corregida.
+
+Nexo no configura interceptores de subida de archivos, pero conserva el control de dependencias y actualiza el paquete. No se cambian Nest, sus peers, los parsers propios ni los umbrales de auditoría. La [issue #106](https://github.com/ngarayc/Nexo/issues/106) identifica la corrección; el nuevo candidato debe acreditar sus propias pruebas y escaneos.

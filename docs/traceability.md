@@ -2,7 +2,7 @@
 
 Esta matriz relaciona el [contrato](requirements/common-spec.md), la [demo](requirements/DEMO-REPLAY.md), la [rúbrica](requirements/CRITERIOS-EVALUACION.md) y el [backlog](requirements/backlog.md) con implementación y evidencia. Los extractos abreviados están identificados y no sustituyen el enunciado original de evaluación.
 
-La última versión publicada comprobada es main `23f6702e83c359882cefcd521155a933be7bed6a`, integrado en [PR #105](https://github.com/ngarayc/Nexo/pull/105) y desplegado mediante CD. [Verificación](verification.md#estado-de-entrega-y-despliegue) identifica su fuente, CI y límites. La release `entrega-final` corresponde a una revisión anterior; sus pruebas ampliadas conservan ese alcance.
+La matriz toma como referencia main `23f6702e83c359882cefcd521155a933be7bed6a`, integrado en [PR #105](https://github.com/ngarayc/Nexo/pull/105) y desplegado mediante CD. [Verificación](verification.md#estado-de-entrega-y-despliegue) identifica su fuente, CI y límites. La release `entrega-final` corresponde a una revisión anterior; sus pruebas ampliadas conservan ese alcance. Las [releases posteriores](https://github.com/ngarayc/Nexo/releases) identifican la evidencia de sus propios candidatos.
 
 ## Requisitos funcionales y técnicos
 

@@ -55,6 +55,9 @@
   },
   "overrides": {
     "vite": "$vite",
+    "@nestjs/platform-express": {
+      "multer": "2.5.0"
+    },
     "@esbuild-kit/core-utils": {
       "esbuild": "0.25.12"
     }

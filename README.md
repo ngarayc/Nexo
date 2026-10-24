@@ -185,7 +185,7 @@ La [retrospectiva](docs/RETROSPECTIVA.md) desarrolla decisiones, deuda y próxim
 
 **Dedicación estimada aportada por el autor: 25 horas.** La cifra es estimada; no representa una medición de dedicación.
 
-La última versión desplegada comprobada es main `23f6702`, con [CI de origen](https://github.com/ngarayc/Nexo/actions/runs/40036044204), [PR #105](https://github.com/ngarayc/Nexo/pull/105) y [CD Azure aprobado](https://github.com/ngarayc/Nexo/actions/runs/40039165651). El [estado de entrega](docs/verification.md#estado-de-entrega-y-despliegue) detalla su evidencia.
+Como referencia de despliegue comprobado, main `23f6702` cuenta con [CI de origen](https://github.com/ngarayc/Nexo/actions/runs/40036044204), [PR #105](https://github.com/ngarayc/Nexo/pull/105) y [CD Azure aprobado](https://github.com/ngarayc/Nexo/actions/runs/40039165651). El [registro de entrega](docs/verification.md#estado-de-entrega-y-despliegue) detalla esa evidencia; cada release posterior identifica su propia revisión.
 
 La [release entrega-final](https://github.com/ngarayc/Nexo/releases/tag/entrega-final) conserva el commit anterior `81bf4bb` y los artefactos de esa revisión. No contiene las mejoras posteriores de nube, limpieza, CD y geocerca. Las nuevas entregas se publican como versiones separadas en [Releases](https://github.com/ngarayc/Nexo/releases), con su commit y evidencia propios. `main` puede incorporar mejoras posteriores: relaciona siempre el código evaluado con su CI, PR y despliegue correspondientes. Identifica el checkout con:
 
