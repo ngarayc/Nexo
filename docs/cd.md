@@ -48,15 +48,18 @@ Un archivo privado y atómico, `/opt/nexo-private/active-release.json`, identifi
 Después de activar CD, administrar con systemd o con el operador instalado:
 
 ```sh
+sudo docker ps --filter label=com.docker.compose.project=nexo-cloud
 sudo python3 /usr/local/lib/nexo-deploy.py boot status
 sudo systemctl start nexo-compose
 sudo python3 /usr/local/lib/nexo-deploy.py boot up
 ```
 
+Ejecutar estos comandos dentro de la VM. `docker ps` muestra los contenedores; `boot status` devuelve el SHA y los IDs de imágenes en JSON, mientras la salida interna de Compose se conserva en el log privado del operador. Consultar el estado no modifica código ni requiere ejecutar CI.
+
 Los despliegues se serializan en Actions y mediante un bloqueo de VM. No ejecutar operaciones Compose manuales mientras CD esté activo. Una repetición del mismo SHA ya saludable comprueba estado y devuelve `already_current`, sin reconstruir ni reiniciar los servicios.
 
 Actions publica en su resumen el SHA confirmado y mantiene el estado del environment. Los inventarios, configuración privada, salida Azure y logs permanecen fuera de los artefactos públicos. El agente VM debe devolver un marcador inequívoco con SHA, salud y las cuatro imágenes: HTTP200 de Azure por sí solo no acredita el despliegue. El registro privado conserva la release anterior para recuperación.
 
-Las pruebas de [política](../scripts/ci/cd-policy.test.mjs) y [operador](../tests/cd/test_azure_vm.py) cubren ramas/eventos ajenos, identidad y CI incompletos, workflow inseguro, falso éxito Azure, manifiestos alterados, rutas/enlaces externos y rollback ante fallo parcial. La primera ejecución real de OIDC/CD se verifica después de integrar este incremento en main; las pruebas simuladas no sustituyen esa ejecución.
+Las pruebas de [política](../scripts/ci/cd-policy.test.mjs) y [operador](../tests/cd/test_azure_vm.py) cubren ramas/eventos ajenos, identidad y CI incompletos, workflow inseguro, falso éxito Azure, manifiestos alterados, rutas/enlaces externos y rollback ante fallo parcial. La [primera ejecución real de OIDC/CD](https://github.com/ngarayc/Nexo/actions/runs/40039165651) terminó correctamente para main `23f6702e83c359882cefcd521155a933be7bed6a`, integrado mediante [PR #105](https://github.com/ngarayc/Nexo/pull/105). [Verificación](verification.md#estado-de-entrega-y-despliegue) identifica la fuente probada, las cuatro imágenes y la comprobación posterior. Las pruebas simuladas y la comprobación de configuración del arranque no equivalen a haber reiniciado la VM con esta nueva unidad.
 
 Referencias: [OIDC de GitHub](https://docs.github.com/en/actions/reference/security/oidc), [Azure Login con identidad federada](https://learn.microsoft.com/en-us/azure/developer/github/connect-from-azure-openid-connect), [Run Command y sus límites](https://learn.microsoft.com/en-us/azure/virtual-machines/linux/run-command).

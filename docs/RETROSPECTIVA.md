@@ -2,11 +2,11 @@
 
 ## Decisiones que sostienen el resultado
 
-El monolito modular mantiene ingesta, consultas, acceso, tiempo real y reproductor dentro de NestJS, con límites comprobados entre módulos. PostgreSQL concentra identidad persistente, transacciones, proyección y outbox; pg-boss permite admisión durable sin un cuarto servicio. Esta elección reduce coordinación operativa para la prueba y se verifica con fallos reales; no demuestra capacidad para una flota productiva arbitraria. [Arquitectura](architecture.md) y [recuperación](recovery.md) describen costes y límites.
+El monolito modular mantiene ingesta, consultas, acceso, tiempo real y reproductor dentro de NestJS, con límites comprobados entre módulos. PostgreSQL concentra identidad persistente, transacciones, proyección y outbox; pg-boss permite admisión durable en la misma base, sin un broker adicional. El perfil Azure incorpora Caddy como cuarto servicio para HTTPS. Esta elección reduce coordinación operativa para la prueba y se verifica con fallos reales; no demuestra capacidad para una flota productiva arbitraria. [Arquitectura](architecture.md) y [recuperación](recovery.md) describen costes y límites.
 
 Angular separa páginas, fachadas, transportes y adaptadores visuales. Una sola coordinación SSE por aplicación alimenta snapshot, flota, alertas y reproductor. Tabla, mapa, trayectoria y gráfico seleccionan la misma identidad exacta; las visualizaciones no reconstruyen reglas de dominio. El mapa conserva posiciones recibidas y el gráfico las velocidades suministradas, sin inferir ruta vial o precisión GPS. Las fracciones temporales se conservan para ordenar, mientras el dibujo usa aproximaciones explícitas.
 
-El reproductor simula al productor por HTTP, con cuerpos y orden originales; pausa/reinicio controlan al emisor. La cola del servidor sigue procesando lo admitido y el diario conserva incertidumbre sin reenvío automático. La distinción evita presentar una pausa visual como control de dispositivos reales. El reset permanece local y conserva evidencia antes de recrear exclusivamente recursos sintéticos propios.
+El reproductor simula al productor por HTTP, con cuerpos y orden originales; pausa/reinicio controlan al emisor. La cola del servidor sigue procesando lo admitido y el diario conserva incertidumbre sin reenvío automático. La distinción evita presentar una pausa visual como control de dispositivos reales. El reset por CLI es local y conserva evidencia antes de recrear su volumen sintético. La limpieza del panel, disponible también en la demo cloud, exige confirmación y descarta datos/informes sin respaldo, conservando cuenta, esquema y volumen.
 
 ## Dificultades y correcciones comprobadas
 
@@ -21,6 +21,14 @@ El reproductor simula al productor por HTTP, con cuerpos y orden originales; pau
 
 [Verificación](verification.md) y las issues enlazadas conservan fallos, correcciones y alcance de cada resultado. Una repetición aprobada no borra el intento anterior.
 
+## Mejoras posteriores a la primera release
+
+La revisión visual conservó el orden y los datos, incorporó iconos con ayuda accesible y corrigió rueda, repetición mundial y capas de los mapas. El panel permite volver a explorar después de cerrar el par oficial y presenta un informe legible, manteniendo el detalle técnico disponible.
+
+La geocerca fija reutiliza las muestras confirmadas. Añadir su contorno reveló dos selectores de prueba que contaban todos los trazos SVG como trayectoria; se identificó la polilínea y se comprobaron ambos elementos por separado, conservando las aserciones originales.
+
+La operación cloud añadió HTTPS, persistencia y CD por OIDC. El subject federado debía usar los identificadores inmutables reales de GitHub. Los escaneos con una base actualizada también detectaron Brotli/Node y body-parser; se actualizaron las dependencias sin rebajar controles. [Verificación](verification.md#estado-de-entrega-y-despliegue) vincula el CI y el primer CD real con su candidato.
+
 ## Trabajo agéntico y revisión
 
 EP-03 se construyó antes de CR-01. Los procedimientos de especificación, implementación y revisión se aplicaron a cambios reales y se acompañaron de diffs, pruebas y correcciones. El autor revisó candidatos de main; la QA técnica del agente y el CI no se presentaron como intervención humana. Las barreras se demostraron en el recurso sintético archivado, sin atacar las ramas de entrega. [Gobierno](../AGENT-GOVERNANCE.md), [ciclos](AI-WORKFLOW.md) y [controles](control-demonstrations.md) permiten evaluar esas diferencias.
@@ -29,7 +37,7 @@ La comparación general/focalizada usó dos propuestas de lectura autorizadas so
 
 ## Límites y mejoras posteriores
 
-La cuenta demo/demo, sesiones en memoria, una instancia de API y HTTP de loopback corresponden a una demostración local. Un despliegue real requeriría identidad individual, TLS, gestión de secretos, retención, observabilidad y validación de capacidad con carga representativa. No se presentan esas tareas como requisitos ya entregados.
+El perfil local utiliza demo/demo y HTTP de loopback. Azure incorpora HTTPS, cuenta Demo con contraseña privada, disco persistente y CD mediante OIDC. Ambos mantienen una instancia API, sesiones en memoria y una sola cuenta. Un servicio productivo requeriría identidad individual, coordinación entre réplicas, retención, observabilidad avanzada y validación de capacidad con carga representativa.
 
 Las colecciones completas simplifican snapshot y selección, pero necesitarían paginación/ventanas y presupuestos de memoria con históricos mayores. SSE recupera mediante snapshot, sin ACK del navegador o replay durable. Las posiciones no garantizan ubicación actual; la proyección cartográfica tiene límites polares y el proveedor de tiles puede fallar. El historial sigue siendo alternativa accesible para puntos coincidentes. Las pruebas sintéticas no certifican disponibilidad de un proveedor externo.
 

@@ -6,7 +6,7 @@ La [issue #26](https://github.com/ngarayc/Nexo/issues/26) incorpora el transport
 
 `GET /api/stream` exige la cookie de una sesión vigente. La API key del productor no sustituye esa sesión. El GET del mismo origen puede omitir Origin; si lo envía, debe coincidir exactamente con el origen configurado. La respuesta es `text/event-stream; charset=utf-8`, con `Cache-Control: private, no-store, no-transform` y `X-Accel-Buffering: no`.
 
-La suscripción se registra antes de enviar `stream.ready`, siempre el primer mensaje. Su JSON contiene type, schemaVersion 1, instanceId y heartbeatMilliseconds 15000. Después se envía `stream.heartbeat` cada quince segundos con type, versión e instancia. Ambos son controles sin ID de dominio. La generación se comparte con `GET /api/snapshot`: cambia al reiniciar API y después de recuperar una degradación comprobada.
+La suscripción se registra antes de enviar `stream.ready`, siempre el primer mensaje. Su JSON contiene type, schemaVersion 1, instanceId y heartbeatMilliseconds 15000. Después se envía `stream.heartbeat` cada quince segundos con type, versión e instancia. Ambos son controles sin ID de dominio. La generación se comparte con `GET /api/snapshot`: cambia al reiniciar API, después de recuperar una degradación comprobada y al limpiar la demo.
 
 | Mensaje de dominio | Cuándo se crea                    | data                                      |
 | ------------------ | --------------------------------- | ----------------------------------------- |
@@ -14,13 +14,19 @@ La suscripción se registra antes de enviar `stream.ready`, siempre el primer me
 | vehicle.updated    | El evento cambia latest           | Evento público y state OFF/MOVING/STOPPED |
 | alert.created      | Evento aceptado con velocidad >80 | Evento público y type OVERSPEED           |
 
-El sobre contiene messageId UUID v4, schemaVersion 1, type, eventId, vehicleId, observedAt y data. La trama usa `id:UUID`, `event:type` y una línea data con JSON, terminada en línea vacía. Los identificadores libres de telemetría permanecen dentro del JSON escapado; nunca forman campos SSE. `observedAt` conserva el instante UTC exacto. El estado del mensaje vehicle.updated se llama state, mientras la proyección de consulta lo presenta como status. La alerta del stream incluye ignitionOn; la colección de consulta expone su vista más pequeña.
+El sobre contiene messageId UUID v4, schemaVersion 1, type, eventId, vehicleId, observedAt y data. La trama usa `id:UUID`, `event:type` y una línea data con JSON, terminada en línea vacía. Los identificadores libres de telemetría permanecen dentro del JSON escapado; nunca forman campos SSE. `observedAt` conserva el instante UTC exacto; `data.observedAtOriginal` conserva la cadena recibida y puede faltar en mensajes históricos anteriores a ese metadato. Ambos representan el mismo instante. El estado del mensaje vehicle.updated se llama state, mientras la proyección de consulta lo presenta como status. La alerta del stream incluye ignitionOn; la colección de consulta expone su vista más pequeña.
 
 La notificación procede del commit de negocio; duplicados y rechazos no añaden mensajes. Un evento tardío puede producir telemetry.accepted y alert.created sin vehicle.updated. UUID identifica la notificación, no su orden temporal. Los consumidores deben poder ignorar una repetición del mismo UUID y comparar el instante/eventId para actualizar latest.
 
 SSE es una notificación en vivo, sin ACK del navegador ni historial garantizado. Una marca published_at confirma la distribución local, no recepción o renderizado de todos los clientes. Sin suscriptores también se marca: quien llegue después obtiene snapshot. `Last-Event-ID` no solicita retransmisión histórica y los mensajes publicados no se vuelven a distribuir al reiniciar.
 
 Para sincronizar, registrar el stream, esperar ready, almacenar temporalmente cambios y pedir snapshot. Solo combinar si versiones/instancias coinciden; después aplicar el buffer y continuar en vivo. Una desconexión, cambio de generación o `stream.resync-required` exige volver a sincronizar. Un snapshot iniciado antes de una transición puede responder con la generación anterior, que permite detectar esa carrera. La [coordinación Angular](frontend-sync.md) implementa captura acotada y recuperación, sin deducir una vista completa del último UUID recibido.
+
+## Estado del reproductor
+
+El mismo stream publica `demo.replay.updated`, con la vista completa de `ReplayControl` y tres campos adicionales: `type`, `schemaVersion: 1` y `streamInstanceId`. [OpenAPI](openapi.json) describe esta trama mediante `ReplayStreamFrame`, junto a los controles y cambios de dominio.
+
+Esta notificación no lleva `id` de SSE ni crea una fila de outbox. Se publica tras cambios durables y cada dos segundos mientras hay suscriptores; si la lectura falla, no se presenta una copia anterior como recién comprobada. `streamInstanceId` identifica la generación de SSE; `instanceId` identifica el control del reproductor y cambia al reiniciar API o limpiar la demo. Las revisiones del control permiten descartar vistas antiguas. El [panel](replay-panel.md) y el [emisor](replay-emitter.md) detallan sus estados y recuperación.
 
 ## Despacho y durabilidad
 

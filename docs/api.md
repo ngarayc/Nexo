@@ -2,31 +2,32 @@
 
 La [issue #24](https://github.com/ngarayc/Nexo/issues/24) consolida el contrato del backend E1. La descripción [OpenAPI 3.1.1 versionada](openapi.json) enumera las operaciones actuales, incluido el transporte SSE de la [issue #26](https://github.com/ngarayc/Nexo/issues/26). Las pruebas HTTP, reglas de dominio y respuestas reales conservan la autoridad sobre su comportamiento; OpenAPI no sustituye la validación del servidor.
 
-Origen predeterminado: `http://localhost:8080`; prefijo: `/api`. Una copia de comprobación puede configurar otro puerto/origen. El perfil soportado es HTTP local con una instancia API. No habilita CORS ni ofrece transporte de producción. El [dashboard](dashboard.md) consume estas operaciones; el motor de demo tiene controles protegidos descritos abajo. CR-01 incorpora el filtro de alertas en API; la selección Angular conserva filtros por cliente sobre la colección global sincronizada.
+Origen predeterminado: `http://localhost:8080`; prefijo: `/api`. Una copia de comprobación puede configurar otro puerto/origen. Se admiten el perfil HTTP local y la [demo HTTPS en Azure](cloud-deployment.md), ambos con una instancia API y origen canónico. No se habilita CORS. El [dashboard](dashboard.md) consume estas operaciones; el motor de demo tiene controles protegidos descritos abajo. CR-01 incorpora el filtro de alertas en API; la selección Angular conserva filtros por cliente sobre la colección global sincronizada.
 
 ## Rutas y acceso
 
-| Método y ruta                           | Acceso                          | Resultado                                         |
-| --------------------------------------- | ------------------------------- | ------------------------------------------------- |
-| `GET /api`                              | Público                         | Identidad mínima del servicio                     |
-| `GET /api/health`                       | Público                         | Salud de base/esquema/dispatcher, 200 o 503       |
-| `POST /api/session`                     | Origin canónico                 | Login, cookie, usuario, vencimiento y token CSRF  |
-| `GET /api/session`                      | Sesión                          | Misma sesión, sin renovación del plazo            |
-| `DELETE /api/session`                   | Sesión, Origin y CSRF           | 204, revocación de ese SID                        |
-| `POST /api/events/batch`                | X-API-Key                       | Admisión durable y resultado o estado explícito   |
-| `GET /api/ingestions/:ingestionId`      | X-API-Key                       | Recibo, incluso pendiente o con fallo técnico     |
-| `GET /api/demo/ingestions/:ingestionId` | Sesión y modo demo              | Mismo recibo sin entregar la API key al navegador |
-| `GET /api/vehicles?q=...`               | Sesión                          | Flota, total filtrado y resumen global            |
-| `GET /api/vehicles/:vehicleId/events`   | Sesión                          | Historial completo ascendente                     |
-| `POST /api/queries/vehicle-events`      | Sesión, Origin y CSRF           | El mismo historial transportando el ID en JSON    |
-| `GET /api/alerts?vehicleId=...`         | Sesión                          | Alertas históricas con filtro exacto opcional     |
-| `POST /api/queries/alerts`              | Sesión, Origin y CSRF           | Las mismas alertas filtradas mediante JSON        |
-| `GET /api/snapshot`                     | Sesión                          | Flota y alertas de una vista SQL coherente        |
-| `GET /api/stream`                       | Sesión; Origin válido si existe | SSE de cambios confirmados y controles            |
+| Método y ruta                           | Acceso                           | Resultado                                         |
+| --------------------------------------- | -------------------------------- | ------------------------------------------------- |
+| `GET /api`                              | Público                          | Identidad mínima del servicio                     |
+| `GET /api/health`                       | Público                          | Salud de base/esquema/dispatcher, 200 o 503       |
+| `POST /api/session`                     | Origin canónico                  | Login, cookie, usuario, vencimiento y token CSRF  |
+| `GET /api/session`                      | Sesión                           | Misma sesión, sin renovación del plazo            |
+| `DELETE /api/session`                   | Sesión, Origin y CSRF            | 204, revocación de ese SID                        |
+| `POST /api/events/batch`                | X-API-Key                        | Admisión durable y resultado o estado explícito   |
+| `GET /api/ingestions/:ingestionId`      | X-API-Key                        | Recibo, incluso pendiente o con fallo técnico     |
+| `GET /api/demo/ingestions/:ingestionId` | Sesión y modo demo               | Mismo recibo sin entregar la API key al navegador |
+| `GET /api/vehicles?q=...`               | Sesión                           | Flota, total filtrado y resumen global            |
+| `GET /api/vehicles/:vehicleId/events`   | Sesión                           | Historial completo ascendente                     |
+| `POST /api/queries/vehicle-events`      | Sesión, Origin y CSRF            | El mismo historial transportando el ID en JSON    |
+| `GET /api/alerts?vehicleId=...`         | Sesión                           | Alertas históricas con filtro exacto opcional     |
+| `POST /api/queries/alerts`              | Sesión, Origin y CSRF            | Las mismas alertas filtradas mediante JSON        |
+| `GET /api/snapshot`                     | Sesión                           | Flota y alertas de una vista SQL coherente        |
+| `POST /api/demo/replay/reset`           | Sesión, modo demo, Origin y CSRF | Limpieza confirmada de datos e informes de demo   |
+| `GET /api/stream`                       | Sesión; Origin válido si existe  | SSE de cambios confirmados y controles            |
 
 La API key procede del entorno del servidor/productor. No autoriza rutas de sesión ni se entrega a Angular. Una cookie o un token CSRF tampoco sustituyen la API key. Las rutas sin política explícita se deniegan por defecto.
 
-El login usa `{"username":"demo","password":"demo"}` con Origin exacto. La respuesta contiene `user: { id, username }`, `expiresAt` y `csrfToken`; el SID firmado solo viaja en la cookie HttpOnly `nexo.sid`. Sesión absoluta de cuatro horas, máximo 32 sesiones; reiniciar API las invalida sin borrar la cuenta. El token se mantiene en memoria y se envía como X-CSRF-Token en logout y POST de consulta. [Acceso](access.md) documenta cuotas, revocación y precedencia.
+El login local predeterminado usa `{"username":"demo","password":"demo"}` con Origin exacto. En Azure utiliza `Demo` y su contraseña privada configurada. La respuesta contiene `user: { id, username }`, `expiresAt` y `csrfToken`; el SID firmado solo viaja en la cookie HttpOnly `nexo.sid`. Sesión absoluta de cuatro horas, máximo 32 sesiones; reiniciar API las invalida sin borrar la cuenta. El token se mantiene en memoria y se envía como X-CSRF-Token en logout, POST de consulta y operaciones del reproductor. [Acceso](access.md) documenta cuotas, revocación y precedencia.
 
 ## Entrada y clasificación
 
@@ -89,17 +90,17 @@ El [protocolo SSE](realtime.md) define ready primero, heartbeat cada quince segu
 
 ## Límites y errores
 
-| Recurso                          | Perfil predeterminado                                                                              |
-| -------------------------------- | -------------------------------------------------------------------------------------------------- |
-| Login                            | 4 KiB; usuario 1–64 bytes UTF-8 y contraseña 1–256; 10 solicitudes/minuto y dos hashes simultáneos |
-| Lote                             | 2 MiB y 1.000 posiciones; 16 POST activos; 1.200 POST/minuto                                       |
-| Consulta de recibo por API key   | 1.200 lecturas/minuto, separadas del contador POST                                                 |
-| Lecturas de sesión, GET y POST   | 600/minuto compartidas por cuenta; 16 operaciones y pool compartido de cuatro conexiones           |
-| Cuerpo de consulta JSON          | 2 MiB y recepción de 15 segundos, tras comprobar acceso y reservar cupo                            |
-| Aperturas SSE                    | 30/minuto por cuenta; cuatro streams por SID y dieciséis globales                                  |
-| Salida SSE por conexión          | 1.000 tramas/2 MiB, incluyendo writableLength; cierre tras 15 s sin progreso                       |
-| Espera HTTP de ingesta           | 60 segundos totales; proxy 75; no retiene conexión SQL mientras espera                             |
-| Espera/sentencia/transacción SQL | Adquisición 2 s, lock 1 s, sentencia 5 s, cliente 6 s y transacción 10 s donde aplica              |
+| Recurso                          | Perfil predeterminado                                                                                                |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| Login                            | 4 KiB; usuario 1–64 bytes UTF-8 y contraseña 1–256; 10 solicitudes/minuto local o 5 en HTTPS; dos hashes simultáneos |
+| Lote                             | 2 MiB y 1.000 posiciones; 16 POST activos; 1.200 POST/minuto                                                         |
+| Consulta de recibo por API key   | 1.200 lecturas/minuto, separadas del contador POST                                                                   |
+| Lecturas de sesión, GET y POST   | 600/minuto compartidas por cuenta; 16 operaciones y pool compartido de cuatro conexiones                             |
+| Cuerpo de consulta JSON          | 2 MiB y recepción de 15 segundos, tras comprobar acceso y reservar cupo                                              |
+| Aperturas SSE                    | 30/minuto por cuenta; cuatro streams por SID y dieciséis globales                                                    |
+| Salida SSE por conexión          | 1.000 tramas/2 MiB, incluyendo writableLength; cierre tras 15 s sin progreso                                         |
+| Espera HTTP de ingesta           | 60 segundos totales; proxy 75; no retiene conexión SQL mientras espera                                               |
+| Espera/sentencia/transacción SQL | Adquisición 2 s, lock 1 s, sentencia 5 s, cliente 6 s y transacción 10 s donde aplica                                |
 
 Los cuerpos de ingesta/consulta exigen application/json UTF-8 sin compresión. El perfil de ingesta puede reducir sus límites mediante configuración compatible. Las reservas activas/retenidas tienen límites conjuntos documentados en [operación](operations.md); tamaño lógico no equivale a disco físico.
 
@@ -128,7 +129,15 @@ Al cambiar rutas o respuestas, actualizar OpenAPI, esta página y las pruebas pe
 
 [Contrato de control](replay-emitter.md) y [OpenAPI](openapi.json) describen GET /api/demo/replay y POST /api/demo/replay/commands. GET ofrece control actual o selectores excluyentes de ejecución/historial/recibo; POST admite intención durable con sesión, origen, CSRF, cuota de 60/min y JSON de 4 KiB. Un 202 no equivale a resolución completada. COMMIT desconocido 503 conserva incertidumbre y exige consultar el estado/recibo; no autoriza reenvío automático. Modo demo deshabilitado404 antes del parser.
 
-La misma SSE publica demo.replay.updated con vista completa y dos revisiones; la época del stream no sustituye la instancia estable del control. La pausa no cancela cola del receptor. El informe de escenario y los individuales se conservan separados. Estos endpoints no aceptan destino/fixture/clave del navegador ni ofrecen borrado. El panel y reset seguro mantienen sus incrementos propios.
+La misma SSE publica demo.replay.updated con vista completa y dos revisiones; la época del stream no sustituye la instancia estable del control. La pausa no cancela cola del receptor. El informe de escenario y los individuales se conservan separados. Los comandos no aceptan destino, fixture o clave del navegador. La limpieza tiene una ruta independiente descrita a continuación.
+
+## Limpieza autenticada de la demo
+
+`POST /api/demo/replay/reset` está habilitado solo con modo demo, sesión vigente, origen exacto y CSRF. Comparte la cuota de controles del reproductor (60/minuto) y acepta JSON UTF-8 de hasta 4 KiB, con 15 segundos para recibirlo.
+
+El cuerpo contiene exactamente `confirmation: "CLEAR_DEMO"`, `instanceId` y `expectedControlVersion`, tomados del control actual. No lleva commandId. Una respuesta 200 con `{"cleared":true}` confirma la limpieza; 409 indica actividad incompatible (`DEMO_BUSY`) o un control obsoleto (`REPLAY_CONFLICT`). Formato incorrecto produce 400; fuera de modo demo, 404. Un fallo técnico o de comunicación no demuestra ausencia de efectos: recuperar el control, sin repetir automáticamente el borrado.
+
+Elimina las ocho tablas de datos/demo y los trabajos de ingesta en una transacción, conserva cuenta y esquema y no genera respaldo. Renueva las identidades del control y SSE para que los clientes recuperen una base vacía. La operación solo procede con reproducción terminada, sin orden pendiente ni ingesta activa. [El panel](replay-panel.md#limpiar-demostración) explica confirmación y límites; [seguridad](security.md#limpieza-explícita-en-modo-demo) describe la función SQL acotada. El [reset por CLI](demo-reset.md) conserva su alcance exclusivamente local.
 
 ## Fecha original y precisión en las vistas
 

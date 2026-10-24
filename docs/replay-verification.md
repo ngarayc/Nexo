@@ -17,7 +17,7 @@ El cuerpo de cada envío futuro conserva literalmente la línea original dentro 
 
 ## Preparación y snapshot
 
-La preparación exige servicios disponibles, hash de migración vigente, cuenta local compatible, dominio/recibos/intentos vacíos y ausencia de trabajo de ingesta pendiente o activo. Admite únicamente la propia ejecución en preparación sin envíos. La disponibilidad incluye una señal del coordinador; su composición en el motor se incorpora después.
+La preparación exige servicios disponibles, hash de migración vigente, cuenta compatible con el perfil local o HTTPS configurado, dominio/recibos/intentos vacíos y ausencia de trabajo de ingesta pendiente o activo. Admite únicamente la propia ejecución en preparación sin envíos. La disponibilidad incluye una señal del coordinador, conectado al verificador por DemoRuntime.
 
 La preparación de una continuación distingue un escenario abierto de uno ya cerrado. En el segundo caso exige fecha de cierre y verificación final presentes, ejecución previa terminal y receptor disponible/sin trabajo pendiente. Solo habilita un recorrido exploratorio; no vuelve a acreditar el par oficial ni exige vaciar la base. Los informes guardados se mantienen como evidencia del corte original.
 

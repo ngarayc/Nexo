@@ -1,6 +1,6 @@
 # Emisor HTTP del reproductor
 
-La [issue #42](https://github.com/ngarayc/Nexo/issues/42) compone un único motor compartido en NestJS, controles HTTP protegidos, diario y verificador del par oficial. Angular transmite intenciones y observa el estado; la API conserva fixture, destino y clave. El panel, reset seguro y demostración integral en dos navegadores conservan sus incrementos posteriores.
+La [issue #42](https://github.com/ngarayc/Nexo/issues/42) compone un único motor compartido en NestJS, controles HTTP protegidos, diario y verificador del par oficial. Angular transmite intenciones y observa el estado; la API conserva fixture, destino y clave. El [panel](replay-panel.md), la limpieza confirmada y la [demostración integral](demo-guide.md) en dos navegadores completan este motor.
 
 ## Fronteras y garantías
 
@@ -37,7 +37,7 @@ La separación entre aceptación y finalización sigue [RFC 9110, 202 Accepted](
 
 ## Composición y controles
 
-`DemoRuntime` carga las fuentes y calcula las huellas del material ejecutable y la configuración efectiva permitida. El perfil no contiene secretos. `PostgresReplayEvidence` contrasta además migración, cuenta y estado de la cola mediante SQL/API pública. Modo demo deshabilitado devuelve 404 y no carga fixture/huellas ni construye el motor. Habilitado, recupera el diario antes de escuchar HTTP; nunca reanuda envíos al arrancar. La identidad de API es estable durante el proceso y distinta de la época SSE.
+`DemoRuntime` carga las fuentes y calcula las huellas del material ejecutable y la configuración efectiva permitida. El perfil no contiene secretos. `PostgresReplayEvidence` contrasta además migración, cuenta y estado de la cola mediante SQL/API pública. Modo demo deshabilitado devuelve 404 y no carga fixture/huellas ni construye el motor. Habilitado, recupera el diario antes de escuchar HTTP; nunca reanuda envíos al arrancar. La identidad del control se conserva durante la operación ordinaria y es distinta de la época SSE. La limpieza confirmada renueva ambas e invalida intenciones anteriores.
 
 Recepción y Demo importan `ProcessingModule`: comparten un `WriteDatabase` de seis conexiones y la misma `QueueConnection`. Un turno de escritura limitado se comparte entre diario y recuperación; el actor tiene otra exclusión corta en memoria y no adquiere dos veces el mismo turno. No se agrega pool o broker de producto. HTTP del emisor y las esperas entre líneas quedan fuera de esas secciones.
 
@@ -68,7 +68,7 @@ El cierre del escenario mantiene su informe separado de los individuales. Si su 
 
 El historial no reactiva ejecuciones. El detalle omite intención, documentos HTTP originales, cabeceras y credenciales; muestra correlación ingestionId, línea 1–24 e índice de lote0. Los diagnósticos contienen solo campos permitidos y no reclasifican resultados originales. El informe guardado conserva su snapshot; la inspección distingue estado actual igual, cambiado o no disponible.
 
-`demo.replay.updated` usa la conexión SSE existente y sus mismos límites de sesiones, mensajes y bytes. Publica una representación completa tras cambios durables y cada 2 s con suscriptores, mediante una lectura compartida y fresca. No crea mensajes de dominio/outbox ni un stream por componente. Lectura fallida no publica una copia antigua con fecha nueva. `streamInstanceId` pertenece a la época SSE; el instanceId del control pertenece al proceso API. Recargar, cerrar sesión o desconectar un navegador no cancela una reproducción admitida.
+`demo.replay.updated` usa la conexión SSE existente y sus mismos límites de sesiones, mensajes y bytes. Publica una representación completa tras cambios durables y cada 2 s con suscriptores, mediante una lectura compartida y fresca. No crea mensajes de dominio/outbox ni un stream por componente. Lectura fallida no publica una copia antigua con fecha nueva. `streamInstanceId` pertenece a la época SSE; el instanceId del control identifica al coordinador activo y también se renueva después de limpiar la demo. Recargar, cerrar sesión o desconectar un navegador no cancela una reproducción admitida.
 
 ## Evidencia de integración del motor
 
