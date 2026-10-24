@@ -1,5 +1,29 @@
 # Verificación de Nexo
 
+## Estado de entrega y despliegue
+
+Esta sección distingue la última versión publicada comprobada de la release anterior. Los registros siguientes conservan sus resultados históricos: un ensayo aprobado en una revisión no se atribuye a otra.
+
+| Referencia                   | Fuente y resultado comprobado                                                                                                                                                                                                                                                                                                                                                              |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Release `entrega-final`      | Publicada en `81bf4bb2f3acb15b2a9e266bae63fb4a15da6213`; fuente probada `63b258313bf32caca747cfe9404f9d1f438d4bc5`. [CI ordinario](https://github.com/ngarayc/Nexo/actions/runs/39896387117) y [ampliado](https://github.com/ngarayc/Nexo/actions/runs/39896446332), con manifiestos de esa revisión.                                                                                      |
+| Último CI completo publicado | Fuente `32a8a70820067886b16b7f58e6782af5e5da473d`, [ejecución 40036044204](https://github.com/ngarayc/Nexo/actions/runs/40036044204), intento 1: 506 API, 142 Angular, 127 PostgreSQL/HTTP y 28 Chromium; cinco artefactos descargados y revalidados, con exclusión previa a publicación comprobada.                                                                                       |
+| Promoción a main             | [PR #105](https://github.com/ngarayc/Nexo/pull/105), aprobación del autor en [main-review 40039062989](https://github.com/ngarayc/Nexo/actions/runs/40039062989) y merge `23f6702e83c359882cefcd521155a933be7bed6a`. [CI de main 40039127783](https://github.com/ngarayc/Nexo/actions/runs/40039127783) verificó procedencia y reutilizó la evidencia del mismo árbol, sin repetir suites. |
+| CD Docker en Azure           | [Ejecución 40039165651](https://github.com/ngarayc/Nexo/actions/runs/40039165651) satisfactoria para ese main: verificación, OIDC real, construcción/escaneo de las cuatro imágenes, activación y salud HTTPS.                                                                                                                                                                             |
+
+Fuente y promoción actuales comparten el árbol `29f86b2034fbbde975c75936604d06b97acdfac2`. La release anterior conserva sus adjuntos originales; su ampliado de Firefox/WebKit/carga no acredita las mejoras posteriores de interfaz, limpieza, nube, CD y geocerca. Estas mejoras tienen el CI ordinario y las comprobaciones descritas aquí. La entrega de una nueva revisión requiere vincular su propio candidato y evidencia; esta revisión documental no amplía el alcance de los resultados históricos.
+
+La comprobación posterior al CD verificó los cuatro contenedores, HTTPS, login con la cuenta configurada, cookie Secure/HttpOnly/SameSite=Strict, SSE, Informe, geocerca con 2 vehículos dentro y 6 fuera, recarga y logout. No ejecutó replay ni limpieza y registró cero escrituras de negocio. El navegador de esa comprobación usó tiles sintéticos; no acredita de nuevo al proveedor cartográfico externo.
+
+| Imagen activa de ese despliegue | ID comprobado                                                             |
+| ------------------------------- | ------------------------------------------------------------------------- |
+| API                             | `sha256:bc68611255a55ffda44a7d49709c91ebdd34a92b64162ff89c181ca86d5bd116` |
+| Web                             | `sha256:ae9baf193016a01d989da7cc1132339caf3d643dbac1e1981e23590f7b5ba1c0` |
+| PostgreSQL                      | `sha256:6d6c4f83099f4c303d2862e0655f9a30ab5abf2da0629ad3311b47946b2afd33` |
+| Gateway                         | `sha256:e178f5c04681e93f2d6b0810605afc867c0267f39ba2c120e43e1fc3df377bbd` |
+
+Las etiquetas de revisión de las cuatro imágenes coinciden con main `23f6702`. Se conservaron disco, montaje y configuración del volumen. El operador instalado y la unidad systemd coinciden con las fuentes publicadas, y el servicio está habilitado. No se realizó un nuevo reinicio completo de VM para esta unidad: el reinicio descrito más abajo corresponde al despliegue inicial anterior a CD. Los entornos y registros crudos permanecen privados.
+
 ## Presentación temporal consistente en WebKit — #80
 
 La preparación ampliada de E6 detectó una diferencia real del parser nativo de fechas: WebKit27.2 redondeaba una fracción canónica de12 dígitos al segundo siguiente y rechazaba otra de20. El recorrido ISO con API/PostgreSQL/SSE reales y la imagen del cierre608152b reprodujo el fallo en la tabla: recibió00:00:02 donde debía mostrar00:00:01. Un primer intento del runner no inició casos por un argumento CLI incorrecto; se conservó como fallo de preparación y no se contó como evidencia del producto. El segundo sí ejecutó WebKit y conservó la aserción fallida.
@@ -573,7 +597,7 @@ Chromium verificó tres recorridos focalizados: mapas/filtros con ambos oráculo
 
 La actualización aditiva sobre el volumen local conservó una huella coherente de telemetría, proyección, alertas, outbox, ejecuciones e intentos existentes; no hubo reset. Las capturas de revisión visual se mantienen fuera del repositorio.
 
-# Despliegue Azure de la revisión local
+## Despliegue Azure inicial anterior a la integración en main
 
 La issue #95 añade un despliegue de demostración con los cambios locales de
 presentación y acceso, sin publicar esos cambios en Git. Usa Docker para API,

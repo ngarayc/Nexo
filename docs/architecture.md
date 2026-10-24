@@ -1,55 +1,98 @@
-# Arquitectura
+# Arquitectura de Nexo
 
-## Estado implementado
+Nexo usa un monolito modular en NestJS y un frontend Angular organizado por funcionalidades. Ambos comparten tipos y funciones puras mediante `packages/contracts`. PostgreSQL conserva los datos y la cola durable de pg-boss.
 
-Nexo contiene dos aplicaciones y un núcleo compartido en un workspace npm: API NestJS/TypeScript ESM, Angular standalone y packages/contracts con DTO/reglas puras. La API compone controladores, servicios y acceso PostgreSQL mediante inyección; Angular presenta acceso, conexión en vivo, totales y [flota, historial y alertas](dashboard.md) bajo el router protegido. Docker Compose integra web, API y PostgreSQL bajo un mismo origen.
+## Aplicaciones y despliegue
 
-Se verificaron instalación limpia, calidad, compilación, pruebas unitarias, migración y seed sobre PostgreSQL real, salud y conservación del usuario/hash tras recrear contenedores. Las credenciales de migración y ejecución se distinguen; la API HTTP no hereda la contraseña del propietario. Ingesta, recuperación, SSE y motor HTTP del reproductor están compuestos dentro del mismo monolito.
+```text
+apps/api/             API NestJS y migraciones PostgreSQL
+apps/web/             Interfaz Angular
+packages/contracts/   Tipos, validaciones y comparadores puros compartidos
+infra/                Dockerfiles, Compose y proxies
+scripts/              Preparación, verificación, CI y CD
+```
 
-`modules/access` separa validación pura, caso de autenticación y puertos de sus adaptadores Argon2/PostgreSQL/HTTP. Su composición conecta proveedores y guard global. `platform/http` define la política explícita y parser acotado, sin importar implementaciones de módulos. En Angular la fachada coordina el adaptador HTTP y estado efímero; guard e interceptor consumen ese estado compartido. [Acceso](access.md) describe reservas, revocación, CSRF y costes del almacenamiento en una instancia.
+El perfil local tiene tres servicios Docker: `web` sirve Angular con NGINX y reenvía `/api` a NestJS; `api` procesa peticiones y trabajos; `db` conserva PostgreSQL en un volumen. Solo web publica `127.0.0.1:8080`.
 
-La primera migración crea `users`; la segunda incorpora las seis tablas de [persistencia de E1](persistence.md), restricciones, triggers y adaptadores puros de identidad, instante y JSON. Drizzle mantiene su registro técnico de migraciones en su propio esquema. La salud exige conexión, migración vigente y cuenta preparada cuando la demo está habilitada; la disponibilidad del transporte SSE también incorpora la frescura del dispatcher. Una respuesta saludable no sustituye las comprobaciones del contrato de dominio.
+Azure añade un cuarto contenedor, `gateway`, con Caddy. Publica 80/443, gestiona HTTPS y reenvía a web. Base y certificados están en disco persistente. [Operación local](operations.md), [perfil cloud](cloud-deployment.md) y [CD](cd.md) explican ambos recorridos.
 
-La tercera migración permite los cierres técnicos tempranos especificados, sin modificar tablas o datos existentes. [Recuperación](recovery.md) describe códigos cerrados, presupuesto durable y prueba de upgrade.
+## Backend por responsabilidades
 
-La cuarta migración añade el [diario del reproductor](replay-journal.md): ejecución/escenario e intentos en dos tablas, con transición/revisión, resultados inmutables y recuperación sin envíos. El [verificador](replay-verification.md) separa fuentes originales, lectura coherente de PostgreSQL/cola y comparación con oráculos. El [adaptador del emisor](replay-emitter.md) sí realiza el POST HTTP real; su temporizador espera la confirmación del diario y separa pausa del receptor. DemoRuntime compone estos componentes con los controles HTTP protegidos y el [panel Angular](replay-panel.md). El ingreso o la recuperación del proceso no inician un replay automáticamente.
+```text
+apps/api/
+├── migrations/       Ocho migraciones propias, 0000–0007
+└── src/
+    ├── main.ts       Arranque
+    ├── app.module.ts Composición de NestJS
+    ├── modules/
+    │   ├── access/      Autenticación, sesiones y acceso
+    │   ├── ingestion/   Recepción, cola y recuperación de lotes
+    │   ├── telemetry/   Reglas y clasificación de eventos
+    │   ├── queries/     Lecturas de flota, historial y alertas
+    │   ├── realtime/    Distribución de cambios por SSE
+    │   └── demo/        Reproductor, diario e informes
+    └── platform/
+        ├── database/    Conexiones y transacciones
+        ├── http/        Transporte HTTP y errores
+        ├── queue/       Conexión y preparación de pg-boss
+        └── runtime/     Salud y coordinación de la instancia
+```
 
-La quinta migración, [0004](../apps/api/migrations/0004_identity_materialization.sql), corrige el coste de validar identidades extensas comprimidas. Conserva datos, semántica y nueve tablas propias; [persistencia](persistence.md) documenta su prueba de actualización y restricciones.
+Los módulos contienen capacidades funcionales; platform aporta recursos técnicos compartidos. [AppModule](../apps/api/src/app.module.ts) compone los módulos de NestJS. `telemetry` se consume como código interno mediante su `public.ts` y no necesita un decorador `@Module` propio.
 
-La sexta migración, [0005](../apps/api/migrations/0005_exploratory_after_closure.sql), permite recorridos exploratorios tras un cierre conservado. Añade una marca interna calculada por SQL y mantiene inmutables los informes y las condiciones del par oficial; [diario](replay-journal.md) describe sus límites.
+### Ejemplo: una alerta por velocidad
 
-El núcleo compartido concentra DTO, identidad y representación/comparación temporal puras en packages/contracts, con uso real en ambas aplicaciones. Se mantuvo una biblioteca coherente en lugar de crear otro paquete sin consumidor independiente. Sus fronteras impiden dependencias de aplicaciones, frameworks o Node. Las reglas autoritativas de aceptación y las transacciones pertenecen al backend; la validación de transporte Angular comprueba consistencia de las vistas. [CI](ci-controls.md) describe las restricciones de módulos y presentación que se ejecutan sobre el código.
+```text
+modules/telemetry/
+├── domain/event.ts
+├── application/classify.ts
+├── adapters/postgres/telemetry-transaction.ts
+└── public.ts
+```
 
-## Dirección aceptada
+- **Dominio:** `event.ts` valida el evento, compara su contenido y expone reglas puras. `isOverspeed` se implementa en [event-fields.ts](../packages/contracts/src/event-fields.ts), dentro de contracts, y se reexporta desde el dominio. La regla es `speedKph > 80`; exactamente 80 no genera alerta.
+- **Caso de uso:** [ClassifyTelemetry](../apps/api/src/modules/telemetry/application/classify.ts) distingue aceptados, duplicados y rechazados. Para un evento nuevo coordina último estado, alerta y notificaciones mediante la interfaz `TelemetryEffects`.
+- **Adaptador:** [TelemetryTransaction](../apps/api/src/modules/telemetry/adapters/postgres/telemetry-transaction.ts) implementa esos efectos con SQL parametrizado dentro de la transacción recibida.
+- **Acceso entre módulos:** `public.ts` expone las piezas que puede consumir ingestion. [ProcessItem](../apps/api/src/modules/ingestion/adapters/postgres/process-item.ts) crea la transacción y llama al caso de uso.
 
-El backend es un monolito modular con Recepción, Telemetría, Consultas, Tiempo real, Acceso y Demo. Las reglas y casos de uso se separan de HTTP, persistencia y cola; los módulos y abstracciones nacen cuando incorporan comportamiento útil.
+Esta separación aplica puertos y adaptadores: el caso de uso expresa las operaciones que necesita y el adaptador concreta cómo ejecutarlas. Las carpetas aparecen cuando hay comportamiento útil; queries y realtime no tienen actualmente una carpeta domain.
 
-Angular agrupa páginas, fachadas y componentes por funcionalidad. Los adaptadores HTTP/SSE encapsulan transporte; las fachadas poseen el estado y los componentes presentan datos e intenciones. Comparte una conexión SSE y una coordinación de recuperación por sesión. [Sincronización](frontend-sync.md) relaciona generaciones, captura global, detalle cancelable, reglas comunes y límites.
+### Recepción, persistencia y tiempo real
 
-Tres contenedores permanentes: `web` sirve Angular y hace proxy bajo el mismo origen hacia `api`; `db` conserva datos en un volumen PostgreSQL. Solo `web` publica el puerto de loopback. Esta composición y el acceso por localhost desde Windows/WSL se comprobaron en E0-I03. Los tres servicios comienzan con usuarios sin root. API/web tienen filesystem de solo lectura y temporal writable; no requieren volúmenes persistentes propios. PostgreSQL escribe únicamente sus datos de servicio y el volumen.
+1. Ingestion valida el sobre HTTP y admite el lote junto con su primer trabajo de cola en una transacción.
+2. El consumidor procesa cada posición mediante telemetry. Evento, último estado cuando corresponde, alerta, outbox, resultado y continuación se confirman juntos.
+3. Después del commit se confirma el trabajo a pg-boss. La recuperación relee el estado durable antes de sustituir una oportunidad; un error técnico no se convierte en rechazo de dominio.
+4. Realtime distribuye los mensajes confirmados de la outbox por SSE. El navegador obtiene snapshot al abrir o recuperar la conexión.
+5. Queries permite consultar el estado persistido con sesión y sin efectos de negocio. Las lecturas están separadas de los comandos, sobre la misma base.
 
-La ingesta utiliza cola durable en PostgreSQL, procesamiento transaccional por evento y outbox para cambios confirmados. El receptor progresa independientemente de los controles del emisor. [Clasificación](classification.md), [recuperación](recovery.md) y [tiempo real](realtime.md) distinguen commit, distribución local y recuperación por snapshot.
+La pausa del reproductor detiene nuevos envíos del simulador; la cola del receptor continúa procesando lo admitido. [Ingesta](ingestion.md), [clasificación](classification.md), [recuperación](recovery.md) y [SSE](realtime.md) detallan garantías y límites. La outbox conserva la intención de notificar junto al cambio; su publicación no acredita recepción o renderizado en todos los navegadores.
 
-La [admisión](ingestion.md) prepara pg-boss y conecta rutas HTTP, autenticación pre-parser, cuotas y adaptadores SQL. Conserva recibos propios y publica el primer job en la misma transacción Drizzle. El consumidor confirma cada posición y su continuación en otra transacción; ACK ocurre después del commit. Las consultas/sesiones/salud comparten pool de cuatro conexiones y un presupuesto acotado de operaciones. La espera HTTP no controla el procesamiento ni interpreta un timeout como rollback.
+La API tiene ocho migraciones propias y nueve tablas de aplicación. Las migraciones 0000–0004 incorporan cuenta, telemetría, recuperación, diario y corrección de identidad; 0005 permite recorridos exploratorios después del cierre; 0006 admite las credenciales local/cloud y 0007 limita la tabla a una sola cuenta. Drizzle y pg-boss mantienen sus esquemas técnicos. [Persistencia](persistence.md) y [diario](replay-journal.md) describen las restricciones. Preparar el esquema usa el propietario; HTTP usa un rol restringido, con una función de limpieza demo de alcance fijo.
 
-El handler y reconciliador usan una transición común para sustituir una oportunidad o cerrar técnicamente la posición. Bloqueos, generaciones y relectura durable resuelven repeticiones y confirmaciones inciertas; los turnos SQL se liberan antes del backoff. `WriteTransactions` administra el cliente reservado y lo descarta ante error. No se introduce un segundo broker o un servicio de recuperación separado.
+## Frontend por funcionalidades
 
-`modules/queries` separa las lecturas de los comandos de ingesta sin añadir un bus o una segunda base. El caso de consulta depende de un puerto de lectura; HTTP y PostgreSQL son adaptadores. [Consultas](queries.md) define búsqueda, historial, alertas y snapshot, todos con sesión y cupo compartido. El snapshot usa una transacción breve REPEATABLE READ READ ONLY; RuntimeModule aporta la generación compartida con el stream; se renueva al reiniciar o recuperar degradación. La consulta captura la generación antes de leer para que el cliente detecte una transición concurrente. Parser y codecs se comparten donde ya existen dos consumidores reales.
+```text
+apps/web/src/app/
+├── features/
+│   ├── access/          Login y acceso
+│   ├── fleet/           Flota, mapas, historial y gráfico
+│   ├── alerts/          Alertas y filtros
+│   ├── demo-replay/     Panel del reproductor e informe
+│   └── live-monitoring/ Sincronización de la sesión
+├── platform/            HTTP, SSE, sesión, mapas y presentación común
+└── shell/               Navegación y estructura general
+```
 
-`modules/realtime` selecciona metadatos y payloads acotados, distribuye sin esperar red y marca la outbox. Una confirmación incierta se relee; el mismo UUID puede repetirse sin crear otro efecto. Cada conexión posee su cola/cupo y temporizadores. RuntimeHealth incorpora frescura del dispatcher; la ingesta conserva autonomía durante degradación. El pool dedicado materializa la conexión antes reservada dentro del presupuesto de dieciséis, sin nuevas tablas o servicios.
+En flota, `FleetPage` organiza la pantalla, `FleetFacade` mantiene vehículos/filtros/totales y `VehicleDetailFacade` conserva la selección y su historial. Tabla y mapa reciben la misma colección visible y emiten la identidad seleccionada. Los adaptadores encapsulan Leaflet y Chart.js. `LiveMonitor` coordina una conexión SSE por aplicación autenticada, instala el snapshot y aplica cambios a las colecciones compartidas.
 
-El coste de estas decisiones es una composición modular y controles transaccionales explícitos. Mantienen un único despliegue de API y evitan agregar un broker o servicios ajenos al alcance. No se afirma capacidad productiva para una flota real sin mediciones.
+Las señales de Angular permiten derivar las vistas del estado. Una respuesta antigua no reemplaza una selección nueva; al perder continuidad se recupera la base. Las alertas proceden del servidor. La geocerca fija calcula Dentro/Fuera y cambios entre muestras para presentación, sin crear alertas persistidas. [Dashboard](dashboard.md), [sincronización](frontend-sync.md), [cartografía](cartography.md), [gráfico](speed-chart.md) y [geocerca](geofence.md) explican el detalle.
 
-## Patrones aplicados
+## Contratos y controles de arquitectura
 
-| Problema                                        | Solución y ubicación                                                                         | Límite                                                     |
-| ----------------------------------------------- | -------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| Reglas independientes de HTTP/SQL               | Puertos y adaptadores en los módulos de acceso, ingesta y consultas; inyección en Nest       | No agrega microservicios o un framework de dominio         |
-| Clasificar sin perder continuación/notificación | Transacción por posición, continuación durable y outbox; clasificación/recuperación/realtime | Una publicación local no es ACK del navegador              |
-| Lecturas coherentes sin acoplarlas al emisor    | Casos de consulta separados y snapshot READ ONLY/REPEATABLE READ                             | La colección completa tiene coste de transferencia/memoria |
-| Una colección con varios consumidores Angular   | Fachadas propietarias, páginas que componen y componentes de presentación                    | No hay copias de dominio por componente ni store externo   |
-| Carreras entre HTTP, SSE y sesión               | Coordinador de sesión, capturas acotadas y generaciones de sincronización/selección          | Requiere recuperar la base tras perder continuidad         |
+`packages/contracts` comparte DTO, identidad, tiempo exacto, validación, orden y funciones puras de estado/umbral. Tiene consumidores reales en ambas aplicaciones y no depende de NestJS, Angular o Node. El backend conserva la autoridad sobre admisión y persistencia; los validadores del navegador comprueban las respuestas recibidas.
 
-Estos patrones responden a comportamiento existente y tienen pruebas de sus garantías. La [trazabilidad](traceability.md) identifica qué requisitos cubren y qué partes continúan pendientes.
+`npm run boundaries` comprueba ciclos, dependencias entre aplicaciones, capas y accesos entre módulos. [CI](ci-controls.md) documenta sus pruebas negativas. La inyección de dependencias conecta puertos y adaptadores; las fachadas concentran el estado de presentación y la outbox vincula cambios confirmados con su distribución.
 
-Los adaptadores de [cartografía](cartography.md) y [velocidad](speed-chart.md) reciben vistas de las fachadas y emiten IDs originales. Sus puertos separan Leaflet/Chart.js de los componentes; una superficie Leaflet compartida conserva configuración y ciclo de vida de los dos mapas. Las conversiones numéricas del gráfico no participan en las reglas exactas de dominio.
+## Límites
+
+El diseño mantiene una instancia API y una base compartida. Sesiones, cuotas y coordinación de demo son de proceso. El snapshot descarga colecciones completas; hay costes crecientes de memoria y almacenamiento. Las pruebas sintéticas acreditan sus recorridos, no capacidad productiva para una flota arbitraria. [Retrospectiva](RETROSPECTIVA.md) y [verificación](verification.md) conservan decisiones, resultados por candidato y mejoras posteriores.

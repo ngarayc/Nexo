@@ -12,7 +12,7 @@ cd nexo-check
 git rev-parse HEAD
 ```
 
-Node 24.22.1/npm 12.2.0 se necesitan para el reset local y para comprobar fuentes fuera de las imágenes. La construcción de API/web usa sus herramientas dentro de Docker. Si la PR o el manifiesto identifica otro SHA, seleccionarlo antes de generar configuración; el tag entrega-final identifica la entrega cuando esté publicado. Registrar y contrastar el SHA realmente comprobado, además del nombre de la rama.
+Node 24.22.1/npm 12.2.0 se necesitan para el reset local y para comprobar fuentes fuera de las imágenes. `test:ci-controls` requiere también Python 3 para las pruebas del operador de CD. La construcción de API/web usa sus herramientas dentro de Docker. Si la PR o el manifiesto identifica otro SHA, seleccionarlo antes de generar configuración; el tag entrega-final identifica una revisión ya publicada, anterior a las mejoras cloud/geocerca; consultar el [estado por candidato](verification.md#estado-de-entrega-y-despliegue). Registrar y contrastar el SHA realmente comprobado, además del nombre de la rama.
 
 Desde la raíz de esa copia, generar una configuración nueva. No copiar `.env.local` de otra instalación:
 
@@ -55,7 +55,7 @@ Para el recorrido automatizado de navegador, detener antes el stack manual de es
 
 ```sh
 WEB_PORT=8081 docker compose --project-name "$NEXO_VERIFY_PROJECT" --env-file .env.local -f infra/compose.yaml down
-npx --no-install playwright install chromium
+npx --no-install playwright install chromium --only-shell
 npm run test:e2e
 ```
 
