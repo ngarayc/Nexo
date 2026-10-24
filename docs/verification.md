@@ -30,6 +30,12 @@ El candidato documental `226df93e409290cb0cdaadf734687bf6679deb6c` no obtuvo apr
 
 La corrección fija multer 2.5.0 para la dependencia exacta de Nest mediante un override acotado. Pasaron `npm ci`, `npm ls multer`, `npm audit --audit-level=high` (cero vulnerabilidades), compilación API y 38 pruebas focalizadas de bootstrap HTTP, lectura de cuerpo, ingesta HTTP y sesión. No se ejecutó otra batería local completa. [Seguridad](security.md#corrección-de-multer--106) describe el aviso y la condición para retirar el override. El candidato corregido requiere su propio CI remoto y ampliado antes del cierre; sus resultados se vinculan en la PR y release correspondientes.
 
+## Rueda del mapa con margen real de desplazamiento — #107
+
+El [ampliado de `441f53c`](https://github.com/ngarayc/Nexo/actions/runs/40058275405) superó escaneos, arranque limpio y los casos Firefox anteriores a presentación, pero falló en `presentation.spec.mjs`. La reproducción local confirmó que `scrollY` era 428, el viewport 1.000 y la altura de página 1.428: ya no había margen inferior. Exigir que la rueda desplazara hacia abajo en ese punto era una premisa incorrecta de la prueba.
+
+La corrección elige una dirección con recorrido disponible y sigue exigiendo desplazamiento real de la página y los mismos tiles, sin cambio de zoom. No modifica Leaflet, CSS, límites de tiempo, oráculos ni el resto de aserciones. El caso completo pasó por separado en Chromium, Firefox y WebKit, con API/PostgreSQL/NGINX reales y cartografía sintética; conserva tooltips, mundo único, capas, presentación adaptable y conteos de dominio. También pasaron en WebKit los casos focalizados de limpieza de demo y geocerca, incorporados después del ampliado original. El CI ordinario del candidato anterior se canceló al preparar esta corrección; las ejecuciones finales deben identificar el nuevo candidato.
+
 ## Presentación temporal consistente en WebKit — #80
 
 La preparación ampliada de E6 detectó una diferencia real del parser nativo de fechas: WebKit27.2 redondeaba una fracción canónica de12 dígitos al segundo siguiente y rechazaba otra de20. El recorrido ISO con API/PostgreSQL/SSE reales y la imagen del cierre608152b reprodujo el fallo en la tabla: recibió00:00:02 donde debía mostrar00:00:01. Un primer intento del runner no inició casos por un argumento CLI incorrecto; se conservó como fallo de preparación y no se contó como evidencia del producto. El segundo sí ejecutó WebKit y conservó la aserción fallida.
