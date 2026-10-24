@@ -32,7 +32,9 @@ El comando ejecuta el inventario de archivos `.test.mjs`, exige pruebas ejecutad
 
 Los commits propios deben incluir un trailer `Refs #<issue>`; pueden declarar varias referencias separadas por coma. Se admite un único punto final opcional después de la lista completa; para nuevos commits se recomienda omitirlo. No se admiten decimales, puntos intermedios, doble punto, texto adicional o números no seguros. Cada número se comprueba como una issue del repositorio, abierta o cerrada. Un número de PR no sirve como issue. Esto comprueba la existencia de la referencia; no demuestra por sí solo que la issue precedió a cada edición o que todos sus criterios estén resueltos.
 
-Los merges sin trailer solo se admiten si la API acredita una PR integrada por el flujo permitido y el SHA exacto de merge. Un push a test/main también necesita esa procedencia. Un fallo de autenticación o consulta impide verificar la trazabilidad.
+Los merges de promoción sin trailer se admiten si la API acredita una PR integrada por el flujo permitido y el SHA exacto de merge. Un push a test/main también necesita esa procedencia. Un fallo de autenticación o consulta impide verificar la trazabilidad.
+
+La actualización automática de una PR development → test puede producir un merge de test hacia development sin cambios de archivos. [#109](https://github.com/ngarayc/Nexo/issues/109) reconoce ese caso únicamente si conserva el árbol del primer padre, GitHub acredita firma válida y committer `web-flow`, los dos padres coinciden y el segundo procede de una promoción auténtica a test. También exige asociación remota a una PR del flujo y repositorio correctos. No acepta sincronizaciones que cambien archivos ni commits propios sin issue; tampoco sustituye el CI del candidato o la revisión humana de main. Abrir una PR no cambia un commit; integrarla o actualizar su rama puede crear otro SHA con contenido idéntico.
 
 La prueba local contra la API real validó el commit de plantillas y su issue #2. Su contexto de push fue construido localmente; no se presenta como una ejecución de Actions.
 

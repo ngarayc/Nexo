@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { promotionMetadata } from './promotion-metadata.mjs';
+import { verifySyncMerge } from './sync-merge.mjs';
 import {
   issueReferences,
   repository,
@@ -74,7 +75,17 @@ export function verifyTraceability(env = process.env) {
           return false;
         }
       });
-      if (!promotion)
+      if (
+        !promotion &&
+        !verifySyncMerge({
+          commit,
+          message: git('show', '--no-patch', '--format=%B', commit),
+          parents,
+          git,
+          api,
+          promotionPulls,
+        })
+      )
         throw new Error('Un merge propio carece de issue y no es una promoción de GitHub.');
       generatedMerges += 1;
       continue;

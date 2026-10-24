@@ -36,6 +36,12 @@ El [ampliado de `441f53c`](https://github.com/ngarayc/Nexo/actions/runs/40058275
 
 La corrección elige una dirección con recorrido disponible y sigue exigiendo desplazamiento real de la página y los mismos tiles, sin cambio de zoom. No modifica Leaflet, CSS, límites de tiempo, oráculos ni el resto de aserciones. El caso completo pasó por separado en Chromium, Firefox y WebKit, con API/PostgreSQL/NGINX reales y cartografía sintética; conserva tooltips, mundo único, capas, presentación adaptable y conteos de dominio. También pasaron en WebKit los casos focalizados de limpieza de demo y geocerca, incorporados después del ampliado original. El CI ordinario del candidato anterior se canceló al preparar esta corrección; las ejecuciones finales deben identificar el nuevo candidato.
 
+## Sincronización de rama generada por GitHub — #109
+
+La actualización de la PR #108 produjo `b377f2e`, un merge de test hacia development con el mismo árbol que `3ab6e99`. [CI 40062921160](https://github.com/ngarayc/Nexo/actions/runs/40062921160) pasó las comprobaciones de fuentes, pero rechazó su trazabilidad: el commit generado por GitHub no tenía trailer Refs ni era una promoción. Ese resultado permanece fallido.
+
+El verificador ahora reconoce exclusivamente la sincronización sin cambios de contenido descrita en [controles CI](ci-controls.md#trazabilidad). Pasaron 29 pruebas focalizadas de contexto, referencias, promociones, evidencia y sincronización, además de formato y lint. La comprobación local contra Git y la API real acreditó los dos merges del rango; utilizó un evento de push reconstruido y no se presenta como una ejecución de Actions. La corrección conserva el historial y requiere CI propio antes de promover. No modifica la aplicación, sus oráculos ni las protecciones de main.
+
 ## Presentación temporal consistente en WebKit — #80
 
 La preparación ampliada de E6 detectó una diferencia real del parser nativo de fechas: WebKit27.2 redondeaba una fracción canónica de12 dígitos al segundo siguiente y rechazaba otra de20. El recorrido ISO con API/PostgreSQL/SSE reales y la imagen del cierre608152b reprodujo el fallo en la tabla: recibió00:00:02 donde debía mostrar00:00:01. Un primer intento del runner no inició casos por un argumento CLI incorrecto; se conservó como fallo de preparación y no se contó como evidencia del producto. El segundo sí ejecutó WebKit y conservó la aserción fallida.
